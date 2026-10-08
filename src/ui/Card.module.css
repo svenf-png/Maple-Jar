@@ -1,0 +1,14 @@
+.card {
+  background: var(--card);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.list {
+  border-radius: var(--r-list);
+}
+.kpi {
+  border-radius: var(--r-kpi);
+}
+.hero {
+  border-radius: var(--r-hero);
+}

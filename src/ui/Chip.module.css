@@ -1,0 +1,32 @@
+.chip {
+  appearance: none;
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  height: 40px;
+  padding: 0 14px 0 6px;
+  border-radius: 20px;
+  background: var(--fill);
+  color: var(--label);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.chip[aria-pressed="true"] {
+  background: var(--chip);
+  color: var(--onCat);
+}
+.icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--label);
+}
+.chip[aria-pressed="true"] .icon {
+  background: color-mix(in srgb, var(--onCat) 22%, transparent);
+  color: var(--onCat);
+}

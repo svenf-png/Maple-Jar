@@ -1,0 +1,66 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { de } from './de';
+import { en } from './en';
+import { formatMoney, formatMonth, formatRate } from './format';
+import { setLang, t } from './t';
+
+const nbsp = ' ';
+
+describe('t()', () => {
+  beforeEach(() => setLang('de'));
+
+  it('ersetzt Platzhalter', () => {
+    expect(t('settings.sharedWith', { name: 'Person B' })).toBe(
+      'Gemeinsamer Haushalt mit Person B',
+    );
+  });
+
+  it('lässt unbekannte Platzhalter stehen', () => {
+    expect(t('settings.sharedWith')).toContain('{name}');
+  });
+
+  it('wechselt die Sprache und setzt html lang', () => {
+    setLang('en');
+    expect(t('connect.submit')).toBe('Connect');
+    expect(document.documentElement.lang).toBe('en');
+  });
+
+  it('EN hat exakt dieselben Schlüssel wie DE', () => {
+    expect(Object.keys(en).sort()).toEqual(Object.keys(de).sort());
+  });
+
+  it('Platzhalter stimmen in beiden Sprachen überein', () => {
+    const ph = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
+    for (const key of Object.keys(de) as Array<keyof typeof de>) {
+      expect(ph(en[key]), key).toEqual(ph(de[key]));
+    }
+  });
+});
+
+describe('formatMoney', () => {
+  it('de-DE / CAD', () => {
+    expect(formatMoney(8417, 'CAD', 'de-DE')).toBe(`84,17${nbsp}CA$`);
+  });
+  it('de-DE / EUR', () => {
+    expect(formatMoney(8417, 'EUR', 'de-DE')).toBe(`84,17${nbsp}€`);
+  });
+  it('en-CA / CAD', () => {
+    expect(formatMoney(8417, 'CAD', 'en-CA')).toBe('$84.17');
+  });
+  it('en-CA / EUR', () => {
+    expect(formatMoney(8417, 'EUR', 'en-CA')).toBe('€84.17');
+  });
+  it('akzeptiert bigint und negative Werte', () => {
+    expect(formatMoney(-5n, 'EUR', 'de-DE')).toContain('0,05');
+    expect(formatMoney(123456789012345678n, 'CAD', 'en-CA')).toContain('1,234,567,890,123,456.78');
+  });
+});
+
+describe('weitere Formate', () => {
+  it('formatMonth', () => {
+    expect(formatMonth('2027-02-01', 'de-DE')).toBe('Februar 2027');
+  });
+  it('formatRate aus Mikro-Einheiten', () => {
+    expect(formatRate(1_610_000n, 'de-DE')).toBe(`1,61${nbsp}CA$`);
+  });
+});
