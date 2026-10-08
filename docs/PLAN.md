@@ -82,7 +82,7 @@ Gebaut wird eine offline-fähige PWA als gemeinsames Haushaltsbuch für zwei Per
 ### 2.1 Daten-Repo (privat, in der Organisation)
 
 ```
-household.json                       # Format-Version, Haushalts-ID, Mitglieder (GitHub-Login → Anzeigename, Farbe)
+household.json                       # Format-Version, Haushalts-ID, Mitglieder (GitHub-Login → Anzeigename, Farbe), Startwerte der Einstellungen
 log/<deviceId>/<YYYY-MM>.jsonl       # Ereignisse dieses Geräts, eine JSON-Zeile pro Ereignis, nur anhängen
 README.md                            # kurzer Hinweis, nicht von Hand bearbeiten
 ```
@@ -290,7 +290,13 @@ Siehe `CLAUDE.md` im Repo-Root (an Version 2 angepasst).
 
 ---
 
-## 8. Offene Fragen (mit meinem Vorschlag als Standard)
+## 8. Entscheidungen
+
+Alle Vorschläge wurden am 08.10.2026 übernommen. Die *Vorschlag*-Texte unten gelten damit als Entscheidung.
+Konkretisierungen:
+- Frage 7: Kategoriefarben für weiße Schrift abgedunkelt auf *Gesundheit* `#667F1C` (4,55:1), *Sonstiges* `#7F7569` (4,52:1), *Geschenke* `#B4602F` (4,51:1). Das Token `--scen` (`#B5602F`) bleibt unverändert, weil es nur für Diagrammlinien dient.
+- Frage 8: Die generische Kategorie-Vorlage liegt in `src/domain/category-template.ts` und wird in „Haushalt einrichten“ angeboten (angewendet ab M2).
+- `household.json` enthält zusätzlich die Startwerte der Einstellungen (Name, Ort, Zeitraum, Kursquelle). Der Fold beginnt mit diesen Startwerten, spätere Änderungen sind Ereignisse.
 
 1. **Fixkosten buchen:** automatisch am Fälligkeitstag oder per Tipp „als bezahlt buchen“? Zählen sie ins Kategorie-Budget? *Vorschlag:* Tipp zum Bestätigen, `autobook` pro Fixkosten einschaltbar. Ja, sie zählen ins Budget, in der Projektion aber nicht doppelt.
 2. **Sparpläne (z. B. ETF):** Ausgabe oder Sparen? *Vorschlag:* Fixkosten mit Merkmal „ist Sparen“, zählen im Kreisdiagramm und in der Sparquote als Sparen.
