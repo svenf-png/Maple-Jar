@@ -17,7 +17,8 @@
     "test:e2e": "playwright test",
     "check:privacy": "node scripts/check-privacy.mjs",
     "check:size": "node scripts/check-size.mjs",
-    "generate:icons": "node scripts/generate-icons.mjs"
+    "generate:icons": "node scripts/generate-icons.mjs",
+    "check:e2e-leak": "node scripts/check-no-e2e.mjs"
   },
   "dependencies": {
     "dexie": "~4.4.6",
