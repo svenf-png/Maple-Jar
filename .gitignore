@@ -1,0 +1,32 @@
+# Abhängigkeiten und Builds
+node_modules/
+dist/
+dev-dist/
+*.tsbuildinfo
+
+# Tests
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
+# Lokale Konfiguration und Secrets
+.env
+.env.*
+!.env.example
+
+# Nur lokal: Design-Referenz, private Bootstrap-Daten, Datenschutz-Denylist
+design-reference/
+supabase/bootstrap.local.sql
+.privacy-denylist
+
+# Supabase CLI
+supabase/.temp/
+supabase/.branches/
+
+# Editor und System
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.log
