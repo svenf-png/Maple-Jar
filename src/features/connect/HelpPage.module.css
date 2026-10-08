@@ -1,0 +1,21 @@
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top) + 16px) 24px calc(env(safe-area-inset-bottom) + 40px);
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--acc);
+  font-size: 17px;
+  text-decoration: none;
+}
+.list {
+  margin: var(--s-5) 0 0;
+  padding-left: var(--s-5);
+  display: grid;
+  gap: var(--s-3);
+  font-size: 16px;
+  line-height: 1.45;
+}
