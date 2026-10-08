@@ -1,0 +1,30 @@
+import type { IconProps } from './icon-base';
+
+export function Logo({ size = 44, className }: IconProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      aria-hidden="true"
+      focusable="false"
+      {...(className ? { className } : {})}
+    >
+      <rect x="7" y="2" width="10" height="3" rx="1" fill="#FFFFFF" />
+      <path
+        d="M7.6 6h8.8c1.5 1.2 2.6 2.7 2.6 4.6v7.4a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3v-7.4C5 8.7 6.1 7.2 7.6 6z"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <g transform="translate(7.1 9.4) scale(.41)">
+        <path
+          fill="#FFFFFF"
+          d="M12 1.5l1.6 3.5 2-1-.6 5 2.8-2.4.8 1.8 2.8-.6-1.2 3.4 1.8 1-5.4 4.4.6 1.8-4.6-.8.2 4.9h-1.6l.2-4.9-4.6.8.6-1.8L2 12.2l1.8-1-1.2-3.4 2.8.6.8-1.8L9 9l-.6-5 2 1z"
+        />
+      </g>
+    </svg>
+  );
+}
