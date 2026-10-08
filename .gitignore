@@ -15,14 +15,9 @@ blob-report/
 .env.*
 !.env.example
 
-# Nur lokal: Design-Referenz, private Bootstrap-Daten, Datenschutz-Denylist
+# Nur lokal: Design-Referenz, Datenschutz-Denylist
 design-reference/
-supabase/bootstrap.local.sql
 .privacy-denylist
-
-# Supabase CLI
-supabase/.temp/
-supabase/.branches/
 
 # Editor und System
 .DS_Store
