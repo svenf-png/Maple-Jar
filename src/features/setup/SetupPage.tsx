@@ -1,18 +1,9 @@
 import { type FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router';
-import {
-  type Household,
-  MEMBER_COLORS,
-  type MemberColor,
-  periodEndFor,
-  sameLogin,
-  serializeHousehold,
-} from '../../data/household';
-import { ConflictError } from '../../data/remote/remote-store';
-import { evaluateHousehold, saveHousehold } from '../../data/session';
-import { getStore } from '../../data/store-factory';
+import { MEMBER_COLORS, type MemberColor, periodEndFor } from '../../data/household';
+import { createHousehold } from '../../data/session';
 import { useSession } from '../../data/use-session';
-import { t, useLang } from '../../i18n/t';
+import { getLocale, t, useLang } from '../../i18n/t';
 import { WarnIcon } from '../../icons/ui-icons';
 import { Button, Card, Segmented, TextField } from '../../ui';
 import { remoteErrorMessage } from '../connect/errors';
@@ -31,87 +22,38 @@ export function SetupPage() {
   const [months, setMonths] = useState('12');
   const [myName, setMyName] = useState('');
   const [myColor, setMyColor] = useState<MemberColor>(MEMBER_COLORS[0]);
-  const [otherLogin, setOtherLogin] = useState('');
-  const [otherName, setOtherName] = useState('');
-  const [otherColor, setOtherColor] = useState<MemberColor>(MEMBER_COLORS[1]);
   const [fx, setFx] = useState<'ECB' | 'BOC'>('ECB');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   if (!session) return null;
 
-  async function afterConflict(): Promise<void> {
-    if (!session) return;
-    const store = await getStore(session.repo, session.token);
-    const file = await store.readFile('household.json');
-    if (!file) throw new Error('Missing after conflict');
-    const outcome = evaluateHousehold(file.text, file.sha, session.login);
-    if (outcome.kind === 'ok') {
-      await saveHousehold(outcome.household, outcome.sha);
-      void navigate('/', { replace: true });
-    } else if (outcome.kind === 'notMember') setError(t('connect.error.notMember'));
-    else if (outcome.kind === 'notYetMember') setError(t('connect.error.notYetMember'));
-    else setError(t('connect.error.invalidHousehold'));
-  }
-
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!session) return;
     if (!name.trim())
       return setError(t('setup.error.required', { field: t('setup.householdName') }));
     if (!myName.trim()) return setError(t('setup.error.required', { field: t('setup.yourName') }));
     const n = Number(months);
     if (!Number.isInteger(n) || n < 1 || n > 60) return setError(t('setup.error.duration'));
-    const hasOther = otherLogin.trim() !== '' || otherName.trim() !== '';
-    if (hasOther && (!otherLogin.trim() || !otherName.trim())) {
-      return setError(t('setup.error.secondIncomplete'));
-    }
-    if (hasOther && sameLogin(otherLogin.trim(), session.login)) {
-      return setError(t('setup.error.secondSame'));
-    }
     const periodStart = `${start}-01`;
-    const members: Household['members'] = [
-      { githubLogin: session.login, displayName: myName.trim(), color: myColor },
-    ];
-    if (hasOther) {
-      members.push({
-        githubLogin: otherLogin.trim(),
-        displayName: otherName.trim(),
-        color: otherColor,
-      });
-    }
-    const household: Household = {
-      format: 1,
-      householdId: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      members,
-      settings: {
-        name: name.trim(),
-        placeLabel: place.trim() || null,
-        periodStart,
-        periodEnd: periodEndFor(periodStart, n),
-        baseCurrency: 'CAD',
-        secondCurrency: 'EUR',
-        fxProvider: fx,
-      },
-    };
     setError(null);
     setBusy(true);
     try {
-      const store = await getStore(session.repo, session.token);
-      try {
-        const { sha } = await store.writeFile(
-          'household.json',
-          serializeHousehold(household),
-          null,
-          'chore: set up household',
-        );
-        await saveHousehold(household, sha);
-        void navigate('/', { replace: true });
-      } catch (err) {
-        if (err instanceof ConflictError) await afterConflict();
-        else throw err;
-      }
+      await createHousehold({
+        displayName: myName.trim(),
+        color: myColor,
+        locale: getLocale(),
+        settings: {
+          name: name.trim(),
+          placeLabel: place.trim() || null,
+          periodStart,
+          periodEnd: periodEndFor(periodStart, n),
+          baseCurrency: 'CAD',
+          secondCurrency: 'EUR',
+          fxProvider: fx,
+        },
+      });
+      void navigate('/', { replace: true });
     } catch (err) {
       const message = remoteErrorMessage(err);
       setError(message === t('connect.error.unknown') ? t('setup.error.write') : message);
@@ -165,28 +107,6 @@ export function SetupPage() {
           />
           <div className={styles.colorRow}>
             <ColorPicker label={t('setup.color')} value={myColor} onChange={setMyColor} />
-          </div>
-        </Card>
-        <h2 className="type-label">{t('setup.second')}</h2>
-        <Card>
-          <TextField
-            label={t('setup.secondLogin')}
-            hint={t('setup.secondHint')}
-            value={otherLogin}
-            onChange={(e) => setOtherLogin(e.target.value)}
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            autoComplete="off"
-          />
-          <TextField
-            label={t('setup.secondName')}
-            value={otherName}
-            onChange={(e) => setOtherName(e.target.value)}
-            autoComplete="off"
-          />
-          <div className={styles.colorRow}>
-            <ColorPicker label={t('setup.color')} value={otherColor} onChange={setOtherColor} />
           </div>
         </Card>
         <div className={styles.fx}>

@@ -24,9 +24,35 @@ const router = createHashRouter([
       const { SetupPage } = await import('../features/setup/SetupPage');
       return {
         element: (
-          <RequireConnection>
+          <RequireConnection stage="setup">
             <SetupPage />
           </RequireConnection>
+        ),
+      };
+    },
+  },
+  {
+    path: '/beitreten',
+    lazy: async () => {
+      const { JoinPage } = await import('../features/setup/JoinPage');
+      return {
+        element: (
+          <RequireConnection stage="join">
+            <JoinPage />
+          </RequireConnection>
+        ),
+      };
+    },
+  },
+  {
+    path: '/anmelden',
+    lazy: async () => {
+      const { RenewPage } = await import('../features/connect/RenewPage');
+      return {
+        element: (
+          <RequireHousehold>
+            <RenewPage />
+          </RequireHousehold>
         ),
       };
     },
