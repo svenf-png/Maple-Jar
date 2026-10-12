@@ -254,7 +254,7 @@ Es gibt in M2 keinen Live-Kanal (Realtime ist später optional). Änderungen ers
 - Kategorien verwalten, Onboarding/Leer-Zustand.
 - Tests: money, fx, budget, fold/merge, Sync-Engine mit `MemoryTransport`. Playwright: Erfassen, Offline-Erfassen, zwei Geräte mit Konflikt.
 
-**M3 Einnahmen, Fixkosten, Sparziele**
+**M3 Einnahmen, Fixkosten, Sparziele**. Details in `docs/prompts/M3.md`.
 - CRUD für alle drei, Wiederholungslogik, „Als Nächstes fällig“, Buchungsfluss für Fixkosten.
 - Sparziele mit Beiträgen, Plan-Abweichung, „Sparziel erreicht“ (einmal pro Person).
 - Kreisdiagramm „Anteil am Einkommen“ vollständig.
