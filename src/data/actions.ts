@@ -3,6 +3,7 @@ import {
   autobookCandidates,
   bookingDraft,
   bookingState,
+  defaultPayer,
   fixedCostEntryId,
 } from '../domain/fixed-cost';
 import { chooseRate, type KnownRate } from '../domain/fx';
@@ -309,16 +310,12 @@ const sessionUser = async (db: MapleJarDb): Promise<string> => {
   return id;
 };
 
-/**
- * Zahler automatisch gebuchter Fixkosten: das Mitglied mit der kleinsten Nutzer-ID. Auf jedem Gerät derselbe Wert,
- * damit zwei Geräte, die dieselbe Fälligkeit buchen, identische Felder schreiben (sonst Feldkonflikt auf `paidBy`).
- */
-async function autobookPayer(db: MapleJarDb): Promise<string> {
+/** Standard-Zahler aus dem Haushalt (siehe `defaultPayer`), sonst der angemeldete Nutzer. */
+async function payerOf(db: MapleJarDb): Promise<string> {
   const members = (
     (await db.meta.get('household'))?.value as { members?: Array<{ userId: string }> } | undefined
   )?.members;
-  const ids = (members ?? []).map((m) => m.userId).sort();
-  return ids[0] ?? (await sessionUser(db));
+  return defaultPayer(members ?? []) ?? (await sessionUser(db));
 }
 
 async function createFixedEntry(
@@ -342,12 +339,14 @@ async function createFixedEntry(
 /**
  * Bucht eine Fälligkeit mit deterministischer Eintrags-ID (zwei Geräte erzeugen denselben Eintrag).
  * Ausdrücklich gelöschte Buchung: wiederherstellen. Wirft `NoRateError` bei EUR ohne bekannten Kurs.
+ * Zahler: `options.paidBy`, sonst der Standard-Zahler des Haushalts.
  */
 export async function bookFixedCost(
   db: MapleJarDb,
   fixedCostId: string,
   dueOn: string,
   rate: KnownRate | null,
+  options: { paidBy?: string } = {},
 ): Promise<BookResult> {
   const fcRow = await db.fixedCost.get(fixedCostId);
   if (!fcRow) throw new Error('Fixed cost not found');
@@ -359,7 +358,14 @@ export async function bookFixedCost(
     await appendLocalEvent(db, { entity: 'entry', rowId, op: 'restore' });
     return 'restored';
   }
-  await createFixedEntry(db, rowId, toFixedCost(fcRow), dueOn, rate, await sessionUser(db));
+  await createFixedEntry(
+    db,
+    rowId,
+    toFixedCost(fcRow),
+    dueOn,
+    rate,
+    options.paidBy ?? (await payerOf(db)),
+  );
   return 'booked';
 }
 
@@ -376,7 +382,7 @@ export async function runAutobook(
   const fixedCosts = (await db.fixedCost.toArray()).map(toFixedCost);
   const entries = (await db.entry.filter((e) => e.source === 'fixed').toArray()).map(toEntry);
   const fcById = new Map(fixedCosts.map((f) => [f.id, f]));
-  const paidBy = await autobookPayer(db);
+  const paidBy = await payerOf(db);
   let booked = 0;
   for (const item of await autobookCandidates(fixedCosts, entries, today)) {
     const fc = fcById.get(item.fixedCostId);

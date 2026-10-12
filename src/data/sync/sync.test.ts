@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { fixedCostEntryId } from '../../domain/fixed-cost';
-import { runAutobook } from '../actions';
+import { bookFixedCost, deleteEntry, runAutobook } from '../actions';
 import { type EventRow, MapleJarDb } from '../db';
 import { CAT_1, categoryData, entryData, ROW_1, uuid } from '../events/test-helpers';
 import { exportEventsJson } from '../export';
@@ -420,8 +420,9 @@ describe('Kurse nachziehen', () => {
 });
 
 describe('Fixkosten-Buchung auf zwei Geräten', () => {
-  it('gleiche Fälligkeit auf beiden Geräten offline per Autobook gebucht: genau ein Eintrag, kein Konflikt', async () => {
-    const FC = uuid();
+  const FC = uuid();
+  const DUE = '2027-01-10';
+  async function setup() {
     await write(a, { entity: 'category', rowId: CAT_1, op: 'create', data: categoryData() });
     await write(a, {
       entity: 'fixedCost',
@@ -441,19 +442,46 @@ describe('Fixkosten-Buchung auf zwei Geräten', () => {
     });
     await sync(a);
     await sync(b);
-    // Beide Geräte buchen offline voneinander dieselbe Fälligkeit.
-    expect(await runAutobook(a.db, null, '2027-01-12')).toBe(1);
-    expect(await runAutobook(b.db, null, '2027-01-12')).toBe(1);
+    return fixedCostEntryId(FC, DUE);
+  }
+  async function expectOneEntry(id: string) {
     await sync(a);
     await sync(b);
     await sync(a);
-    const id = await fixedCostEntryId(FC, '2027-01-10');
     for (const d of [a, b]) {
       const rows = (await d.db.entry.toArray()).filter((e) => e.id === id);
       expect(rows).toHaveLength(1);
       expect(rows[0]).toMatchObject({ deleted: false, conflict: false, source: 'fixed' });
       expect((await d.db.entry.toArray()).filter((e) => !e.deleted)).toHaveLength(1);
     }
+  }
+
+  it('beide Geräte buchen offline per Autobook: genau ein Eintrag, kein Konflikt', async () => {
+    const id = await setup();
+    expect(await runAutobook(a.db, null, '2027-01-12')).toBe(1);
+    expect(await runAutobook(b.db, null, '2027-01-12')).toBe(1);
+    await expectOneEntry(id);
+  });
+
+  it('Tipp-Buchung (ohne Override) auf A, Autobook auf B: ein Eintrag, kein Konflikt', async () => {
+    const id = await setup();
+    expect(await bookFixedCost(a.db, FC, DUE, null)).toBe('booked');
+    expect(await runAutobook(b.db, null, '2027-01-12')).toBe(1);
+    await expectOneEntry(id);
+  });
+
+  it('auf A gelöschte Autobuchung bleibt gelöscht, wenn B erst synchronisiert und dann Autobook läuft', async () => {
+    const id = await setup();
+    expect(await runAutobook(a.db, null, '2027-01-12')).toBe(1);
+    await sync(a);
+    await sync(b); // B hat den Eintrag
+    await deleteEntry(a.db, id);
+    await sync(a);
+    await sync(b); // erst Sync, dann Autobook (Reihenfolge der Laufzeit)
+    expect(await runAutobook(b.db, null, '2027-01-12')).toBe(0);
+    await sync(b);
+    await sync(a);
+    for (const d of [a, b]) expect((await d.db.entry.get(id))?.deleted).toBe(true);
   });
 });
 

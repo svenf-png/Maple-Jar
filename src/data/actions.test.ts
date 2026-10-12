@@ -372,6 +372,12 @@ describe('Fixkosten buchen', () => {
     expect(await fixedEntries()).toHaveLength(1);
   });
 
+  it('bookFixedCost: Override für den Zahler', async () => {
+    const fc = await createFixedCost(db, fcInput({ autobook: false }));
+    await bookFixedCost(db, fc, '2027-02-10', null, { paidBy: OTHER });
+    expect((await fixedEntries())[0]?.paidBy).toBe(OTHER);
+  });
+
   it('bookFixedCost: EUR ohne Kurs wirft NoRateError, veralteter Kurs ist vorläufig', async () => {
     const fc = await createFixedCost(db, fcInput({ currency: 'EUR', autobook: false }));
     await expect(bookFixedCost(db, fc, '2027-02-10', null)).rejects.toBeInstanceOf(NoRateError);

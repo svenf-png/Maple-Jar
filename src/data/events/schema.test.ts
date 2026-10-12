@@ -93,7 +93,8 @@ describe('parseEvent: M3-Entitäten', () => {
   });
 
   it('null löscht optionale Felder nur in update, nicht in create', () => {
-    const upd = (entity: string, data: object) => ok(mk({ entity, op: 'update', data }));
+    const upd = (entity: 'income' | 'fixedCost' | 'goal', data: Record<string, unknown>) =>
+      ok(mk({ entity, op: 'update', data }));
     expect(upd('income', { endsOn: null, memberId: null })).toBe(true);
     expect(upd('fixedCost', { endsOn: null, icon: null })).toBe(true);
     expect(upd('goal', { archivedAt: null })).toBe(true);

@@ -3,6 +3,7 @@ import {
   autobookCandidates,
   bookingDraft,
   bookingState,
+  defaultPayer,
   dueNext,
   dueWithIds,
   fixedCostEntryId,
@@ -160,5 +161,13 @@ describe('bookingDraft', () => {
   });
   it('EUR ohne Kurs: null', () => {
     expect(bookingDraft(fixedCost({ currency: 'EUR' }), '2027-02-10', null)).toBeNull();
+  });
+});
+
+describe('defaultPayer', () => {
+  it('kleinste Nutzer-ID, unabhängig von der Reihenfolge; null ohne Mitglieder', () => {
+    expect(defaultPayer([{ userId: 'b' }, { userId: 'a' }])).toBe('a');
+    expect(defaultPayer([{ userId: 'a' }, { userId: 'b' }])).toBe('a');
+    expect(defaultPayer([])).toBeNull();
   });
 });

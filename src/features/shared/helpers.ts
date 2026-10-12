@@ -1,13 +1,8 @@
 import type { HouseholdMember } from '../../data/household';
+import { todayIso } from '../../data/today';
 import type { Locale } from '../../i18n/t';
 
-/** Heutiger Kalendertag (lokal) als `YYYY-MM-DD`. */
-export function todayIso(now: Date = new Date()): string {
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
+export { todayIso };
 
 export const memberName = (members: readonly HouseholdMember[], id: string): string =>
   members.find((m) => m.userId === id)?.displayName ?? '';

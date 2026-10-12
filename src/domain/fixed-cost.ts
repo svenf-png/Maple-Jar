@@ -156,3 +156,10 @@ export function bookingDraft(
     fxProvisional: choice.provisional,
   };
 }
+
+/**
+ * Standard-Zahler gebuchter Fixkosten: Mitglied mit der kleinsten Nutzer-ID. Auf jedem Gerät derselbe Wert,
+ * damit gleichzeitige Buchungen identische Felder schreiben. `null` ohne Mitglieder.
+ */
+export const defaultPayer = (members: readonly { userId: string }[]): string | null =>
+  members.map((m) => m.userId).sort()[0] ?? null;

@@ -1,9 +1,9 @@
 // Schwerer Teil der Sync-Laufzeit. Wird nur per import() aus control.ts geladen.
 import { liveQuery } from 'dexie';
 import type { KnownRate } from '../../domain/fx';
-import { todayIso } from '../../features/shared/helpers';
 import { db } from '../db';
 import { type FxProvider, fetchRate, lastKnownRate } from '../fx/frankfurter';
+import { todayIso } from '../today';
 import { getTransport } from '../transport-factory';
 import { onLocalChange } from '../write';
 import { runSync } from './cycle';
@@ -30,8 +30,9 @@ async function knownRate(provider: FxProvider, day: string): Promise<KnownRate |
 let autobooking: Promise<void> | null = null;
 
 /**
- * Bucht fällige Autobook-Fixkosten. Hängt nicht vom Netz ab (CAD geht offline); Fehler werden verschluckt, der
- * Sync darf daran nie scheitern. Der Code wird erst hier per import() geladen.
+ * Bucht fällige Autobook-Fixkosten, nur nach erfolgreichem Sync (der erste erfolgreiche Lauf nach dem Start deckt
+ * „beim App-Start“ ab). Vorher zu buchen könnte eine auf einem anderen Gerät gelöschte Buchung wiederbeleben.
+ * Fehler werden verschluckt, der Sync darf daran nie scheitern. Der Code wird erst hier per import() geladen.
  */
 function autobook(): Promise<void> {
   autobooking ??= (async () => {
@@ -93,8 +94,6 @@ export function startSync(): void {
   window.addEventListener('offline', onOffline);
   window.addEventListener('online', onOnline);
   scheduler.start();
-  // Start: auch offline sofort buchen (der erste Sync-Lauf bricht ohne Netz früh ab).
-  void autobook();
 }
 
 export function stopSync(): void {
