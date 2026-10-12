@@ -92,6 +92,17 @@ describe('parseEvent: M3-Entitäten', () => {
     expect(ok(mk({ entity: 'goalContribution', op: 'delete' }))).toBe(true);
   });
 
+  it('null löscht optionale Felder nur in update, nicht in create', () => {
+    const upd = (entity: string, data: object) => ok(mk({ entity, op: 'update', data }));
+    expect(upd('income', { endsOn: null, memberId: null })).toBe(true);
+    expect(upd('fixedCost', { endsOn: null, icon: null })).toBe(true);
+    expect(upd('goal', { archivedAt: null })).toBe(true);
+    expect(upd('income', { name: null })).toBe(false);
+    expect(upd('goal', { icon: null })).toBe(false);
+    expect(create('income', incomeData({ endsOn: null }))).toBe(false);
+    expect(create('goal', goalData({ archivedAt: null }))).toBe(false);
+  });
+
   it('lehnt ungültige Beträge, Wiederholungen und Felder ab', () => {
     expect(create('income', incomeData({ amountMinor: 0 }))).toBe(false);
     expect(create('income', incomeData({ every: 0 }))).toBe(false);

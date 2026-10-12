@@ -22,7 +22,7 @@ export function savedByGoal(contributions: readonly GoalContribution[]): Map<str
 
 /** Ziele, die in Auswertungen mitzählen: weder gelöscht noch archiviert. */
 export const activeGoals = (goals: readonly Goal[]): Goal[] =>
-  goals.filter((g) => !g.deleted && g.archivedAt === undefined);
+  goals.filter((g) => !g.deleted && g.archivedAt == null);
 
 /** Fortschritt in ganzen Prozent, abgerundet, zwischen 0 und 100. */
 export function progress(goal: Pick<Goal, 'targetMinor'>, savedMinor: bigint): number {

@@ -1,6 +1,12 @@
 import type { CategoryTemplateEntry } from '../domain/category-template';
+import {
+  autobookCandidates,
+  bookingDraft,
+  bookingState,
+  fixedCostEntryId,
+} from '../domain/fixed-cost';
 import { chooseRate, type KnownRate } from '../domain/fx';
-import { monthOf, type RepeatUnit } from '../domain/model';
+import { monthOf, type RepeatUnit, toEntry, toFixedCost } from '../domain/model';
 import type { Currency } from '../domain/money';
 import type { MapleJarDb } from './db';
 import { appendLocalEvent } from './write';
@@ -190,7 +196,7 @@ const clean = (patch: object): Record<string, unknown> =>
       .map(([k, v]) => [k, k === 'name' && typeof v === 'string' ? v.trim() : v]),
   );
 
-/** Schreibt nur Felder, die sich vom materialisierten Stand unterscheiden. Optionale Felder lassen sich nicht löschen. */
+/** Schreibt nur Felder, die sich vom materialisierten Stand unterscheiden. `null` löscht ein optionales Feld. */
 async function updateFields(
   db: MapleJarDb,
   entity: 'income' | 'fixedCost' | 'goal',
@@ -201,7 +207,8 @@ async function updateFields(
   if (!current) return false;
   const data: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(clean(patch))) {
-    if (JSON.stringify(current[k]) !== JSON.stringify(v)) data[k] = v;
+    if (v === null ? current[k] != null : JSON.stringify(current[k]) !== JSON.stringify(v))
+      data[k] = v;
   }
   if (Object.keys(data).length === 0) return false;
   await appendLocalEvent(db, { entity, rowId: id, op: 'update', data });
@@ -233,7 +240,13 @@ export interface IncomeInput extends RepeatInput {
 }
 
 export const createIncome = (db: MapleJarDb, input: IncomeInput) => createRow(db, 'income', input);
-export const updateIncome = (db: MapleJarDb, id: string, patch: Partial<IncomeInput>) =>
+/** Update-Patch: optionale Felder akzeptieren `null` zum Löschen. */
+type Clearable<T, K extends keyof T> = Omit<T, K> & { [P in K]?: T[P] | null };
+export type IncomePatch = Partial<Clearable<IncomeInput, 'endsOn' | 'memberId'>>;
+export type FixedCostPatch = Partial<Clearable<FixedCostInput, 'endsOn' | 'icon'>>;
+export type GoalPatch = Partial<GoalInput> & { archivedAt?: string | null };
+
+export const updateIncome = (db: MapleJarDb, id: string, patch: IncomePatch) =>
   updateFields(db, 'income', id, patch);
 export const deleteIncome = (db: MapleJarDb, id: string) =>
   appendLocalEvent(db, { entity: 'income', rowId: id, op: 'delete' });
@@ -250,7 +263,7 @@ export interface FixedCostInput extends RepeatInput {
 
 export const createFixedCost = (db: MapleJarDb, input: FixedCostInput) =>
   createRow(db, 'fixedCost', input);
-export const updateFixedCost = (db: MapleJarDb, id: string, patch: Partial<FixedCostInput>) =>
+export const updateFixedCost = (db: MapleJarDb, id: string, patch: FixedCostPatch) =>
   updateFields(db, 'fixedCost', id, patch);
 export const deleteFixedCost = (db: MapleJarDb, id: string) =>
   appendLocalEvent(db, { entity: 'fixedCost', rowId: id, op: 'delete' });
@@ -266,7 +279,7 @@ export interface GoalInput {
 }
 
 export const createGoal = (db: MapleJarDb, input: GoalInput) => createRow(db, 'goal', input);
-export const updateGoal = (db: MapleJarDb, id: string, patch: Partial<GoalInput>) =>
+export const updateGoal = (db: MapleJarDb, id: string, patch: GoalPatch) =>
   updateFields(db, 'goal', id, patch);
 /** Archiviert ein Ziel (`archivedAt` = `today`, `YYYY-MM-DD`). Bereits archivierte Ziele bleiben unverändert. */
 export const archiveGoal = async (db: MapleJarDb, id: string, today: string): Promise<boolean> => {
@@ -287,3 +300,93 @@ export const addContribution = (db: MapleJarDb, input: ContributionInput) =>
   createRow(db, 'goalContribution', { ...input, note: input.note.trim() });
 export const deleteContribution = (db: MapleJarDb, id: string) =>
   appendLocalEvent(db, { entity: 'goalContribution', rowId: id, op: 'delete' });
+
+export type BookResult = 'booked' | 'already' | 'restored';
+
+const sessionUser = async (db: MapleJarDb): Promise<string> => {
+  const id = (await db.meta.get('userId'))?.value;
+  if (typeof id !== 'string') throw new Error('No session');
+  return id;
+};
+
+/**
+ * Zahler automatisch gebuchter Fixkosten: das Mitglied mit der kleinsten Nutzer-ID. Auf jedem Gerät derselbe Wert,
+ * damit zwei Geräte, die dieselbe Fälligkeit buchen, identische Felder schreiben (sonst Feldkonflikt auf `paidBy`).
+ */
+async function autobookPayer(db: MapleJarDb): Promise<string> {
+  const members = (
+    (await db.meta.get('household'))?.value as { members?: Array<{ userId: string }> } | undefined
+  )?.members;
+  const ids = (members ?? []).map((m) => m.userId).sort();
+  return ids[0] ?? (await sessionUser(db));
+}
+
+async function createFixedEntry(
+  db: MapleJarDb,
+  rowId: string,
+  fc: ReturnType<typeof toFixedCost>,
+  dueOn: string,
+  rate: KnownRate | null,
+  paidBy: string,
+): Promise<void> {
+  const draft = bookingDraft(fc, dueOn, rate);
+  if (!draft) throw new NoRateError();
+  await appendLocalEvent(db, {
+    entity: 'entry',
+    rowId,
+    op: 'create',
+    data: { ...draft, paidBy, merchant: fc.name, note: '' },
+  });
+}
+
+/**
+ * Bucht eine Fälligkeit mit deterministischer Eintrags-ID (zwei Geräte erzeugen denselben Eintrag).
+ * Ausdrücklich gelöschte Buchung: wiederherstellen. Wirft `NoRateError` bei EUR ohne bekannten Kurs.
+ */
+export async function bookFixedCost(
+  db: MapleJarDb,
+  fixedCostId: string,
+  dueOn: string,
+  rate: KnownRate | null,
+): Promise<BookResult> {
+  const fcRow = await db.fixedCost.get(fixedCostId);
+  if (!fcRow) throw new Error('Fixed cost not found');
+  const rowId = await fixedCostEntryId(fixedCostId, dueOn);
+  const existing = await db.entry.get(rowId);
+  const state = bookingState(rowId, existing ? [toEntry(existing)] : []);
+  if (state === 'booked') return 'already';
+  if (state === 'deleted') {
+    await appendLocalEvent(db, { entity: 'entry', rowId, op: 'restore' });
+    return 'restored';
+  }
+  await createFixedEntry(db, rowId, toFixedCost(fcRow), dueOn, rate, await sessionUser(db));
+  return 'booked';
+}
+
+/**
+ * Bucht alle fälligen Autobook-Fixkosten der letzten 35 Tage, die noch offen sind. Gelöschte Buchungen werden
+ * nie neu gebucht. EUR ohne Kurs wird übersprungen; Fehler einzelner Fälligkeiten brechen den Lauf nicht ab.
+ * Gibt die Anzahl neu gebuchter Einträge zurück.
+ */
+export async function runAutobook(
+  db: MapleJarDb,
+  rate: KnownRate | null,
+  today: string,
+): Promise<number> {
+  const fixedCosts = (await db.fixedCost.toArray()).map(toFixedCost);
+  const entries = (await db.entry.filter((e) => e.source === 'fixed').toArray()).map(toEntry);
+  const fcById = new Map(fixedCosts.map((f) => [f.id, f]));
+  const paidBy = await autobookPayer(db);
+  let booked = 0;
+  for (const item of await autobookCandidates(fixedCosts, entries, today)) {
+    const fc = fcById.get(item.fixedCostId);
+    if (!fc) continue;
+    try {
+      await createFixedEntry(db, item.entryId, fc, item.dueOn, rate, paidBy);
+      booked++;
+    } catch {
+      // EUR ohne Kurs, ungültiges Ereignis o. Ä.: später erneut versuchen.
+    }
+  }
+  return booked;
+}

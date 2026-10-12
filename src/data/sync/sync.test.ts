@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { fixedCostEntryId } from '../../domain/fixed-cost';
+import { runAutobook } from '../actions';
 import { type EventRow, MapleJarDb } from '../db';
 import { CAT_1, categoryData, entryData, ROW_1, uuid } from '../events/test-helpers';
 import { exportEventsJson } from '../export';
@@ -414,6 +416,44 @@ describe('Kurse nachziehen', () => {
       }),
     ).toBe(0);
     expect((await rowOf(a, ROW_1))?.fxProvisional).toBe(true);
+  });
+});
+
+describe('Fixkosten-Buchung auf zwei Geräten', () => {
+  it('gleiche Fälligkeit auf beiden Geräten offline per Autobook gebucht: genau ein Eintrag, kein Konflikt', async () => {
+    const FC = uuid();
+    await write(a, { entity: 'category', rowId: CAT_1, op: 'create', data: categoryData() });
+    await write(a, {
+      entity: 'fixedCost',
+      rowId: FC,
+      op: 'create',
+      data: {
+        name: 'Streaming-Abo A',
+        amountMinor: 1299,
+        currency: 'CAD',
+        unit: 'month',
+        every: 1,
+        startsOn: '2027-01-10',
+        categoryId: CAT_1,
+        isSaving: false,
+        autobook: true,
+      },
+    });
+    await sync(a);
+    await sync(b);
+    // Beide Geräte buchen offline voneinander dieselbe Fälligkeit.
+    expect(await runAutobook(a.db, null, '2027-01-12')).toBe(1);
+    expect(await runAutobook(b.db, null, '2027-01-12')).toBe(1);
+    await sync(a);
+    await sync(b);
+    await sync(a);
+    const id = await fixedCostEntryId(FC, '2027-01-10');
+    for (const d of [a, b]) {
+      const rows = (await d.db.entry.toArray()).filter((e) => e.id === id);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({ deleted: false, conflict: false, source: 'fixed' });
+      expect((await d.db.entry.toArray()).filter((e) => !e.deleted)).toHaveLength(1);
+    }
   });
 });
 

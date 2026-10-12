@@ -139,7 +139,23 @@ const createSchemas = {
   goalContribution: z.strictObject(fieldSchemas.goalContribution),
 } as const;
 
-// Optionale Felder (endsOn, memberId, icon, archivedAt) lassen sich per `update` setzen, nicht löschen.
+// Optionale Felder (endsOn, memberId, icon, archivedAt) lassen sich per `update` setzen und mit `null` löschen
+// (nur in `update`; `create` lässt sie weg).
+const clearable = <T extends z.core.SomeType>(t: T) => z.optional(z.nullable(t));
+const incomeUpdate = {
+  ...fieldSchemas.income,
+  memberId: clearable(fieldSchemas.income.memberId),
+  endsOn: clearable(fieldSchemas.income.endsOn),
+};
+const fixedCostUpdate = {
+  ...fieldSchemas.fixedCost,
+  endsOn: clearable(fieldSchemas.fixedCost.endsOn),
+  icon: clearable(fieldSchemas.fixedCost.icon),
+};
+const goalUpdate = {
+  ...fieldSchemas.goal,
+  archivedAt: clearable(fieldSchemas.goal.archivedAt),
+};
 const atLeastOne = z.refine((d) => Object.keys(d as object).length > 0);
 const updateSchemas = {
   settings: z.partial(z.strictObject(fieldSchemas.settings)).check(atLeastOne),
@@ -147,9 +163,9 @@ const updateSchemas = {
   category: z.partial(z.strictObject(fieldSchemas.category)).check(atLeastOne),
   entry: z.partial(z.strictObject(fieldSchemas.entry)).check(atLeastOne),
   budget: z.partial(z.strictObject(fieldSchemas.budget)).check(atLeastOne),
-  income: z.partial(z.strictObject(fieldSchemas.income)).check(atLeastOne),
-  fixedCost: z.partial(z.strictObject(fieldSchemas.fixedCost)).check(atLeastOne),
-  goal: z.partial(z.strictObject(fieldSchemas.goal)).check(atLeastOne),
+  income: z.partial(z.strictObject(incomeUpdate)).check(atLeastOne),
+  fixedCost: z.partial(z.strictObject(fixedCostUpdate)).check(atLeastOne),
+  goal: z.partial(z.strictObject(goalUpdate)).check(atLeastOne),
 } as const;
 
 const envelope = z.strictObject({

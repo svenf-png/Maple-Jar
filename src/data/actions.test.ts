@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { categoryTemplate } from '../domain/category-template';
+import { fixedCostEntryId } from '../domain/fixed-cost';
 import {
   addContribution,
   applyCategoryTemplate,
   archiveGoal,
+  bookFixedCost,
   createCategory,
   createEntry,
   createFixedCost,
@@ -15,6 +17,7 @@ import {
   deleteIncome,
   NoRateError,
   restoreEntry,
+  runAutobook,
   setBudget,
   updateCategory,
   updateEntry,
@@ -255,6 +258,39 @@ describe('Einnahmen, Fixkosten, Sparziele', () => {
     expect((await db.goal.get(id))?.archivedAt).toBe('2027-06-01');
   });
 
+  it('optionale Felder lassen sich mit null löschen (Einnahme, Fixkosten, Ziel)', async () => {
+    const inc = await createIncome(db, {
+      ...rule,
+      endsOn: '2027-12-31',
+      name: 'Gehalt A',
+      memberId: USER,
+      amountMinor: 300_000,
+      currency: 'CAD',
+    });
+    expect(await updateIncome(db, inc, { endsOn: null, memberId: null })).toBe(true);
+    expect(await updateIncome(db, inc, { endsOn: null })).toBe(false);
+    expect(await db.income.get(inc)).toMatchObject({ endsOn: null, memberId: null });
+    const fc = await createFixedCost(db, {
+      ...rule,
+      endsOn: '2027-12-31',
+      icon: 'haus',
+      name: 'Miete A',
+      amountMinor: 100_000,
+      currency: 'CAD',
+      categoryId: cat,
+      isSaving: false,
+      autobook: false,
+    });
+    expect(await updateFixedCost(db, fc, { endsOn: null, icon: null })).toBe(true);
+    expect(await db.fixedCost.get(fc)).toMatchObject({ endsOn: null, icon: null });
+    const goal = await createGoal(db, goalInput);
+    await archiveGoal(db, goal, '2027-06-01');
+    expect(await updateGoal(db, goal, { archivedAt: null })).toBe(true);
+    expect((await db.goal.get(goal))?.archivedAt).toBeNull();
+    expect(await archiveGoal(db, goal, '2027-07-01')).toBe(true);
+    expect((await db.goal.get(goal))?.archivedAt).toBe('2027-07-01');
+  });
+
   it('Beitrag: anlegen, Entnahme, löschen; ungültiger Betrag wirft', async () => {
     const goal = await createGoal(db, goalInput);
     const id = await addContribution(db, {
@@ -298,5 +334,74 @@ describe('Einnahmen, Fixkosten, Sparziele', () => {
     await refoldRows(db, await waitingRefs(db), await getMemberIds(db));
     expect((await db.goalContribution.get(id))?.goalId).toBe(goalId);
     expect(await waitingRefs(db)).toEqual([]);
+  });
+});
+
+describe('Fixkosten buchen', () => {
+  const fcInput = (over: Partial<Parameters<typeof createFixedCost>[1]> = {}) => ({
+    unit: 'month' as const,
+    every: 1,
+    startsOn: '2027-01-10',
+    name: 'Streaming-Abo A',
+    amountMinor: 1299,
+    currency: 'CAD' as const,
+    categoryId: cat,
+    isSaving: false,
+    autobook: true,
+    ...over,
+  });
+  const fixedEntries = async () => (await db.entry.toArray()).filter((e) => e.source === 'fixed');
+
+  it('bookFixedCost: booked, already, restored', async () => {
+    const fc = await createFixedCost(db, fcInput({ autobook: false }));
+    const id = await fixedCostEntryId(fc, '2027-02-10');
+    expect(await bookFixedCost(db, fc, '2027-02-10', null)).toBe('booked');
+    expect(await db.entry.get(id)).toMatchObject({
+      source: 'fixed',
+      fixedCostId: fc,
+      paidBy: USER,
+      amountMinor: 1299,
+      bookedOn: '2027-02-10',
+      merchant: 'Streaming-Abo A',
+      deleted: false,
+    });
+    expect(await bookFixedCost(db, fc, '2027-02-10', null)).toBe('already');
+    await deleteEntry(db, id);
+    expect(await bookFixedCost(db, fc, '2027-02-10', null)).toBe('restored');
+    expect((await db.entry.get(id))?.deleted).toBe(false);
+    expect(await fixedEntries()).toHaveLength(1);
+  });
+
+  it('bookFixedCost: EUR ohne Kurs wirft NoRateError, veralteter Kurs ist vorläufig', async () => {
+    const fc = await createFixedCost(db, fcInput({ currency: 'EUR', autobook: false }));
+    await expect(bookFixedCost(db, fc, '2027-02-10', null)).rejects.toBeInstanceOf(NoRateError);
+    expect(await fixedEntries()).toHaveLength(0);
+    const rate = { rateMicro: 1_450_000n, date: '2027-02-05', stale: true };
+    expect(await bookFixedCost(db, fc, '2027-02-10', rate)).toBe('booked');
+    const row = (await fixedEntries())[0];
+    expect(row).toMatchObject({ fxRateMicro: 1_450_000, fxProvisional: true });
+  });
+
+  it('runAutobook: nur offene Fälligkeiten der letzten 35 Tage, nie doppelt, nie gelöschte', async () => {
+    const fc = await createFixedCost(db, fcInput({ startsOn: '2027-01-01' }));
+    await createFixedCost(db, fcInput({ name: 'Manuell A', autobook: false }));
+    const today = '2027-02-20';
+    // Fälligkeiten 01.01. (zu alt), 01.02. (im Fenster)
+    expect(await runAutobook(db, null, today)).toBe(1);
+    expect((await fixedEntries()).map((e) => e.bookedOn)).toEqual(['2027-02-01']);
+    expect(await runAutobook(db, null, today)).toBe(0);
+    // Ein Monat später: 01.03. kommt dazu, die gelöschte 01.02. bleibt gelöscht
+    await deleteEntry(db, await fixedCostEntryId(fc, '2027-02-01'));
+    expect(await runAutobook(db, null, '2027-03-02')).toBe(1);
+    const rows = await fixedEntries();
+    expect(rows.filter((e) => !e.deleted).map((e) => e.bookedOn)).toEqual(['2027-03-01']);
+    expect(rows.filter((e) => e.deleted)).toHaveLength(1);
+  });
+
+  it('runAutobook: EUR ohne Kurs wird übersprungen, der Rest gebucht', async () => {
+    await createFixedCost(db, fcInput({ name: 'EUR A', currency: 'EUR' }));
+    await createFixedCost(db, fcInput({ name: 'CAD A' }));
+    expect(await runAutobook(db, null, '2027-02-20')).toBe(1);
+    expect((await fixedEntries())[0]?.currency).toBe('CAD');
   });
 });

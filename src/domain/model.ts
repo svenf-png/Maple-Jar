@@ -50,13 +50,13 @@ export interface RepeatRule {
   unit: RepeatUnit;
   every: number;
   startsOn: string;
-  endsOn?: string;
+  endsOn?: string | null;
 }
 
 export interface Income extends RepeatRule {
   id: string;
   name: string;
-  memberId?: string;
+  memberId?: string | null;
   amountMinor: number;
   currency: Currency;
   deleted: boolean;
@@ -70,7 +70,7 @@ export interface FixedCost extends RepeatRule {
   amountMinor: number;
   currency: Currency;
   categoryId: string;
-  icon?: string;
+  icon?: string | null;
   isSaving: boolean;
   autobook: boolean;
   deleted: boolean;
@@ -87,7 +87,7 @@ export interface Goal {
   currency: Currency;
   startsOn: string;
   targetDate: string;
-  archivedAt?: string;
+  archivedAt?: string | null;
   deleted: boolean;
   conflict: boolean;
   hlc: string;

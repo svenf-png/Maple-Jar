@@ -68,7 +68,7 @@ function nth(rule: RepeatRule, k: number): string {
 
 /** Fälligkeiten in aufsteigender Reihenfolge, beginnend bei der ersten ≥ `from`, solange ≤ `limit`. */
 function* walk(rule: RepeatRule, from: string, limit: string): Generator<string> {
-  const last = rule.endsOn !== undefined && rule.endsOn < limit ? rule.endsOn : limit;
+  const last = rule.endsOn != null && rule.endsOn < limit ? rule.endsOn : limit;
   let k = 0;
   // Grobes Überspringen: nie über `from` hinaus, danach Feinsuche.
   if (rule.unit !== 'once' && from > rule.startsOn) {

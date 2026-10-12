@@ -111,12 +111,34 @@ describe('incomeSplit', () => {
     expect(s.expensesCadMinor).toBe(150_000n);
     expect(s.incomeCadMinor).toBe(100_000n);
     const a = amounts(s);
-    expect(a.overflow).toBe(50_000n);
-    expect(a.other).toBe(100_000n);
+    expect(a.other).toBe(150_000n); // wahrer Betrag, keine Skalierung
     expect(s.segments.some((x) => x.kind === 'free')).toBe(false);
+    expect(s.segments.some((x) => (x.kind as string) === 'overflow')).toBe(false);
     expect(s.segments.reduce((t, x) => t + x.cadMinor, 0n)).toBe(150_000n);
     expect(percentSum(s)).toBe(100);
-    expect(s.segments.find((x) => x.kind === 'overflow')?.percent).toBe(33);
+    expect(s.overflow).toEqual({ cadMinor: 50_000n, percentOfTotal: 33 });
+  });
+
+  it('Überlauf: Prozente der Segmente (größter Rest) summieren auf 100 der Ausgaben', async () => {
+    const s = await split({
+      incomes: [income({ amountMinor: 10_000 })],
+      entries: [
+        entry({ amountMinor: 10_000, categoryId: CAT_B }),
+        entry({ amountMinor: 10_000, categoryId: CAT_B }),
+        entry({ amountMinor: 10_000, categoryId: CAT_B }),
+      ],
+    });
+    expect(s.mode).toBe('overflow');
+    expect(percentSum(s)).toBe(100);
+    expect(s.overflow?.percentOfTotal).toBe(67);
+  });
+
+  it('normal und noIncome haben keinen Überlauf', async () => {
+    const s = await split({
+      incomes: [income({ amountMinor: 10_000 })],
+      entries: [entry({ amountMinor: 1_000, categoryId: CAT_B })],
+    });
+    expect(s.overflow).toBeNull();
   });
 
   it('Ausgaben genau gleich Einnahmen: normal, Frei 0', async () => {

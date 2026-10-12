@@ -14,7 +14,7 @@ import {
 import { toCadMinor } from './money';
 import { occurrences } from './schedule';
 
-export type SplitKind = 'fixed' | 'budget' | 'other' | 'saving' | 'free' | 'overflow';
+export type SplitKind = 'fixed' | 'budget' | 'other' | 'saving' | 'free';
 export type SplitMode = 'normal' | 'noIncome' | 'overflow';
 
 export interface SplitSegment {
@@ -27,13 +27,15 @@ export interface SplitSegment {
 export interface IncomeSplit {
   /** Ganzer Kreis in CAD-Minor. */
   totalCadMinor: bigint;
-  /** Echte Einnahmen und Ausgaben (vor Skalierung im Modus overflow). */
+  /** Echte Einnahmen und Ausgaben. */
   incomeCadMinor: bigint;
   expensesCadMinor: bigint;
   /** true: mindestens ein EUR-Betrag wurde mit dem bekannten Kurs umgerechnet (Anzeige „≈“). */
   approximate: boolean;
   mode: SplitMode;
   segments: SplitSegment[];
+  /** Nur im Modus overflow: Betrag der Ausgaben über den Einnahmen und dessen Anteil am Kreis (Ausgaben), ganzzahlig gerundet. Kein Ringsegment. */
+  overflow: { cadMinor: bigint; percentOfTotal: number } | null;
 }
 
 export interface IncomeSplitInput {
@@ -140,23 +142,20 @@ export function incomeSplit(input: IncomeSplitInput): IncomeSplit {
   ];
   let mode: SplitMode = 'normal';
   let total = income;
+  let overflow: IncomeSplit['overflow'] = null;
 
   if (income <= 0n) {
     mode = 'noIncome';
     total = expenses;
   } else if (expenses > income) {
-    // Kreis = Ausgaben. Der durch Einnahmen gedeckte Teil wird anteilig auf die Kategorien verteilt,
-    // der Rest ist der Überlauf.
+    // Kreis = Ausgaben; Segmente tragen die echten Beträge (Summe 100 % der Ausgaben).
+    // Der Überlauf ist ein eigenes Feld, kein Segment.
     mode = 'overflow';
     total = expenses;
-    const covered = percentsLike(
-      parts.map(([, v]) => v),
-      income,
-    );
-    parts.forEach((p, i) => {
-      p[1] = covered[i] ?? 0n;
-    });
-    parts.push(['overflow', expenses - income]);
+    overflow = {
+      cadMinor: expenses - income,
+      percentOfTotal: Number(((expenses - income) * 100n + expenses / 2n) / expenses),
+    };
   } else {
     parts.push(['free', income - expenses]);
   }
@@ -168,23 +167,7 @@ export function incomeSplit(input: IncomeSplitInput): IncomeSplit {
     expensesCadMinor: expenses,
     approximate,
     mode,
+    overflow,
     segments: parts.map(([kind, cadMinor], i) => ({ kind, cadMinor, percent: percents[i] ?? 0 })),
   };
-}
-
-/** Verteilt `sum` im Verhältnis von `values` auf ganze Beträge, Summe exakt `sum` (größter Rest). */
-function percentsLike(values: readonly bigint[], sum: bigint): bigint[] {
-  const total = values.reduce((a, b) => a + b, 0n);
-  if (total <= 0n) return values.map(() => 0n);
-  const base = values.map((v) => (v * sum) / total);
-  let missing = sum - base.reduce((a, b) => a + b, 0n);
-  const order = values
-    .map((v, i) => ({ i, r: (v * sum) % total }))
-    .sort((a, b) => (a.r === b.r ? a.i - b.i : a.r > b.r ? -1 : 1));
-  for (const { i } of order) {
-    if (missing <= 0n) break;
-    base[i] = (base[i] ?? 0n) + 1n;
-    missing--;
-  }
-  return base;
 }
