@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { PageHeader } from '../../app/PageHeader';
+import { db } from '../../data/db';
+import { exportEventsJson } from '../../data/export';
 import { findMember } from '../../data/household';
 import { disconnect } from '../../data/session';
+import { useLiveQuery } from '../../data/use-live-query';
 import { useReadySession } from '../../data/use-session';
 import { formatDay, formatRate } from '../../i18n/format';
 import { getLocale, setLang, t, useLang } from '../../i18n/t';
@@ -14,14 +17,38 @@ import styles from './SettingsPage.module.css';
 
 export function SettingsPage() {
   const lang = useLang();
-  const { household, login, repo } = useReadySession();
+  const { household, userId, username } = useReadySession();
   const desktop = useMedia('(min-width: 1024px)');
   const persisted = usePersisted();
   const fx = useTodayRate(household.settings.fxProvider);
   const [theme, setThemeState] = useState<ThemePref>(readTheme());
   const [confirm, setConfirm] = useState(false);
-  const me = findMember(household, login);
-  const other = household.members.find((m) => m !== me);
+  const me = findMember(household, userId);
+  const other = household.members.find((m) => m.userId !== userId);
+
+  const parked = useLiveQuery(() => db.parked.toArray(), [], []);
+  const conflicts = useLiveQuery(() => db.conflicts.count(), [], 0);
+  const waiting = useLiveQuery(
+    async () => (((await db.meta.get('waiting'))?.value as string[] | undefined) ?? []).length,
+    [],
+    0,
+  );
+  const [exportError, setExportError] = useState(false);
+
+  async function exportData() {
+    setExportError(false);
+    try {
+      const json = await exportEventsJson(db);
+      const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `maple-jar-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    } catch {
+      setExportError(true);
+    }
+  }
 
   const providerLabel = t(`setup.fx.${household.settings.fxProvider}`);
   let fxText = t('settings.fx.loading');
@@ -43,7 +70,7 @@ export function SettingsPage() {
           <div className={styles.profile}>
             {me ? <Avatar name={me.displayName} color={me.color} size={52} /> : null}
             <div>
-              <div className={styles.name}>{me?.displayName ?? login}</div>
+              <div className={styles.name}>{me?.displayName ?? username}</div>
               <div className={styles.sub}>
                 {other
                   ? t('settings.sharedWith', { name: other.displayName })
@@ -92,8 +119,31 @@ export function SettingsPage() {
             title={t('settings.persisted')}
             right={persisted === null ? '' : persisted ? t('common.yes') : t('common.no')}
           />
-          <ListRow title={t('settings.repo')} right={repo} />
-          <ListRow title={t('settings.login')} right={login} />
+          <ListRow title={t('settings.login')} right={username} />
+        </Card>
+        <Card>
+          <ListRow
+            title={t('settings.export')}
+            right={
+              <Button variant="secondary" onClick={() => void exportData()}>
+                {t('settings.export.action')}
+              </Button>
+            }
+          />
+          {exportError ? (
+            <p role="alert" className={styles.sub}>
+              {t('settings.export.error')}
+            </p>
+          ) : null}
+        </Card>
+        <Card>
+          <h2 className="type-label">{t('settings.diagnostics')}</h2>
+          <ListRow title={t('settings.diagnostics.parked')} right={String(parked.length)} />
+          <ListRow title={t('settings.diagnostics.waiting')} right={String(waiting)} />
+          <ListRow title={t('settings.diagnostics.conflicts')} right={String(conflicts)} />
+          {parked.map((p) => (
+            <ListRow key={p.key} title={p.reason} right={p.seq === null ? '' : `#${p.seq}`} />
+          ))}
         </Card>
         <Button variant="secondary" onClick={() => setConfirm(true)}>
           {t('settings.logout')}

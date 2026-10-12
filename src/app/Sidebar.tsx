@@ -10,8 +10,8 @@ import styles from './Sidebar.module.css';
 
 export function Sidebar() {
   const toast = useToast();
-  const { household, login } = useReadySession();
-  const me = findMember(household, login);
+  const { household, userId } = useReadySession();
+  const me = findMember(household, userId);
   return (
     <aside className={styles.side}>
       <div className={styles.brand}>

@@ -21,51 +21,67 @@ export const de = {
   'page.empty.title': 'Noch nichts zu sehen',
 
   'status.connected': 'Verbunden',
+  'status.offline': 'Offline',
+  'status.pending': '{count} warten auf Sync',
+  'status.reauth': 'Anmeldung erneuern',
+  'status.error': 'Sync gestört',
   'status.member': 'Mitglied {name}',
 
   'connect.subtitle': 'Euer gemeinsames Haushaltsbuch.',
-  'connect.repo': 'Daten-Repo',
-  'connect.repoPlaceholder': 'organisation/repo',
-  'connect.token': 'Zugangsschlüssel',
+  'connect.projectUrl': 'Projekt-URL',
+  'connect.projectUrlPlaceholder': 'https://projekt.supabase.co',
+  'connect.anonKey': 'Öffentlicher Schlüssel',
+  'connect.username': 'Benutzername',
+  'connect.password': 'Passwort',
   'connect.submit': 'Verbinden',
   'connect.help': 'So richtest du den Zugang ein',
-  'connect.footer': 'Nur für euren Haushalt. Die Daten liegen in eurem privaten GitHub-Repo.',
+  'connect.footer': 'Nur für euren Haushalt. Die Daten liegen in eurem eigenen Supabase-Projekt.',
   'connect.langLabel': 'Sprache',
-  'connect.error.format': 'Bitte das Repo als „organisation/repo“ angeben.',
-  'connect.error.tokenMissing': 'Bitte den Zugangsschlüssel eingeben.',
-  'connect.error.auth': 'Zugangsschlüssel ungültig oder abgelaufen',
-  'connect.error.noAccess':
-    'Kein Zugriff auf dieses Repo. Ist der Schlüssel für genau dieses Repo freigegeben und, falls nötig, genehmigt?',
+  'connect.error.url': 'Bitte die Projekt-URL im Format „https://projekt.supabase.co“ angeben.',
+  'connect.error.keyMissing': 'Bitte den öffentlichen Schlüssel eingeben.',
+  'connect.error.username':
+    'Der Benutzername darf nur Kleinbuchstaben, Ziffern, Punkt, Unterstrich und Bindestrich enthalten.',
+  'connect.error.passwordMissing': 'Bitte das Passwort eingeben.',
+  'connect.error.auth':
+    'Benutzername oder Passwort stimmt nicht, oder die Anmeldung ist abgelaufen.',
+  'connect.error.forbidden':
+    'Zugriff verweigert. Wurde das SQL aus dem Repo eingespielt und gehört das Konto zum Haushalt?',
   'connect.error.rateLimit': 'Zu viele Anfragen. Bitte wieder versuchen ab {time} Uhr.',
   'connect.error.network': 'Keine Verbindung',
-  'connect.error.notMember': 'Dieses GitHub-Konto gehört nicht zu diesem Haushalt.',
-  'connect.error.notYetMember': 'Bitte von der ersten Person eintragen lassen.',
-  'connect.error.invalidHousehold': 'Die Haushaltsdatei im Repo ist ungültig.',
+  'connect.error.server':
+    'Der Server antwortet nicht wie erwartet. Bitte später noch einmal versuchen.',
+  'connect.error.notMember': 'Dieses Konto gehört nicht zu diesem Haushalt.',
   'connect.error.unknown': 'Etwas ist schiefgelaufen. Bitte noch einmal versuchen.',
   'connect.busy': 'Verbinde …',
 
+  'renew.title': 'Anmeldung erneuern',
+  'renew.intro':
+    'Die Sitzung ist abgelaufen. Deine lokalen Daten und nicht gesendete Einträge bleiben erhalten.',
+  'renew.submit': 'Anmelden',
+
   'help.title': 'So richtest du den Zugang ein',
   'help.back': 'Zurück',
-  'help.step1': 'Lege für die zweite Person ein GitHub-Konto an, falls noch keines existiert.',
+  'help.step1':
+    'Lege bei Supabase ein kostenloses Projekt an. Wähle eine Region in deiner Nähe und notiere das Datenbank-Passwort im Passwortmanager.',
   'help.step2':
-    'Lege eine kostenlose GitHub-Organisation an (Your organizations, New organization, Free) mit einem neutralen Namen.',
+    'Schalte unter Authentication, Sign In / Providers die Registrierung ab („Allow new users to sign up“ aus). Prüfe dort auch die Mindestlänge für Passwörter (Voreinstellung laut Doku: 6; empfohlen sind mindestens 8 Zeichen).',
   'help.step3':
-    'Lege in der Organisation ein privates Daten-Repo an und initialisiere es mit einer README, damit der Branch main existiert.',
+    'Lege unter Authentication, Users zwei Konten an („Add user“, „Auto Confirm User“ an). Als E-Mail trägst du für jede Person Benutzername und die feste Endung ein, die in der Datei supabase/README.md im App-Repo steht, zum Beispiel „benutzername@endung“. Es werden keine echten E-Mail-Adressen verwendet.',
   'help.step4':
-    'Lade die zweite Person in die Organisation ein (People, Invite member) und gib ihr Schreibrecht auf das Daten-Repo.',
+    'Spiele im SQL Editor die Datei supabase/migrations/0001_init.sql aus dem App-Repo ein und gehe die Prüfliste in supabase/README.md durch.',
   'help.step5':
-    'Prüfe die Token-Richtlinie der Organisation (Settings, Personal access tokens): Entweder ist keine Genehmigung nötig, oder ein Owner genehmigt die Anfragen.',
+    'Öffne Project Settings, Data API bzw. API Keys und kopiere die Projekt-URL und den öffentlichen Schlüssel (anon bzw. publishable). Den geheimen Schlüssel (service_role) trägst du nie in die App ein.',
   'help.step6':
-    'Jede Person erstellt einen fine-grained Token: Resource owner ist die Organisation, Repository access nur das Daten-Repo, Berechtigung Contents auf „Read and write“. Speichere den Token im Passwortmanager.',
+    'Öffne die App-Adresse, gib Projekt-URL, öffentlichen Schlüssel, Benutzername und Passwort ein und tippe auf „Verbinden“. Die erste Person richtet den Haushalt ein.',
   'help.step7':
-    'Im App-Repo: Pages-Quelle auf GitHub Actions stellen, Secret Scanning und Push Protection aktivieren und den Branch main schützen.',
+    'Die zweite Person verbindet sich mit ihrem eigenen Konto und tritt dem Haushalt dabei selbst bei.',
   'help.step8':
-    'Lokal: Datenschutz-Denylist als ignorierte Datei ablegen und die Design-Referenz ungetrackt entpacken.',
+    'iPhone: App-Adresse in Safari öffnen, „Zum Home-Bildschirm“ wählen und in der installierten App verbinden. Safari und Home-Bildschirm-App speichern getrennt.',
   'help.step9':
-    'iPhone: App-Adresse in Safari öffnen, „Zum Home-Bildschirm“ wählen und in der installierten App verbinden. Die erste Person richtet den Haushalt ein.',
+    'Free-Projekte werden nach einer Woche Inaktivität pausiert. Exportiere deshalb regelmäßig unter Einstellungen die Daten als JSON.',
 
   'setup.title': 'Haushalt einrichten',
-  'setup.intro': 'Diese Angaben werden im Daten-Repo gespeichert.',
+  'setup.intro': 'Diese Angaben werden in eurem Supabase-Projekt gespeichert.',
   'setup.householdName': 'Haushaltsname',
   'setup.place': 'Ort',
   'setup.placeHint': 'Wird z. B. in „Monat 4 von 12 in {place}“ angezeigt.',
@@ -75,10 +91,6 @@ export const de = {
   'setup.you': 'Du',
   'setup.yourName': 'Dein Anzeigename',
   'setup.color': 'Farbe',
-  'setup.second': 'Zweite Person',
-  'setup.secondHint': 'Kann auch später ergänzt werden.',
-  'setup.secondLogin': 'GitHub-Login',
-  'setup.secondName': 'Anzeigename',
   'setup.fxProvider': 'Kursquelle',
   'setup.fx.ECB': 'EZB',
   'setup.fx.BOC': 'Bank of Canada',
@@ -86,9 +98,12 @@ export const de = {
   'setup.busy': 'Speichere …',
   'setup.error.required': 'Bitte {field} ausfüllen.',
   'setup.error.duration': 'Die Dauer muss zwischen 1 und 60 Monaten liegen.',
-  'setup.error.secondIncomplete': 'Bitte GitHub-Login und Anzeigename der zweiten Person angeben.',
-  'setup.error.secondSame': 'Die zweite Person muss ein anderes GitHub-Konto haben.',
   'setup.error.write': 'Der Haushalt konnte nicht gespeichert werden.',
+
+  'join.title': 'Haushalt beitreten',
+  'join.intro':
+    'Dein Konto ist noch nicht eingetragen. Wähle Anzeigename und Farbe, dann trittst du dem Haushalt bei.',
+  'join.submit': 'Beitreten',
 
   'settings.title': 'Einstellungen',
   'settings.sharedWith': 'Gemeinsamer Haushalt mit {name}',
@@ -105,12 +120,18 @@ export const de = {
   'settings.fx.unavailable': 'Nicht verfügbar',
   'settings.device': 'Gerät',
   'settings.persisted': 'Speicher dauerhaft',
-  'settings.repo': 'Daten-Repo',
+  'settings.export': 'Daten exportieren (JSON)',
+  'settings.export.action': 'Exportieren',
+  'settings.export.error': 'Der Export ist fehlgeschlagen.',
+  'settings.diagnostics': 'Diagnose',
+  'settings.diagnostics.parked': 'Ungültige Ereignisse (geparkt)',
+  'settings.diagnostics.waiting': 'Zeilen, die auf Referenzen warten',
+  'settings.diagnostics.conflicts': 'Konflikte',
   'settings.login': 'Verbunden als',
   'settings.logout': 'Abmelden',
   'settings.logout.confirmTitle': 'Abmelden?',
   'settings.logout.confirmText':
-    'Zugangsschlüssel und alle lokalen Daten werden von diesem Gerät gelöscht. Die Daten im Repo bleiben erhalten.',
+    'Zugangsdaten und alle lokalen Daten werden von diesem Gerät gelöscht. Die Daten im Supabase-Projekt bleiben erhalten.',
   'settings.logout.confirm': 'Abmelden',
 
   'error.title': 'Etwas ist schiefgelaufen',

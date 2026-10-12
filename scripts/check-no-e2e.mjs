@@ -2,7 +2,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const markers = ['test-token', 'Testhaushalt', 'person-a', 'store=memory', 'scenario'];
+const markers = ['e2e-pass', 'Testhaushalt', 'person-a', 'maple-jar.e2e', 'e2e-project'];
 const dir = join('dist', 'assets');
 let bad = 0;
 for (const f of readdirSync(dir).filter((n) => n.endsWith('.js'))) {

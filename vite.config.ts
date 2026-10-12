@@ -9,7 +9,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data:",
   "font-src 'self'",
-  "connect-src 'self' https://api.github.com https://api.frankfurter.dev",
+  "connect-src 'self' https://*.supabase.co https://api.frankfurter.dev",
   "manifest-src 'self'",
   "worker-src 'self'",
   "base-uri 'self'",
