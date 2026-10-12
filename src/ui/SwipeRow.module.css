@@ -1,0 +1,33 @@
+.wrap {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 0.5px solid var(--sep);
+}
+.wrap:last-child {
+  border-bottom: 0;
+}
+.action {
+  appearance: none;
+  border: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 84px;
+  background: var(--acc);
+  color: var(--onAcc);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+}
+.content {
+  position: relative;
+  background: var(--card);
+  transition: transform 0.18s ease;
+  touch-action: pan-y;
+}

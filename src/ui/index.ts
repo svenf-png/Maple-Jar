@@ -1,11 +1,16 @@
 export { Avatar } from './Avatar';
 export { Button } from './Button';
 export { Card } from './Card';
+export { CategoryTile } from './CategoryTile';
 export { Chip } from './Chip';
 export { ConfirmDialog } from './ConfirmDialog';
+export { Dialog } from './Dialog';
 export { EmptyState } from './EmptyState';
 export { ListRow } from './ListRow';
+export { Numpad, pressKey } from './Numpad';
+export { ProgressBar } from './ProgressBar';
 export { Segmented } from './Segmented';
 export { StatusPill } from './StatusPill';
+export { SwipeRow } from './SwipeRow';
 export { TextField } from './TextField';
 export { ToastProvider, useToast } from './Toast';

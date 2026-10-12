@@ -1,0 +1,23 @@
+.pad {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.key {
+  appearance: none;
+  border: 0;
+  height: 50px;
+  min-height: 44px;
+  border-radius: 12px;
+  background: transparent;
+  font-size: 26px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--label);
+}
+.key:active {
+  background: var(--fill);
+}

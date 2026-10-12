@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 import { ANON_KEY, PERSON_A, PERSON_C, PROJECT_URL } from './fixtures/household';
+import { overviewHeading } from './helpers';
 
 const url = (scenario: string) => `/?e2e=${scenario}#/verbinden`;
 
@@ -10,7 +11,7 @@ type Person = { username: string; password: string };
 async function connectMember(page: Page) {
   await connect(page, 'member');
   await expect(page).toHaveURL(/#\/$/);
-  await expect(page.getByRole('heading', { name: 'Übersicht' })).toBeVisible();
+  await expect(overviewHeading(page)).toBeVisible();
 }
 
 async function connect(page: Page, scenario: string, person: Person = PERSON_A, password?: string) {
@@ -53,7 +54,7 @@ test('2: noch kein Haushalt → Einrichten → Übersicht', async ({ page }) => 
   await expect(page).toHaveURL(/#\/einrichten/);
   await setupHousehold(page);
   await expect(page).toHaveURL(/#\/$/);
-  await expect(page.getByRole('heading', { name: 'Übersicht' })).toBeVisible();
+  await expect(overviewHeading(page)).toBeVisible();
   await page.goto('/#/einstellungen');
   await expect(page.getByText('Noch keine zweite Person eingetragen')).toBeVisible();
 });
@@ -63,7 +64,7 @@ test('3: vorhandener Haushalt (Mitglied) → direkt Übersicht, Status „Verbun
 }) => {
   await connect(page, 'member');
   await expect(page).toHaveURL(/#\/$/);
-  await expect(page.getByRole('heading', { name: 'Übersicht' })).toBeVisible();
+  await expect(overviewHeading(page)).toBeVisible();
   if (!isDesktop(page)) {
     await expect(page.getByRole('img', { name: 'Person A' })).toBeVisible();
     await expect(page.getByRole('img', { name: 'Person B' })).toBeVisible();
@@ -120,7 +121,8 @@ test('6: Tabbar mobil, Seitenleiste auf Desktop', async ({ page }) => {
     const vh = page.viewportSize()?.height ?? 0;
     expect((box?.y ?? 0) + (box?.height ?? 0)).toBeGreaterThan(vh - 2);
     await page.getByRole('button', { name: 'Ausgabe erfassen' }).click();
-    await expect(page.getByRole('status')).toContainText('Kommt in M2');
+    await expect(page.getByRole('heading', { name: 'Neue Ausgabe' })).toBeVisible();
+    await page.goBack();
   }
   await expect(nav.getByRole('link', { name: 'Übersicht' })).toHaveAttribute(
     'aria-current',

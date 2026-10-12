@@ -53,3 +53,22 @@
   color: var(--warn);
   flex: none;
 }
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  min-height: 44px;
+  font-size: 16px;
+}
+.check input {
+  width: 24px;
+  height: 24px;
+  margin-top: 2px;
+  accent-color: var(--acc);
+}
+.checkHint {
+  display: block;
+  font-size: 13px;
+  color: var(--label2);
+}

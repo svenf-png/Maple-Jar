@@ -76,7 +76,8 @@ export function createFakeSupabase(server: MemoryServer, origin: string) {
     }
 
     // Anonyme Anfrage: nur der Keep-Alive-Pfad liefert (leer) etwas, alles andere ist verboten.
-    const bearer = headers.Authorization?.replace(/^Bearer /, '');
+    const auth = headers.Authorization ?? headers.authorization;
+    const bearer = auth?.replace(/^Bearer /, '');
     const uid = bearer ? server.accessTokens.get(bearer) : undefined;
     if (path === '/rest/v1/household' && !bearer) return json(200, []);
     if (!uid) return json(401, { message: 'JWT expired secret-body-text' });

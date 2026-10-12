@@ -1,11 +1,11 @@
-import { NavLink } from 'react-router';
+import { NavLink, useNavigate } from 'react-router';
 import { t } from '../i18n/t';
-import { Button, useToast } from '../ui';
+import { Button } from '../ui';
 import { navItems } from './nav-items';
 import styles from './Tabbar.module.css';
 
 export function Tabbar() {
-  const toast = useToast();
+  const navigate = useNavigate();
   const [overview, history, planning, settings] = navItems;
   const link = (item: (typeof navItems)[number] | undefined) => {
     if (!item) return null;
@@ -26,7 +26,7 @@ export function Tabbar() {
           variant="fab"
           className={styles.fab}
           aria-label={t('nav.capture')}
-          onClick={() => toast(t('toast.comingM2'))}
+          onClick={() => void navigate('/erfassen')}
         />
       </div>
       {link(planning)}

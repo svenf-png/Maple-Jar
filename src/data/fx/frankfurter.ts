@@ -66,3 +66,11 @@ export async function fetchRate(date: string, provider: FxProvider): Promise<FxR
     throw err;
   }
 }
+
+/** Zuletzt bekannter Kurs (offline), oder null. */
+export async function lastKnownRate(provider: FxProvider): Promise<FxRate | null> {
+  const last = (await db.meta.get(lastKey(provider)))?.value as Stored | undefined;
+  return last
+    ? { rateMicro: BigInt(last.rateMicro), date: last.date, provider, stale: true }
+    : null;
+}

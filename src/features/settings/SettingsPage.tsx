@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { PageHeader } from '../../app/PageHeader';
 import { db } from '../../data/db';
 import { exportEventsJson } from '../../data/export';
@@ -120,6 +121,14 @@ export function SettingsPage() {
             right={persisted === null ? '' : persisted ? t('common.yes') : t('common.no')}
           />
           <ListRow title={t('settings.login')} right={username} />
+        </Card>
+        <Card>
+          <Link to="/kategorien" className={styles.navLink}>
+            <ListRow title={t('settings.categories')} chevron />
+          </Link>
+          <Link to="/budgets" className={styles.navLink}>
+            <ListRow title={t('settings.budgets')} chevron />
+          </Link>
         </Card>
         <Card>
           <ListRow

@@ -36,7 +36,7 @@ Der vollständige Umsetzungsplan steht in `docs/PLAN.md`.
 - `npm run lint` / `format`  Biome
 - `npm run typecheck`        tsc --noEmit (TypeScript 7)
 - `npm test`                 Vitest (Domain, Ereignisse, Sync)
-- `npm run test:e2e`         Playwright (Chromium + WebKit, gegen MemoryStore)
+- `npm run test:e2e`         Playwright (Chromium + WebKit, gegen MemoryTransport bzw. abgefangenen Supabase-Client)
 - `npm run check:privacy`    Denylist-Prüfung
 - `npm run check:size`       Größenbudget für initiales JS
 - `npm run check:e2e-leak`   Kein E2E-Code im Produktions-Build
@@ -51,7 +51,8 @@ Der vollständige Umsetzungsplan steht in `docs/PLAN.md`.
 - Sync spricht nur mit `SyncTransport` (Supabase im Betrieb, `MemoryTransport` in Tests).
 - Jedes gelesene Ereignis wird mit Zod validiert. Ungültige Ereignisse werden geparkt und angezeigt, nie still verworfen.
 - Ordner: `src/data/remote/` (Transport), `src/data/events/` (Schema, HLC, Fold, Anwenden), `src/data/sync/`
-  (Engine, Push, Pull, Scheduler), `src/data/write.ts` (lokale Ereignisse), `supabase/` (SQL und RLS-Prüfung).
+  (Engine, Push, Pull, Scheduler), `src/data/write.ts` (lokale Ereignisse), `src/data/actions.ts` (Einträge,
+  Kategorien, Budgets schreiben), `src/data/repos.ts` (Lese-Hooks), `src/features/*` (Seiten), `supabase/` (SQL, RLS-Prüfung).
 - Pull liest ab `Cursor - 100` (Überlappung, Ereignisse sind idempotent), weil `seq` nicht in Commit-Reihenfolge vergeben wird.
 - Geschäftslogik ausschließlich in `src/domain/` (rein, ohne React/IO, vollständig getestet).
 - Beträge immer Integer in Minor Units. Kurse als Mikro-Einheiten (BigInt). Kein `number`-Float für Geld.

@@ -34,3 +34,10 @@ export function sumMinor(values: Iterable<number | bigint>): bigint {
   for (const v of values) total += BigInt(v);
   return total;
 }
+
+/** CAD-Minor → EUR-Minor bei Kurs (1 € = rate CA$), kaufmännisch gerundet. */
+export function cadToEurMinor(cadMinor: number | bigint, fxRateMicro: number | bigint): bigint {
+  const rate = BigInt(fxRateMicro);
+  if (rate <= 0n) return 0n;
+  return (BigInt(cadMinor) * MICRO + rate / 2n) / rate;
+}

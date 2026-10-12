@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { minorToDecimal, parseDecimalToMinor, sumMinor, toCadMinor } from './money';
+import { cadToEurMinor, minorToDecimal, parseDecimalToMinor, sumMinor, toCadMinor } from './money';
 
 describe('toCadMinor', () => {
   it('CAD bleibt unverändert (Kurs 1)', () => {
@@ -49,5 +49,13 @@ describe('minorToDecimal / sumMinor', () => {
   it('summiert exakt', () => {
     expect(sumMinor([1, 2n, 3])).toBe(6n);
     expect(sumMinor([])).toBe(0n);
+  });
+});
+
+describe('cadToEurMinor', () => {
+  it('rechnet zurück und rundet', () => {
+    expect(cadToEurMinor(16_100, 1_610_000)).toBe(10_000n);
+    expect(cadToEurMinor(8_417, 1_610_000)).toBe(5_228n); // 52,28 €
+    expect(cadToEurMinor(1, 0)).toBe(0n);
   });
 });
