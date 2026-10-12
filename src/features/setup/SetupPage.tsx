@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { MEMBER_COLORS, type MemberColor, periodEndFor } from '../../data/household';
 import { createHousehold } from '../../data/session';
 import { useSession } from '../../data/use-session';
-import { getLocale, t, useLang } from '../../i18n/t';
+import { getLang, getLocale, t, useLang } from '../../i18n/t';
 import { WarnIcon } from '../../icons/ui-icons';
 import { Button, Card, Segmented, TextField } from '../../ui';
 import { remoteErrorMessage } from '../connect/errors';
@@ -23,6 +23,7 @@ export function SetupPage() {
   const [myName, setMyName] = useState('');
   const [myColor, setMyColor] = useState<MemberColor>(MEMBER_COLORS[0]);
   const [fx, setFx] = useState<'ECB' | 'BOC'>('ECB');
+  const [template, setTemplate] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -39,20 +40,33 @@ export function SetupPage() {
     setError(null);
     setBusy(true);
     try {
-      await createHousehold({
-        displayName: myName.trim(),
-        color: myColor,
-        locale: getLocale(),
-        settings: {
-          name: name.trim(),
-          placeLabel: place.trim() || null,
-          periodStart,
-          periodEnd: periodEndFor(periodStart, n),
-          baseCurrency: 'CAD',
-          secondCurrency: 'EUR',
-          fxProvider: fx,
+      const lang = getLang();
+      await createHousehold(
+        {
+          displayName: myName.trim(),
+          color: myColor,
+          locale: getLocale(),
+          settings: {
+            name: name.trim(),
+            placeLabel: place.trim() || null,
+            periodStart,
+            periodEnd: periodEndFor(periodStart, n),
+            baseCurrency: 'CAD',
+            secondCurrency: 'EUR',
+            fxProvider: fx,
+          },
         },
-      });
+        template
+          ? async () => {
+              const [{ db }, { applyCategoryTemplate }, { categoryTemplate }] = await Promise.all([
+                import('../../data/db'),
+                import('../../data/actions'),
+                import('../../domain/category-template'),
+              ]);
+              await applyCategoryTemplate(db, categoryTemplate, lang);
+            }
+          : undefined,
+      );
       void navigate('/', { replace: true });
     } catch (err) {
       const message = remoteErrorMessage(err);
@@ -121,6 +135,17 @@ export function SetupPage() {
             onChange={setFx}
           />
         </div>
+        <label className={styles.check}>
+          <input
+            type="checkbox"
+            checked={template}
+            onChange={(e) => setTemplate(e.target.checked)}
+          />
+          <span>
+            {t('setup.template')}
+            <span className={styles.checkHint}>{t('setup.templateHint')}</span>
+          </span>
+        </label>
         {error ? (
           <p className={styles.error} role="alert">
             <WarnIcon size={18} />

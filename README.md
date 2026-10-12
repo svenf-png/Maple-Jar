@@ -13,8 +13,8 @@ eigenen Supabase-Projekt (Postgres mit Row Level Security) und werden über dess
 Anmeldung per Benutzername und Passwort, die Registrierung im Projekt ist deaktiviert. Dieses Repo enthält keine
 Secrets und keine personenbezogenen Daten.
 
-Status: Meilenstein M2 Teil A (Wechsel auf Supabase, Ereigniskern, Sync) umgesetzt, Teil B (Erfassen, Übersicht,
-Verlauf, Budgets) folgt. Details in [`docs/PLAN.md`](docs/PLAN.md), Arbeitsregeln in [`CLAUDE.md`](CLAUDE.md).
+Status: Meilenstein M2 umgesetzt (Supabase, Ereigniskern, Sync; Erfassen, Übersicht, Verlauf, Aktivität,
+Eintragsdetail, Budgets, Kategorien). Details in [`docs/PLAN.md`](docs/PLAN.md), Arbeitsregeln in [`CLAUDE.md`](CLAUDE.md).
 
 ## Einrichtung
 

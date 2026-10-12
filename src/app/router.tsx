@@ -1,9 +1,43 @@
-import { createHashRouter } from 'react-router';
+import type { ComponentType } from 'react';
+import { createHashRouter, Navigate, type RouteObject } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { ConnectPage } from '../features/connect/ConnectPage';
 import { AppShell } from './AppShell';
 import { RedirectIfConnected, RequireConnection, RequireHousehold } from './Guards';
 import { PlaceholderPage } from './PlaceholderPage';
+
+/** Vollbild-Unterseiten (ohne Tabbar), alle nur mit Haushalt erreichbar. */
+function subPages(): RouteObject[] {
+  const page = (path: string, load: () => Promise<ComponentType>): RouteObject => ({
+    path,
+    lazy: async () => {
+      const Component = await load();
+      return {
+        element: (
+          <RequireHousehold>
+            <Component />
+          </RequireHousehold>
+        ),
+      };
+    },
+  });
+  return [
+    page('/erfassen', async () => (await import('../features/capture/CapturePage')).CapturePage),
+    page(
+      '/eintrag/:id/bearbeiten',
+      async () => (await import('../features/capture/CapturePage')).CapturePage,
+    ),
+    page(
+      '/eintrag/:id',
+      async () => (await import('../features/history/EntryDetailPage')).EntryDetailPage,
+    ),
+    page('/budgets', async () => (await import('../features/budgets/BudgetsPage')).BudgetsPage),
+    page(
+      '/kategorien',
+      async () => (await import('../features/categories/CategoriesPage')).CategoriesPage,
+    ),
+  ];
+}
 
 const router = createHashRouter([
   {
@@ -65,10 +99,17 @@ const router = createHashRouter([
       </RequireHousehold>
     ),
     children: [
-      { index: true, element: <PlaceholderPage title="nav.overview" hint="page.overview.hint" /> },
+      {
+        index: true,
+        lazy: async () => ({
+          Component: (await import('../features/overview/OverviewPage')).OverviewPage,
+        }),
+      },
       {
         path: 'verlauf',
-        element: <PlaceholderPage title="nav.history" hint="page.history.hint" />,
+        lazy: async () => ({
+          Component: (await import('../features/history/HistoryPage')).HistoryPage,
+        }),
       },
       {
         path: 'planung',
@@ -82,13 +123,10 @@ const router = createHashRouter([
       },
     ],
   },
+  ...subPages(),
   {
     path: '*',
-    element: (
-      <RequireHousehold>
-        <PlaceholderPage title="nav.overview" hint="page.overview.hint" />
-      </RequireHousehold>
-    ),
+    element: <Navigate to="/" replace />,
   },
 ]);
 

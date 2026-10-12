@@ -125,20 +125,27 @@ export async function connect(input: ConnectInput): Promise<ConnectResult> {
   }
 }
 
-async function saveHousehold(household: Household): Promise<void> {
+async function saveHousehold(household: Household, publishNow = true): Promise<void> {
   await db.meta.bulkPut([
     { key: 'household', value: household },
     { key: 'stage', value: null },
   ]);
-  await loadSession();
+  if (publishNow) await loadSession();
 }
 
-/** Legt den Haushalt an (erste Person) und schreibt die Startwerte der Einstellungen als Ereignis. */
-export async function createHousehold(input: HouseholdInput): Promise<void> {
+/**
+ * Legt den Haushalt an (erste Person), schreibt die Startwerte der Einstellungen als Ereignis und führt
+ * `beforeReady` aus (z. B. Kategorien aus der Vorlage anlegen). Erst danach gilt die Sitzung als bereit,
+ * damit die Oberfläche nicht mit halbfertigen Daten startet.
+ */
+export async function createHousehold(
+  input: HouseholdInput,
+  beforeReady?: () => Promise<void>,
+): Promise<void> {
   const transport = await getTransport();
   if (!transport) throw new Error('No session');
   const household = await transport.createHousehold(input);
-  await saveHousehold(household);
+  await saveHousehold(household, false);
   const { appendLocalEvent } = await import('./write');
   await appendLocalEvent(db, {
     entity: 'settings',
@@ -146,6 +153,8 @@ export async function createHousehold(input: HouseholdInput): Promise<void> {
     op: 'create',
     data: { ...household.settings },
   });
+  await beforeReady?.();
+  await loadSession();
 }
 
 /** Zweite Person tritt dem vorhandenen Haushalt bei. */

@@ -1,0 +1,17 @@
+.dialog {
+  border: 0;
+  border-radius: var(--r-hero);
+  padding: var(--s-5);
+  width: min(92vw, 420px);
+  background: var(--card);
+  color: var(--label);
+  box-shadow: var(--shadow);
+}
+.dialog::backdrop {
+  background: var(--scrim);
+}
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: var(--s-3);
+}

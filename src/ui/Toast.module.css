@@ -9,6 +9,7 @@
   z-index: 50;
 }
 .toast {
+  pointer-events: auto;
   background: var(--label);
   color: var(--bg);
   padding: 10px 16px;
@@ -20,4 +21,18 @@
   .region {
     bottom: 32px;
   }
+}
+
+.action {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--accTint);
+  font-weight: 600;
+  font-size: inherit;
+  min-height: 44px;
+  padding: 0 8px;
+  margin: -10px -8px -10px 12px;
+  cursor: pointer;
+  text-decoration: underline;
 }

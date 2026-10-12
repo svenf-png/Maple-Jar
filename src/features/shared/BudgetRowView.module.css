@@ -1,0 +1,43 @@
+.row {
+  display: flex;
+  gap: var(--s-3);
+  align-items: flex-start;
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 0.5px solid var(--sep);
+}
+.row:last-child {
+  border-bottom: 0;
+}
+.body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.line {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+.name {
+  font-size: 16px;
+  font-weight: 500;
+}
+.amounts {
+  font-size: 15px;
+  color: var(--label2);
+  text-align: right;
+}
+.amounts strong {
+  color: var(--label);
+  font-weight: 600;
+}
+.warn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--warn);
+}

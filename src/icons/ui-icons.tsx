@@ -86,3 +86,55 @@ export const KeyIcon = (p: IconProps) => (
     <path d="M12 12h9M18 12v3M21 12v2" />
   </IconBase>
 );
+
+export const BackspaceIcon = (p: IconProps) => (
+  <IconBase {...p}>
+    <path d="M9 5h11.5v14H9l-6-7z" />
+    <path d="M12.5 9.5l5 5M17.5 9.5l-5 5" />
+  </IconBase>
+);
+
+export const SearchIcon = (p: IconProps) => (
+  <IconBase {...p}>
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="M20 20l-4.2-4.2" />
+  </IconBase>
+);
+
+export const TrashIcon = (p: IconProps) => (
+  <IconBase {...p}>
+    <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+  </IconBase>
+);
+
+export const EditIcon = (p: IconProps) => (
+  <IconBase {...p}>
+    <path d="M4 20h4L19 9l-4-4L4 16z" />
+  </IconBase>
+);
+
+export const CalendarIcon = (p: IconProps) => (
+  <IconBase {...p}>
+    <rect x="3.5" y="5" width="17" height="15.5" rx="3" />
+    <path d="M3.5 10h17M8 3v4M16 3v4" />
+  </IconBase>
+);
+
+export const PersonIcon = (p: IconProps) => (
+  <IconBase {...p}>
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4.5 20.5a7.5 7.5 0 0 1 15 0" />
+  </IconBase>
+);
+
+export const ArrowUpIcon = (p: IconProps) => (
+  <IconBase {...p}>
+    <path d="M12 19V5M6 11l6-6 6 6" />
+  </IconBase>
+);
+
+export const ArrowDownIcon = (p: IconProps) => (
+  <IconBase {...p}>
+    <path d="M12 5v14M6 13l6 6 6-6" />
+  </IconBase>
+);
