@@ -1,0 +1,112 @@
+:root {
+  color-scheme: light;
+  --bg: #f6f2ec;
+  --card: #ffffff;
+  --fill: #efe8df;
+  --fill2: #f4efe8;
+  --sep: #e5dcd0;
+  --label: #1e1b18;
+  --label2: #655d54;
+  --label3: #8c8378;
+  --acc: #b8322a;
+  --accTint: #f9e7e3;
+  --onAcc: #ffffff;
+  --warn: #a35700;
+  --warnTint: #fcefd8;
+  --ok: #2e6b4a;
+  --okTint: #e2f0e7;
+  --info: #2f6690;
+  --infoTint: #e4eef6;
+  --bar: rgba(251, 248, 244, 0.88);
+  --scrim: rgba(30, 20, 10, 0.32);
+  --shadow: 0 1px 2px rgba(70, 45, 20, 0.05), 0 6px 20px rgba(70, 45, 20, 0.07);
+  --base: #2c6cb0;
+  --scen: #b5602f;
+  --grid: #ede6dc;
+  --side: #efe9e1;
+  --rowHover: #fbf8f4;
+  --hill1: #ede3d5;
+  --hill2: #e4d6c4;
+
+  --onCat: #ffffff;
+
+  --r-tile: 9px;
+  --r-field: 12px;
+  --r-button: 14px;
+  --r-list: 16px;
+  --r-kpi: 18px;
+  --r-hero: 22px;
+  --r-pill: 999px;
+
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 44px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #12100e;
+    --card: #1f1c19;
+    --fill: #2d2925;
+    --fill2: #262320;
+    --sep: #38332e;
+    --label: #f4efe9;
+    --label2: #b4aa9e;
+    --label3: #8a8177;
+    --acc: #f2735f;
+    --accTint: #3b201b;
+    --onAcc: #2a0c07;
+    --warn: #f2a93b;
+    --warnTint: #382813;
+    --ok: #6cc79a;
+    --okTint: #16301f;
+    --info: #7db6e0;
+    --infoTint: #162836;
+    --bar: rgba(28, 25, 22, 0.88);
+    --scrim: rgba(0, 0, 0, 0.55);
+    --shadow: 0 0 0 1px rgba(255, 240, 225, 0.05);
+    --base: #7db6e0;
+    --scen: #e8a06a;
+    --grid: #2e2a26;
+    --side: #181513;
+    --rowHover: #25221f;
+    --hill1: #1c1916;
+    --hill2: #231f1b;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #12100e;
+  --card: #1f1c19;
+  --fill: #2d2925;
+  --fill2: #262320;
+  --sep: #38332e;
+  --label: #f4efe9;
+  --label2: #b4aa9e;
+  --label3: #8a8177;
+  --acc: #f2735f;
+  --accTint: #3b201b;
+  --onAcc: #2a0c07;
+  --warn: #f2a93b;
+  --warnTint: #382813;
+  --ok: #6cc79a;
+  --okTint: #16301f;
+  --info: #7db6e0;
+  --infoTint: #162836;
+  --bar: rgba(28, 25, 22, 0.88);
+  --scrim: rgba(0, 0, 0, 0.55);
+  --shadow: 0 0 0 1px rgba(255, 240, 225, 0.05);
+  --base: #7db6e0;
+  --scen: #e8a06a;
+  --grid: #2e2a26;
+  --side: #181513;
+  --rowHover: #25221f;
+  --hill1: #1c1916;
+  --hill2: #231f1b;
+}

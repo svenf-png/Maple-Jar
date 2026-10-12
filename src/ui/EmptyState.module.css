@@ -1,0 +1,13 @@
+.empty {
+  text-align: center;
+  padding: var(--s-7) var(--s-4);
+}
+.title {
+  font-size: 17px;
+  font-weight: 600;
+}
+.text {
+  margin-top: var(--s-1);
+  color: var(--label2);
+  font-size: 15px;
+}

@@ -1,0 +1,23 @@
+.region {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(100px + env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 50;
+}
+.toast {
+  background: var(--label);
+  color: var(--bg);
+  padding: 10px 16px;
+  border-radius: var(--r-pill);
+  font-size: 15px;
+  font-weight: 500;
+}
+@media (min-width: 1024px) {
+  .region {
+    bottom: 32px;
+  }
+}

@@ -1,0 +1,21 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  margin-top: var(--s-4);
+  max-width: 640px;
+}
+.profile {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-4);
+}
+.name {
+  font-size: 18px;
+  font-weight: 600;
+}
+.sub {
+  font-size: 14px;
+  color: var(--label2);
+}

@@ -1,0 +1,26 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ok {
+  color: var(--ok);
+  background: var(--okTint);
+}
+.warn {
+  color: var(--warn);
+  background: var(--warnTint);
+}
+.info {
+  color: var(--info);
+  background: var(--infoTint);
+}
+.neutral {
+  color: var(--label2);
+  background: var(--fill);
+}

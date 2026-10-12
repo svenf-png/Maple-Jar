@@ -1,0 +1,121 @@
+import type { MessageKey } from './de';
+
+export const en: Record<MessageKey, string> = {
+  'app.name': 'Maple Jar',
+  'common.cancel': 'Cancel',
+  'common.save': 'Save',
+  'common.optional': 'optional',
+  'common.yes': 'Yes',
+  'common.no': 'No',
+  'common.language': 'Language',
+
+  'nav.overview': 'Overview',
+  'nav.history': 'History',
+  'nav.planning': 'Planning',
+  'nav.settings': 'Settings',
+  'nav.main': 'Main navigation',
+  'nav.capture': 'Add expense',
+  'toast.comingM2': 'Coming in M2',
+
+  'page.overview.hint': 'Coming in milestone 2',
+  'page.history.hint': 'Coming in milestone 2',
+  'page.planning.hint': 'Coming in milestone 4',
+  'page.empty.title': 'Nothing to see yet',
+
+  'status.connected': 'Connected',
+  'status.member': 'Member {name}',
+
+  'connect.subtitle': 'Your shared household budget.',
+  'connect.repo': 'Data repo',
+  'connect.repoPlaceholder': 'organization/repo',
+  'connect.token': 'Access key',
+  'connect.submit': 'Connect',
+  'connect.help': 'How to set up access',
+  'connect.footer': 'For your household only. The data lives in your private GitHub repo.',
+  'connect.langLabel': 'Language',
+  'connect.error.format': 'Please enter the repo as “organization/repo”.',
+  'connect.error.tokenMissing': 'Please enter the access key.',
+  'connect.error.auth': 'Access key invalid or expired',
+  'connect.error.noAccess':
+    'No access to this repo. Is the key granted for exactly this repo and, if needed, approved?',
+  'connect.error.rateLimit': 'Too many requests. Please try again after {time}.',
+  'connect.error.network': 'No connection',
+  'connect.error.notMember': 'This GitHub account does not belong to this household.',
+  'connect.error.notYetMember': 'Please ask the first person to add you.',
+  'connect.error.invalidHousehold': 'The household file in the repo is invalid.',
+  'connect.error.unknown': 'Something went wrong. Please try again.',
+  'connect.busy': 'Connecting …',
+
+  'help.title': 'How to set up access',
+  'help.back': 'Back',
+  'help.step1': 'Create a GitHub account for the second person if they do not have one yet.',
+  'help.step2':
+    'Create a free GitHub organization (Your organizations, New organization, Free) with a neutral name.',
+  'help.step3':
+    'Create a private data repo in the organization and initialize it with a README so the main branch exists.',
+  'help.step4':
+    'Invite the second person to the organization (People, Invite member) and give them write access to the data repo.',
+  'help.step5':
+    'Check the organization’s token policy (Settings, Personal access tokens): either no approval is needed, or an owner approves the requests.',
+  'help.step6':
+    'Each person creates a fine-grained token: resource owner is the organization, repository access only the data repo, permission Contents set to “Read and write”. Store the token in a password manager.',
+  'help.step7':
+    'In the app repo: set the Pages source to GitHub Actions, enable secret scanning and push protection, and protect the main branch.',
+  'help.step8':
+    'Locally: keep the privacy denylist as an ignored file and unpack the design reference untracked.',
+  'help.step9':
+    'iPhone: open the app address in Safari, choose “Add to Home Screen” and connect in the installed app. The first person sets up the household.',
+
+  'setup.title': 'Set up household',
+  'setup.intro': 'These details are stored in the data repo.',
+  'setup.householdName': 'Household name',
+  'setup.place': 'Place',
+  'setup.placeHint': 'Shown e.g. in “Month 4 of 12 in {place}”.',
+  'setup.placeExample': 'Place',
+  'setup.startMonth': 'Start month',
+  'setup.duration': 'Duration in months',
+  'setup.you': 'You',
+  'setup.yourName': 'Your display name',
+  'setup.color': 'Color',
+  'setup.second': 'Second person',
+  'setup.secondHint': 'Can be added later.',
+  'setup.secondLogin': 'GitHub login',
+  'setup.secondName': 'Display name',
+  'setup.fxProvider': 'Rate source',
+  'setup.fx.ECB': 'ECB',
+  'setup.fx.BOC': 'Bank of Canada',
+  'setup.submit': 'Create household',
+  'setup.busy': 'Saving …',
+  'setup.error.required': 'Please fill in {field}.',
+  'setup.error.duration': 'The duration must be between 1 and 60 months.',
+  'setup.error.secondIncomplete':
+    'Please enter the GitHub login and display name of the second person.',
+  'setup.error.secondSame': 'The second person must use a different GitHub account.',
+  'setup.error.write': 'The household could not be saved.',
+
+  'settings.title': 'Settings',
+  'settings.sharedWith': 'Shared household with {name}',
+  'settings.alone': 'No second person added yet',
+  'settings.language': 'Language',
+  'settings.appearance': 'Appearance',
+  'settings.appearance.auto': 'Auto',
+  'settings.appearance.light': 'Light',
+  'settings.appearance.dark': 'Dark',
+  'settings.fx': 'Exchange rate EUR/CAD',
+  'settings.fx.value': '€1 = {rate} · {provider}, {date}',
+  'settings.fx.offline': 'Offline, last rate {rate} · {provider}, {date}',
+  'settings.fx.loading': 'Loading …',
+  'settings.fx.unavailable': 'Unavailable',
+  'settings.device': 'Device',
+  'settings.persisted': 'Persistent storage',
+  'settings.repo': 'Data repo',
+  'settings.login': 'Connected as',
+  'settings.logout': 'Sign out',
+  'settings.logout.confirmTitle': 'Sign out?',
+  'settings.logout.confirmText':
+    'The access key and all local data will be deleted from this device. The data in the repo stays.',
+  'settings.logout.confirm': 'Sign out',
+
+  'error.title': 'Something went wrong',
+  'error.reload': 'Reload',
+};

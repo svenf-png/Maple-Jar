@@ -1,0 +1,32 @@
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { AppRouter } from './app/router';
+import { loadSession } from './data/session';
+import { initLang } from './i18n/t';
+import { requestPersistence } from './platform/persist';
+import { initTheme } from './platform/theme';
+import './styles/tokens.css';
+import './styles/base.css';
+import { ToastProvider } from './ui';
+
+initTheme();
+initLang();
+void requestPersistence();
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  // Eigene Registrierung (Datei statt Inline-Skript, ohne workbox-window). autoUpdate: skipWaiting + clientsClaim.
+  void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, {
+    scope: import.meta.env.BASE_URL,
+  });
+}
+void loadSession();
+
+const root = document.getElementById('root');
+if (root) {
+  createRoot(root).render(
+    <StrictMode>
+      <ToastProvider>
+        <AppRouter />
+      </ToastProvider>
+    </StrictMode>,
+  );
+}

@@ -1,0 +1,45 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 0 var(--s-4);
+  border-bottom: 0.5px solid var(--sep);
+}
+.row:last-child {
+  border-bottom: 0;
+}
+.settings {
+  min-height: 48px;
+}
+.entry {
+  min-height: 64px;
+}
+.icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+.text {
+  flex: 1;
+  min-width: 0;
+  padding: var(--s-2) 0;
+}
+.title {
+  font-size: 17px;
+}
+.subtitle {
+  font-size: 13px;
+  color: var(--label2);
+}
+.right {
+  flex: none;
+  color: var(--label2);
+  font-size: 15px;
+  text-align: right;
+  max-width: 60%;
+  overflow-wrap: anywhere;
+}
+.chevron {
+  color: var(--label3);
+  display: grid;
+}
