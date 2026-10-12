@@ -65,3 +65,48 @@ export const categoryData = (over: Record<string, unknown> = {}): Record<string,
   hidden: false,
   ...over,
 });
+
+export const GOAL_1 = '00000000-0000-4000-8000-0000000000e1';
+
+export const incomeData = (over: Record<string, unknown> = {}): Record<string, unknown> => ({
+  name: 'Gehalt A',
+  memberId: USER_A,
+  amountMinor: 300000,
+  currency: 'CAD',
+  unit: 'month',
+  every: 1,
+  startsOn: '2027-01-01',
+  ...over,
+});
+
+export const fixedCostData = (over: Record<string, unknown> = {}): Record<string, unknown> => ({
+  name: 'Streaming-Abo A',
+  amountMinor: 1299,
+  currency: 'CAD',
+  unit: 'month',
+  every: 1,
+  startsOn: '2027-01-05',
+  categoryId: CAT_1,
+  isSaving: false,
+  autobook: true,
+  ...over,
+});
+
+export const goalData = (over: Record<string, unknown> = {}): Record<string, unknown> => ({
+  name: 'Sparziel A',
+  icon: 'reise',
+  color: '#2F7D4F',
+  targetMinor: 120000,
+  currency: 'CAD',
+  startsOn: '2027-01-01',
+  targetDate: '2027-12-31',
+  ...over,
+});
+
+export const contributionData = (over: Record<string, unknown> = {}): Record<string, unknown> => ({
+  goalId: GOAL_1,
+  amountMinor: 5000,
+  contributedOn: '2027-02-01',
+  note: '',
+  ...over,
+});

@@ -7,6 +7,7 @@ import type { AppEvent, Entity } from './schema';
 export interface FoldContext {
   hasCategory(id: string): boolean;
   hasMember(id: string): boolean;
+  hasGoal(id: string): boolean;
 }
 
 export interface ConflictCandidate {
@@ -42,7 +43,20 @@ export interface FoldRowResult {
 }
 
 /** Entitäten, bei denen gleichzeitige Änderungen am selben Feld einen Konflikt ergeben (sonst Last-Write-Wins). */
-const CONFLICT_ENTITIES: ReadonlySet<Entity> = new Set(['entry']);
+const CONFLICT_ENTITIES: ReadonlySet<Entity> = new Set(['entry', 'income', 'fixedCost', 'goal']);
+
+/** Reihenfolge der Berechnung: Referenzziele vor den Zeilen, die auf sie zeigen. */
+export const FOLD_ORDER: readonly Entity[] = [
+  'category',
+  'member',
+  'settings',
+  'goal',
+  'entry',
+  'budget',
+  'income',
+  'fixedCost',
+  'goalContribution',
+];
 
 export const byHlc = (a: AppEvent, b: AppEvent): number =>
   compareHlc(a.hlc, b.hlc) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
@@ -56,6 +70,17 @@ function refsMissing(e: AppEvent, ctx: FoldContext): boolean {
     if (typeof d.categoryId === 'string' && !ctx.hasCategory(d.categoryId)) return true;
   }
   if (e.entity === 'entry' && typeof d.paidBy === 'string' && !ctx.hasMember(d.paidBy)) return true;
+  if (e.entity === 'income' || e.entity === 'goalContribution') {
+    if (typeof d.memberId === 'string' && !ctx.hasMember(d.memberId)) return true;
+  }
+  if (
+    e.entity === 'fixedCost' &&
+    typeof d.categoryId === 'string' &&
+    !ctx.hasCategory(d.categoryId)
+  )
+    return true;
+  if (e.entity === 'goalContribution' && typeof d.goalId === 'string' && !ctx.hasGoal(d.goalId))
+    return true;
   return false;
 }
 
@@ -202,12 +227,14 @@ export function foldAll(
   const rows: FoldedRow[] = [];
   const waiting: string[] = [];
   const categories = new Set<string>();
+  const goals = new Set<string>();
   const ctx: FoldContext = {
     hasCategory: (id) => categories.has(id),
     hasMember: (id) => memberIds.has(id),
+    hasGoal: (id) => goals.has(id),
   };
-  // Kategorien zuerst, damit Referenzen auf sie auflösbar sind.
-  const order: Entity[] = ['category', 'member', 'settings', 'entry', 'budget'];
+  // Referenzierte Entitäten zuerst, damit Referenzen auf sie auflösbar sind.
+  const order = FOLD_ORDER;
   for (const entity of order) {
     for (const [k, list] of groups) {
       if (!k.startsWith(`${entity}:`)) continue;
@@ -216,6 +243,7 @@ export function foldAll(
       if (result.row) {
         rows.push(result.row);
         if (entity === 'category') categories.add(result.row.id);
+        if (entity === 'goal') goals.add(result.row.id);
       }
     }
   }

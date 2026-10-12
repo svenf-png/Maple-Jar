@@ -1,6 +1,6 @@
 import type { CategoryTemplateEntry } from '../domain/category-template';
 import { chooseRate, type KnownRate } from '../domain/fx';
-import { monthOf } from '../domain/model';
+import { monthOf, type RepeatUnit } from '../domain/model';
 import type { Currency } from '../domain/money';
 import type { MapleJarDb } from './db';
 import { appendLocalEvent } from './write';
@@ -180,3 +180,110 @@ export async function setBudget(
     data: { categoryId, validFrom, monthlyLimitCadMinor: limitMinor },
   });
 }
+
+// --- M3: Einnahmen, Fixkosten, Sparziele ---------------------------------------------------------
+
+const clean = (patch: object): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(patch)
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => [k, k === 'name' && typeof v === 'string' ? v.trim() : v]),
+  );
+
+/** Schreibt nur Felder, die sich vom materialisierten Stand unterscheiden. Optionale Felder lassen sich nicht löschen. */
+async function updateFields(
+  db: MapleJarDb,
+  entity: 'income' | 'fixedCost' | 'goal',
+  id: string,
+  patch: object,
+): Promise<boolean> {
+  const current = await db[entity].get(id);
+  if (!current) return false;
+  const data: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(clean(patch))) {
+    if (JSON.stringify(current[k]) !== JSON.stringify(v)) data[k] = v;
+  }
+  if (Object.keys(data).length === 0) return false;
+  await appendLocalEvent(db, { entity, rowId: id, op: 'update', data });
+  return true;
+}
+
+async function createRow(
+  db: MapleJarDb,
+  entity: 'income' | 'fixedCost' | 'goal' | 'goalContribution',
+  input: object,
+): Promise<string> {
+  const rowId = crypto.randomUUID();
+  await appendLocalEvent(db, { entity, rowId, op: 'create', data: clean(input) });
+  return rowId;
+}
+
+export interface RepeatInput {
+  unit: RepeatUnit;
+  every: number;
+  startsOn: string;
+  endsOn?: string;
+}
+
+export interface IncomeInput extends RepeatInput {
+  name: string;
+  memberId?: string;
+  amountMinor: number;
+  currency: Currency;
+}
+
+export const createIncome = (db: MapleJarDb, input: IncomeInput) => createRow(db, 'income', input);
+export const updateIncome = (db: MapleJarDb, id: string, patch: Partial<IncomeInput>) =>
+  updateFields(db, 'income', id, patch);
+export const deleteIncome = (db: MapleJarDb, id: string) =>
+  appendLocalEvent(db, { entity: 'income', rowId: id, op: 'delete' });
+
+export interface FixedCostInput extends RepeatInput {
+  name: string;
+  amountMinor: number;
+  currency: Currency;
+  categoryId: string;
+  icon?: string;
+  isSaving: boolean;
+  autobook: boolean;
+}
+
+export const createFixedCost = (db: MapleJarDb, input: FixedCostInput) =>
+  createRow(db, 'fixedCost', input);
+export const updateFixedCost = (db: MapleJarDb, id: string, patch: Partial<FixedCostInput>) =>
+  updateFields(db, 'fixedCost', id, patch);
+export const deleteFixedCost = (db: MapleJarDb, id: string) =>
+  appendLocalEvent(db, { entity: 'fixedCost', rowId: id, op: 'delete' });
+
+export interface GoalInput {
+  name: string;
+  icon: string;
+  color: string;
+  targetMinor: number;
+  currency: Currency;
+  startsOn: string;
+  targetDate: string;
+}
+
+export const createGoal = (db: MapleJarDb, input: GoalInput) => createRow(db, 'goal', input);
+export const updateGoal = (db: MapleJarDb, id: string, patch: Partial<GoalInput>) =>
+  updateFields(db, 'goal', id, patch);
+/** Archiviert ein Ziel (`archivedAt` = `today`, `YYYY-MM-DD`). Bereits archivierte Ziele bleiben unverändert. */
+export const archiveGoal = async (db: MapleJarDb, id: string, today: string): Promise<boolean> => {
+  const current = await db.goal.get(id);
+  if (!current || current.archivedAt) return false;
+  return updateFields(db, 'goal', id, { archivedAt: today });
+};
+
+export interface ContributionInput {
+  goalId: string;
+  amountMinor: number;
+  contributedOn: string;
+  memberId?: string;
+  note: string;
+}
+
+export const addContribution = (db: MapleJarDb, input: ContributionInput) =>
+  createRow(db, 'goalContribution', { ...input, note: input.note.trim() });
+export const deleteContribution = (db: MapleJarDb, id: string) =>
+  appendLocalEvent(db, { entity: 'goalContribution', rowId: id, op: 'delete' });

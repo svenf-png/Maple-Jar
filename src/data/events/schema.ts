@@ -3,8 +3,18 @@ import { HLC_PATTERN } from './hlc';
 
 export const SCHEMA_VERSION = 1;
 
-/** In M2 materialisierte Entitäten. Weitere (income, fixedCost, goal …) kommen in M3/M4. */
-export const ENTITIES = ['settings', 'member', 'category', 'entry', 'budget'] as const;
+/** Materialisierte Entitäten. `scenario` (M4) kommt später. */
+export const ENTITIES = [
+  'settings',
+  'member',
+  'category',
+  'entry',
+  'budget',
+  'income',
+  'fixedCost',
+  'goal',
+  'goalContribution',
+] as const;
 export type Entity = (typeof ENTITIES)[number];
 export const OPS = ['create', 'update', 'delete', 'restore'] as const;
 export type Op = (typeof OPS)[number];
@@ -15,6 +25,18 @@ const currency = z.enum(['CAD', 'EUR']);
 const text = (max: number) => z.string().check(z.minLength(1), z.maxLength(max));
 const minor = z.int().check(z.gte(0), z.lte(1_000_000_000_000));
 const positiveMinor = z.int().check(z.gt(0), z.lte(1_000_000_000_000));
+const nonZeroMinor = z.int().check(
+  z.gte(-1_000_000_000_000),
+  z.lte(1_000_000_000_000),
+  z.refine((n) => n !== 0),
+);
+const hexColor = z.string().check(z.regex(/^#[0-9A-Fa-f]{6}$/));
+const repeat = {
+  unit: z.enum(['once', 'week', 'month', 'year']),
+  every: z.int().check(z.gte(1), z.lte(52)),
+  startsOn: isoDate,
+  endsOn: z.optional(isoDate),
+} as const;
 
 const fieldSchemas = {
   settings: {
@@ -59,7 +81,46 @@ const fieldSchemas = {
     validFrom: monthStart,
     monthlyLimitCadMinor: minor,
   },
+  income: {
+    name: text(80),
+    memberId: z.optional(z.uuid()),
+    amountMinor: positiveMinor,
+    currency,
+    ...repeat,
+  },
+  fixedCost: {
+    name: text(80),
+    amountMinor: positiveMinor,
+    currency,
+    ...repeat,
+    categoryId: z.uuid(),
+    icon: z.optional(text(40)),
+    isSaving: z.boolean(),
+    autobook: z.boolean(),
+  },
+  goal: {
+    name: text(80),
+    icon: text(40),
+    color: hexColor,
+    targetMinor: positiveMinor,
+    currency,
+    startsOn: isoDate,
+    targetDate: isoDate,
+    archivedAt: z.optional(isoDate),
+  },
+  goalContribution: {
+    goalId: z.uuid(),
+    amountMinor: nonZeroMinor,
+    contributedOn: isoDate,
+    memberId: z.optional(z.uuid()),
+    note: z.string().check(z.maxLength(500)),
+  },
 } as const;
+
+type RepeatFields = { unit: string; every: number; startsOn: string; endsOn?: string | undefined };
+const repeatValid = (d: RepeatFields): boolean =>
+  (d.endsOn === undefined || d.endsOn >= d.startsOn) &&
+  (d.unit !== 'once' || (d.every === 1 && d.endsOn === undefined));
 
 // `create` verlangt alle Pflichtfelder, `update` nur geänderte Felder (mindestens eines).
 const createSchemas = {
@@ -72,8 +133,13 @@ const createSchemas = {
     }),
   ),
   budget: z.strictObject(fieldSchemas.budget),
+  income: z.strictObject(fieldSchemas.income).check(z.refine(repeatValid)),
+  fixedCost: z.strictObject(fieldSchemas.fixedCost).check(z.refine(repeatValid)),
+  goal: z.strictObject(fieldSchemas.goal).check(z.refine((d) => d.targetDate > d.startsOn)),
+  goalContribution: z.strictObject(fieldSchemas.goalContribution),
 } as const;
 
+// Optionale Felder (endsOn, memberId, icon, archivedAt) lassen sich per `update` setzen, nicht löschen.
 const atLeastOne = z.refine((d) => Object.keys(d as object).length > 0);
 const updateSchemas = {
   settings: z.partial(z.strictObject(fieldSchemas.settings)).check(atLeastOne),
@@ -81,6 +147,9 @@ const updateSchemas = {
   category: z.partial(z.strictObject(fieldSchemas.category)).check(atLeastOne),
   entry: z.partial(z.strictObject(fieldSchemas.entry)).check(atLeastOne),
   budget: z.partial(z.strictObject(fieldSchemas.budget)).check(atLeastOne),
+  income: z.partial(z.strictObject(fieldSchemas.income)).check(atLeastOne),
+  fixedCost: z.partial(z.strictObject(fieldSchemas.fixedCost)).check(atLeastOne),
+  goal: z.partial(z.strictObject(fieldSchemas.goal)).check(atLeastOne),
 } as const;
 
 const envelope = z.strictObject({
@@ -135,10 +204,16 @@ export function parseEvent(raw: unknown): ParseResult {
     };
   }
   const e = env.data;
+  if (e.entity === 'goalContribution' && (e.op === 'update' || e.op === 'restore')) {
+    return { ok: false, reason: `${e.entity}.${e.op}: op not allowed` };
+  }
   if (e.op === 'delete' || e.op === 'restore') {
     if (e.data !== undefined) return { ok: false, reason: `${e.entity}.${e.op}: data not allowed` };
   } else {
-    const schema = e.op === 'create' ? createSchemas[e.entity] : updateSchemas[e.entity];
+    const schema =
+      e.op === 'create'
+        ? createSchemas[e.entity]
+        : updateSchemas[e.entity as Exclude<Entity, 'goalContribution'>];
     const data = schema.safeParse(e.data ?? {});
     if (!data.success) {
       const issue = data.error.issues[0];

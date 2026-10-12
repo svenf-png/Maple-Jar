@@ -5,9 +5,17 @@ import {
   type Budget,
   type Category,
   type Entry,
+  type FixedCost,
+  type Goal,
+  type GoalContribution,
+  type Income,
   toBudget,
   toCategory,
   toEntry,
+  toFixedCost,
+  toGoal,
+  toGoalContribution,
+  toIncome,
 } from '../domain/model';
 import { db } from './db';
 import { useLiveQuery } from './use-live-query';
@@ -26,6 +34,18 @@ export const useCategories = (): Category[] =>
 
 export const useBudgets = (): Budget[] =>
   useLiveQuery(async () => (await db.budget.toArray()).map(toBudget), [], []);
+
+export const useIncomes = (): Income[] =>
+  useLiveQuery(async () => (await db.income.toArray()).map(toIncome), [], []);
+
+export const useFixedCosts = (): FixedCost[] =>
+  useLiveQuery(async () => (await db.fixedCost.toArray()).map(toFixedCost), [], []);
+
+export const useGoals = (): Goal[] =>
+  useLiveQuery(async () => (await db.goal.toArray()).map(toGoal), [], []);
+
+export const useContributions = (): GoalContribution[] =>
+  useLiveQuery(async () => (await db.goalContribution.toArray()).map(toGoalContribution), [], []);
 
 export const useConflictCount = (): number => useLiveQuery(() => db.conflicts.count(), [], 0);
 

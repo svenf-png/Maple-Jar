@@ -66,6 +66,10 @@ export class MapleJarDb extends Dexie {
   category!: EntityTable<MaterialRow, 'id'>;
   entry!: EntityTable<MaterialRow, 'id'>;
   budget!: EntityTable<MaterialRow, 'id'>;
+  income!: EntityTable<MaterialRow, 'id'>;
+  fixedCost!: EntityTable<MaterialRow, 'id'>;
+  goal!: EntityTable<MaterialRow, 'id'>;
+  goalContribution!: EntityTable<MaterialRow, 'id'>;
 
   constructor(name = 'maple-jar') {
     super(name);
@@ -87,6 +91,22 @@ export class MapleJarDb extends Dexie {
         // Reste der GitHub-Anbindung aus M1 entfernen; Anzeige- und Hilfswerte bleiben erhalten.
         await tx.table('meta').bulkDelete(LEGACY_META_KEYS);
       });
+    this.version(3).stores({
+      meta: 'key',
+      events: 'id, [entity+rowId], hlc',
+      outbox: 'id',
+      conflicts: 'id, entity',
+      parked: 'key',
+      settings: 'id',
+      member: 'id',
+      category: 'id, sort',
+      entry: 'id, bookedOn, categoryId, deleted',
+      budget: 'id, categoryId, validFrom',
+      income: 'id, startsOn',
+      fixedCost: 'id, categoryId, startsOn',
+      goal: 'id, targetDate',
+      goalContribution: 'id, goalId, contributedOn',
+    });
   }
 }
 

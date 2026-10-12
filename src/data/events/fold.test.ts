@@ -1,9 +1,27 @@
 import { describe, expect, it } from 'vitest';
 import { foldAll, foldRow, headsOf } from './fold';
 import type { AppEvent } from './schema';
-import { CAT_1, categoryData, DEV_B, entryData, mk, ROW_1, USER_A, USER_B } from './test-helpers';
+import {
+  CAT_1,
+  categoryData,
+  contributionData,
+  DEV_B,
+  entryData,
+  fixedCostData,
+  GOAL_1,
+  goalData,
+  incomeData,
+  mk,
+  ROW_1,
+  USER_A,
+  USER_B,
+} from './test-helpers';
 
-const ctx = { hasCategory: (id: string) => id === CAT_1, hasMember: () => true };
+const ctx = {
+  hasCategory: (id: string) => id === CAT_1,
+  hasMember: () => true,
+  hasGoal: () => true,
+};
 const idOf = (n: string) => `00000000-0000-4000-8000-${n.padStart(12, '0')}`;
 
 const E0 = idOf('e0');
@@ -169,7 +187,11 @@ describe('foldRow: Parken', () => {
   });
 
   it('Update mit unbekanntem Mitglied wartet, der Rest wird angewendet', () => {
-    const noMember = { hasCategory: () => true, hasMember: (id: string) => id === USER_A };
+    const noMember = {
+      hasCategory: () => true,
+      hasMember: (id: string) => id === USER_A,
+      hasGoal: () => true,
+    };
     const c = mk({ id: E0, op: 'create', data: entryData(), at: 0 });
     const u = mk({ id: idOf('1'), data: { paidBy: USER_B }, base: [E0], at: 10 });
     const r = foldRow('entry', [c, u], noMember);
@@ -280,5 +302,166 @@ describe('foldAll: Reihenfolgeunabhängigkeit', () => {
     expect(e1?.fields.note).toBe('n');
     expect(r.rows.find((x) => x.id === ROW_2)?.conflict?.kind).toBe('deleteVsEdit');
     expect(r.waiting).toEqual([idOf('d0'), idOf('d1')].sort());
+  });
+});
+
+describe('foldRow: M3-Entitäten', () => {
+  const cases = [
+    { entity: 'income', create: incomeData(), a: { name: 'Neu' }, b: { amountMinor: 5 } },
+    { entity: 'fixedCost', create: fixedCostData(), a: { name: 'Neu' }, b: { amountMinor: 5 } },
+    { entity: 'goal', create: goalData(), a: { name: 'Neu' }, b: { targetMinor: 5 } },
+  ] as const;
+
+  for (const c of cases) {
+    describe(c.entity, () => {
+      const create = mk({ id: E0, entity: c.entity, op: 'create', data: c.create, at: 0 });
+      const f = (events: AppEvent[]) => foldRow(c.entity, events, ctx);
+
+      it('merged gleichzeitige Änderungen verschiedener Felder ohne Konflikt', () => {
+        const u1 = mk({ id: idOf('1'), entity: c.entity, data: c.a, base: [E0], at: 10 });
+        const u2 = mk({
+          id: idOf('2'),
+          entity: c.entity,
+          data: c.b,
+          base: [E0],
+          at: 11,
+          device: DEV_B,
+        });
+        const { row } = f([create, u1, u2]);
+        expect(row?.conflict).toBeNull();
+        expect(row?.fields).toMatchObject({ ...c.a, ...c.b });
+      });
+
+      it('meldet gleichzeitige Änderungen desselben Feldes als Konflikt', () => {
+        const u1 = mk({ id: idOf('1'), entity: c.entity, data: c.a, base: [E0], at: 10 });
+        const u2 = mk({
+          id: idOf('2'),
+          entity: c.entity,
+          data: { name: 'Andere' },
+          base: [E0],
+          at: 11,
+          device: DEV_B,
+        });
+        const { row } = f([create, u1, u2]);
+        expect(row?.conflict?.kind).toBe('fields');
+        expect(row?.fields.name).toBe('Andere');
+      });
+
+      it('meldet gleichzeitiges Löschen und Bearbeiten als Konflikt', () => {
+        const u = mk({ id: idOf('1'), entity: c.entity, data: c.a, base: [E0], at: 10 });
+        const d = mk({
+          id: idOf('2'),
+          entity: c.entity,
+          op: 'delete',
+          base: [E0],
+          at: 11,
+          device: DEV_B,
+        });
+        const { row } = f([create, u, d]);
+        expect(row?.conflict?.kind).toBe('deleteVsEdit');
+        expect(row?.deleted).toBe(true);
+      });
+    });
+  }
+
+  it('Beitrag wartet auf fehlendes Ziel und Fixkosten auf fehlende Kategorie bzw. Person auf fehlendes Mitglied', () => {
+    const none = { hasCategory: () => false, hasMember: () => false, hasGoal: () => false };
+    const k = mk({ entity: 'goalContribution', op: 'create', data: contributionData() });
+    expect(foldRow('goalContribution', [k], none).row).toBeNull();
+    expect(foldRow('goalContribution', [k], none).waiting).toEqual([k.id]);
+    const f = mk({ entity: 'fixedCost', op: 'create', data: fixedCostData() });
+    expect(foldRow('fixedCost', [f], none).waiting).toEqual([f.id]);
+    const i = mk({ entity: 'income', op: 'create', data: incomeData() });
+    expect(foldRow('income', [i], none).waiting).toEqual([i.id]);
+    expect(foldRow('goalContribution', [k], { ...none, hasGoal: () => true }).row).not.toBeNull();
+  });
+
+  it('foldAll: Beitrag vor Ziel wird aufgelöst, sobald das Ziel da ist; Reihenfolge egal', () => {
+    const events = [
+      mk({
+        id: idOf('f1'),
+        entity: 'goalContribution',
+        rowId: idOf('901'),
+        op: 'create',
+        data: contributionData(),
+        at: 1,
+      }),
+      mk({
+        id: idOf('f2'),
+        entity: 'goalContribution',
+        rowId: idOf('902'),
+        op: 'create',
+        data: contributionData({ goalId: idOf('999') }),
+        at: 2,
+      }),
+      mk({ id: idOf('f3'), entity: 'goal', rowId: GOAL_1, op: 'create', data: goalData(), at: 3 }),
+      mk({
+        id: idOf('f4'),
+        entity: 'goal',
+        rowId: GOAL_1,
+        data: { name: 'Neu' },
+        base: [idOf('f3')],
+        at: 4,
+      }),
+      mk({
+        id: idOf('f5'),
+        entity: 'goal',
+        rowId: GOAL_1,
+        data: { targetMinor: 7 },
+        base: [idOf('f3')],
+        at: 5,
+        device: DEV_B,
+      }),
+      mk({
+        id: idOf('f6'),
+        entity: 'category',
+        rowId: CAT_1,
+        op: 'create',
+        data: categoryData(),
+        at: 0,
+      }),
+      mk({
+        id: idOf('f7'),
+        entity: 'fixedCost',
+        rowId: idOf('903'),
+        op: 'create',
+        data: fixedCostData(),
+        at: 6,
+      }),
+      mk({
+        id: idOf('f8'),
+        entity: 'income',
+        rowId: idOf('904'),
+        op: 'create',
+        data: incomeData(),
+        at: 7,
+      }),
+      mk({
+        id: idOf('f9'),
+        entity: 'goalContribution',
+        rowId: idOf('901'),
+        op: 'delete',
+        base: [idOf('f1')],
+        at: 8,
+      }),
+    ];
+    const members = new Set([USER_A, USER_B]);
+    const reference = JSON.stringify(foldAll(events, members));
+    const r = foldAll(events, members);
+    expect(r.waiting).toEqual([idOf('f2')]);
+    expect(r.rows.find((x) => x.id === idOf('901'))?.deleted).toBe(true);
+    expect(r.rows.find((x) => x.id === GOAL_1)?.fields).toMatchObject({
+      name: 'Neu',
+      targetMinor: 7,
+    });
+    const random = rng(7);
+    for (let i = 0; i < 50; i++) {
+      const shuffled = [...events];
+      for (let j = shuffled.length - 1; j > 0; j--) {
+        const k = Math.floor(random() * (j + 1));
+        [shuffled[j], shuffled[k]] = [shuffled[k] as AppEvent, shuffled[j] as AppEvent];
+      }
+      expect(JSON.stringify(foldAll(shuffled, members))).toBe(reference);
+    }
   });
 });

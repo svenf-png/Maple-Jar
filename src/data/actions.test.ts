@@ -1,17 +1,30 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { categoryTemplate } from '../domain/category-template';
 import {
+  addContribution,
   applyCategoryTemplate,
+  archiveGoal,
   createCategory,
   createEntry,
+  createFixedCost,
+  createGoal,
+  createIncome,
+  deleteContribution,
   deleteEntry,
+  deleteFixedCost,
+  deleteIncome,
   NoRateError,
   restoreEntry,
   setBudget,
   updateCategory,
   updateEntry,
+  updateFixedCost,
+  updateGoal,
+  updateIncome,
 } from './actions';
 import { MapleJarDb } from './db';
+import { getMemberIds, refoldRows, waitingRefs } from './events/apply';
+import { appendLocalEvent } from './write';
 
 const USER = '00000000-0000-4000-8000-0000000000a1';
 const OTHER = '00000000-0000-4000-8000-0000000000b1';
@@ -180,5 +193,110 @@ describe('setBudget', () => {
     const before = await db.events.count();
     await setBudget(db, cat, '2027-02-01', 90_000);
     expect(await db.events.count()).toBe(before);
+  });
+});
+
+describe('Einnahmen, Fixkosten, Sparziele', () => {
+  const rule = { unit: 'month' as const, every: 1, startsOn: '2027-01-01' };
+  const goalInput = {
+    name: ' Sparziel A ',
+    icon: 'reise',
+    color: '#2F7D4F',
+    targetMinor: 120_000,
+    currency: 'CAD' as const,
+    startsOn: '2027-01-01',
+    targetDate: '2027-12-31',
+  };
+
+  it('Einnahme: anlegen (Name getrimmt), nur geänderte Felder, löschen', async () => {
+    const id = await createIncome(db, {
+      ...rule,
+      name: ' Gehalt A ',
+      memberId: USER,
+      amountMinor: 300_000,
+      currency: 'CAD',
+    });
+    expect((await db.income.get(id))?.name).toBe('Gehalt A');
+    const before = await db.events.count();
+    expect(await updateIncome(db, id, { name: 'Gehalt A', amountMinor: 310_000 })).toBe(true);
+    expect(await db.events.count()).toBe(before + 1);
+    expect((await db.events.orderBy('hlc').last())?.data).toEqual({ amountMinor: 310_000 });
+    expect(await updateIncome(db, id, { amountMinor: 310_000 })).toBe(false);
+    await deleteIncome(db, id);
+    expect((await db.income.get(id))?.deleted).toBe(true);
+  });
+
+  it('Fixkosten: anlegen, ändern, löschen', async () => {
+    const id = await createFixedCost(db, {
+      ...rule,
+      name: ' Streaming-Abo A ',
+      amountMinor: 1299,
+      currency: 'CAD',
+      categoryId: cat,
+      isSaving: false,
+      autobook: true,
+    });
+    expect((await db.fixedCost.get(id))?.name).toBe('Streaming-Abo A');
+    expect(await updateFixedCost(db, id, { autobook: false, isSaving: false })).toBe(true);
+    expect((await db.events.orderBy('hlc').last())?.data).toEqual({ autobook: false });
+    expect((await db.fixedCost.get(id))?.autobook).toBe(false);
+    await deleteFixedCost(db, id);
+    expect((await db.fixedCost.get(id))?.deleted).toBe(true);
+  });
+
+  it('Ziel: anlegen, ändern, archivieren (einmalig)', async () => {
+    const id = await createGoal(db, goalInput);
+    expect((await db.goal.get(id))?.name).toBe('Sparziel A');
+    expect(await updateGoal(db, id, { targetMinor: 130_000 })).toBe(true);
+    expect(await updateGoal(db, id, { targetMinor: 130_000 })).toBe(false);
+    expect(await archiveGoal(db, id, '2027-06-01')).toBe(true);
+    expect((await db.goal.get(id))?.archivedAt).toBe('2027-06-01');
+    expect(await archiveGoal(db, id, '2027-07-01')).toBe(false);
+    expect((await db.goal.get(id))?.archivedAt).toBe('2027-06-01');
+  });
+
+  it('Beitrag: anlegen, Entnahme, löschen; ungültiger Betrag wirft', async () => {
+    const goal = await createGoal(db, goalInput);
+    const id = await addContribution(db, {
+      goalId: goal,
+      amountMinor: 5000,
+      contributedOn: '2027-02-01',
+      memberId: USER,
+      note: ' Monat ',
+    });
+    expect((await db.goalContribution.get(id))?.note).toBe('Monat');
+    await addContribution(db, {
+      goalId: goal,
+      amountMinor: -200,
+      contributedOn: '2027-02-02',
+      note: '',
+    });
+    await expect(
+      addContribution(db, { goalId: goal, amountMinor: 0, contributedOn: '2027-02-02', note: '' }),
+    ).rejects.toThrow();
+    await deleteContribution(db, id);
+    expect((await db.goalContribution.get(id))?.deleted).toBe(true);
+    expect(await db.goalContribution.count()).toBe(2);
+  });
+
+  it('Beitrag zu unbekanntem Ziel wartet und wird mit dem Ziel aufgelöst', async () => {
+    const goalId = crypto.randomUUID();
+    const id = await addContribution(db, {
+      goalId,
+      amountMinor: 100,
+      contributedOn: '2027-02-01',
+      note: '',
+    });
+    expect(await db.goalContribution.get(id)).toBeUndefined();
+    expect(await waitingRefs(db)).toEqual([{ entity: 'goalContribution', rowId: id }]);
+    await appendLocalEvent(db, {
+      entity: 'goal',
+      rowId: goalId,
+      op: 'create',
+      data: { ...goalInput, name: 'Sparziel A' },
+    });
+    await refoldRows(db, await waitingRefs(db), await getMemberIds(db));
+    expect((await db.goalContribution.get(id))?.goalId).toBe(goalId);
+    expect(await waitingRefs(db)).toEqual([]);
   });
 });
