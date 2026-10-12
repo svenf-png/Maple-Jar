@@ -2,21 +2,30 @@
 
 Gemeinsames Haushaltsbuch (PWA, offline-first) für einen Zwei-Personen-Haushalt.
 Vite + React + TypeScript, Dexie (IndexedDB), GitHub Pages. Die Daten liegen als Ereignisprotokoll
-in einem privaten GitHub-Repo und werden über die GitHub REST API synchronisiert. Es gibt keinen eigenen Server.
+in einem eigenen Supabase-Projekt (Postgres mit Row Level Security) und werden über dessen REST-API
+synchronisiert. Es gibt keinen eigenen Server. (Stand M1 nutzt der Code noch ein GitHub-Daten-Repo,
+der Wechsel ist Teil A von M2, siehe `docs/prompts/M2.md`.)
 Der vollständige Umsetzungsplan steht in `docs/PLAN.md`.
 
 ## Datenschutz: harte Regeln (öffentliches Repo)
-- NIE echte Personennamen, E-Mail-Adressen, GitHub-Logins der Nutzer, Orte, Händler aus dem echten Leben,
-  echte Beträge, den Namen der Organisation oder des Daten-Repos in Code, Tests, Fixtures, README,
-  Commit-Messages, PR-Texten oder Screenshots.
-- Beispieldaten nur mit „Person A“ / „Person B“, Logins `person-a` / `person-b`, neutrale Händler
+- NIE echte Personennamen, E-Mail-Adressen, Benutzernamen oder GitHub-Logins der Nutzer, Orte, Händler aus
+  dem echten Leben, echte Beträge, Projekt-URL oder Projekt-Referenz des Supabase-Projekts (und, solange M1
+  gilt, Namen von Organisation und Daten-Repo) in Code, Tests, Fixtures, README, Commit-Messages,
+  PR-Texten oder Screenshots.
+- Beispieldaten nur mit „Person A“ / „Person B“, Benutzernamen `person-a` / `person-b`, neutrale Händler
   („Supermarkt A“, „Café B“), fiktive Beträge.
 - Anzeigenamen, Haushaltsname, Ort (`placeLabel`), Zeitraum und Kategorien kommen zur Laufzeit aus den Daten.
   Texte mit Ort/Namen nutzen i18n-Platzhalter (`{place}`, `{name}`), nie Literale.
 - Die Design-Referenz enthält Ortsnamen und reale Händlernamen: NICHT übernehmen.
-- Keine Secrets im Repo. Token und Daten-Repo werden nur zur Laufzeit in der App eingegeben.
-- Der Token darf nie geloggt, in Fehlermeldungen ausgegeben oder an andere Hosts als `api.github.com` gesendet werden.
-- Zugriffsschutz = privates Daten-Repo + Token mit minimalen Rechten. Die App-Logik ist kein Sicherheitsmerkmal.
+- Keine Secrets im Repo. Projekt-URL, öffentlicher Schlüssel, Benutzername und Passwort werden nur zur Laufzeit
+  in der App eingegeben. Der öffentliche Schlüssel ist kein Geheimnis, steht aber trotzdem in keiner Datei
+  (nur in Secrets bzw. zur Laufzeit).
+- Passwort, Zugriffs- und Refresh-Token dürfen nie geloggt, in Fehlermeldungen ausgegeben oder an andere Hosts
+  als die zur Laufzeit eingegebene Supabase-Projekt-URL (und `api.frankfurter.dev` für Kurse) gesendet werden.
+- Benutzername und Passwort: Die App bildet aus dem Benutzernamen eine synthetische Adresse, es gibt keine
+  echten E-Mail-Adressen im System. Registrierung im Supabase-Projekt ist deaktiviert.
+- Zugriffsschutz = Row Level Security im Supabase-Projekt + deaktivierte Registrierung. Die App-Logik ist kein
+  Sicherheitsmerkmal. Jede neue Tabelle bekommt RLS im selben Commit.
 - Keine Fremd-Skripte, kein `dangerouslySetInnerHTML`, Content Security Policy nicht aufweichen.
 - `design-reference/`, `.env*` (außer `.env.example`) und `.privacy-denylist` bleiben ungetrackt.
 - Vor jedem Commit: `npm run check:privacy`.
@@ -35,10 +44,12 @@ Der vollständige Umsetzungsplan steht in `docs/PLAN.md`.
 ## Architektur in Kürze
 - UI liest NUR aus Dexie (`useLiveQuery`). Schreiben = Dexie-Transaktion: Ereignis in `events` + `outbox`,
   materialisierte Zeile aktualisieren.
-- Jedes Gerät hängt nur an seine eigene Datei `log/<deviceId>/<YYYY-MM>.jsonl` im Daten-Repo an.
+- Jedes Gerät hängt Ereignisse nur an (Tabelle `events`, append-only, per RLS ohne Update/Delete). Pull per
+  Server-Cursor `seq`. (Bis M2 Teil A: eigene Datei `log/<deviceId>/<YYYY-MM>.jsonl` im Daten-Repo.)
 - Zustand = deterministischer Fold aller Ereignisse (`src/data/events/fold.ts`), Reihenfolge per Hybrid Logical Clock.
 - Konflikte: gleichzeitige Updates auf verschiedene Felder werden gemergt, auf dasselbe Feld → Konflikt-Dialog.
-- Sync spricht nur mit `RemoteStore` (`GitHubStore` im Betrieb, `MemoryStore` in Tests).
+- Sync spricht nur mit `SyncTransport` (Supabase im Betrieb, `MemoryTransport` in Tests). Bis M2 Teil A gilt
+  noch `RemoteStore` mit `GitHubStore`.
 - Jedes gelesene Ereignis wird mit Zod validiert. Ungültige Ereignisse werden geparkt und angezeigt, nie still verworfen.
 - Geschäftslogik ausschließlich in `src/domain/` (rein, ohne React/IO, vollständig getestet).
 - Beträge immer Integer in Minor Units. Kurse als Mikro-Einheiten (BigInt). Kein `number`-Float für Geld.
