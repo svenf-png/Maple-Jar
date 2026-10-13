@@ -31,7 +31,8 @@ export function monthlyCadTotal(
   let total = 0n;
   let incomplete = false;
   for (const it of items) {
-    if (!isRunning(it, today)) continue;
+    // Aktuelle Monatslast: beendete und noch nicht gestartete Regeln zählen nicht.
+    if (!isRunning(it, today) || it.startsOn > today) continue;
     const monthly = monthlyEquivalent(it.amountMinor, it.unit, it.every);
     if (it.currency === 'CAD') total += monthly;
     else if (rateMicro == null) incomplete = true;
@@ -51,6 +52,14 @@ export function parseSignedMinor(text: string, parse: (s: string) => number | nu
 
 export const MAX_EVERY = 99;
 
+/** Echtes Kalenderdatum `YYYY-MM-DD`? */
+export function isIsoDay(text: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
+  const [y = 0, m = 0, d = 0] = text.split('-').map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
+}
+
 /** Prüft die Wiederholungsangaben; liefert `every` oder den Fehlerschlüssel. */
 export function checkRepeat(input: {
   unit: RepeatUnit;
@@ -58,6 +67,7 @@ export function checkRepeat(input: {
   startsOn: string;
   endsOn: string | null;
 }): { every: number; error: PlanKey | null } {
+  if (!isIsoDay(input.startsOn)) return { every: 1, error: 'form.error.dates' };
   // Einmalig: Intervall 1, kein Ende (das Formular blendet beides aus).
   if (input.unit === 'once') return { every: 1, error: null };
   const every = Number(input.everyText);
@@ -88,4 +98,8 @@ export const reachedSeenKey = (goalId: string, userId: string): string =>
 
 /** Monate von Start bis heute, mindestens 1 (für „3 Monate von … bis …“). */
 export const monthsSpan = (startsOn: string, today: string): number =>
-  Math.max(1, monthsBetween(startsOn, today));
+  Math.max(1, monthsBetween(spanFrom(startsOn, today), today));
+
+/** Anfang der Spanne: liegt der Start in der Zukunft, zählt heute. */
+export const spanFrom = (startsOn: string, today: string): string =>
+  startsOn < today ? startsOn : today;

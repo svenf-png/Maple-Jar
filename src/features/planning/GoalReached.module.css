@@ -14,7 +14,6 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  display: none;
 }
 .piece {
   position: absolute;
@@ -25,9 +24,6 @@
   transform: rotate(25deg);
 }
 @media (prefers-reduced-motion: no-preference) {
-  .body > .confetti {
-    display: block;
-  }
   .piece {
     animation: drift 3.2s ease-in-out infinite alternate;
   }

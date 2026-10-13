@@ -85,7 +85,7 @@ export const planEn: Record<PlanKey, string> = {
   'goal.contrib.member': 'From',
   'goal.contrib.added': 'Contribution saved',
   'goal.contrib.deleted': 'Contribution deleted',
-  'goal.contrib.delete': 'Delete contribution from {date}',
+  'goal.contrib.delete': 'Delete contribution {amount} from {date}',
   'goal.contrib.error': 'Please enter a non-zero amount.',
   'goal.reached.pill': 'Goal reached',
   'goal.reached.title': '{name} is done!',
@@ -134,6 +134,9 @@ export const planEn: Record<PlanKey, string> = {
   'goal.icon.freizeit': 'Leisure',
   'goal.icon.mobilitaet': 'Mobility',
   'goal.icon.kleidung': 'Clothing',
+  'form.error.dates': 'Please choose a valid start date.',
+  'goal.form.currencyLocked': 'The currency cannot be changed while contributions exist.',
+  'plan.section.archived': 'Archived',
 
   // overview (B2)
   'overview.goals.title': 'Savings goals',

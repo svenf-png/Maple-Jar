@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { addContribution, archiveGoal, deleteContribution } from '../../data/actions';
+import { addContribution, archiveGoal, deleteContribution, updateGoal } from '../../data/actions';
 import { db } from '../../data/db';
 import { useContributions, useGoals, useLoaded } from '../../data/repos';
 import { useReadySession } from '../../data/use-session';
@@ -11,6 +11,7 @@ import { formatDay, formatMoney } from '../../i18n/format';
 import { getLocale, t, useLang } from '../../i18n/t';
 import { TrashIcon } from '../../icons/ui-icons';
 import { Button, Card, CategoryTile, Segmented, TextField, useToast } from '../../ui';
+import { ConflictBadge } from '../conflict/ConflictBadge';
 import { BottomSheet } from '../shared/BottomSheet';
 import { memberName, todayIso } from '../shared/helpers';
 import { FormError } from './FormShell';
@@ -44,6 +45,8 @@ export function GoalDetailPage() {
   const [note, setNote] = useState('');
   const [member, setMember] = useState<string>(userId);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
 
   if (!goal) {
     return (
@@ -66,22 +69,31 @@ export function GoalDetailPage() {
     note: string;
     memberId: string;
   }) {
-    if (!goal) return;
-    await addContribution(db, {
-      goalId: goal.id,
-      amountMinor: input.amountMinor,
-      contributedOn: input.contributedOn,
-      note: input.note,
-      ...(input.memberId ? { memberId: input.memberId } : {}),
-    });
-    toast(t('goal.contrib.added'));
+    // Doppeltipp-Schutz (Ref gilt sofort, State steuert die Anzeige).
+    if (!goal || busyRef.current) return false;
+    busyRef.current = true;
+    setBusy(true);
+    try {
+      await addContribution(db, {
+        goalId: goal.id,
+        amountMinor: input.amountMinor,
+        contributedOn: input.contributedOn,
+        note: input.note,
+        ...(input.memberId ? { memberId: input.memberId } : {}),
+      });
+      toast(t('goal.contrib.added'));
+      return true;
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
   }
 
   async function submit() {
     const amountMinor = parseSignedMinor(amount, parseDecimalToMinor);
     if (!amountMinor) return setError(t('goal.contrib.error'));
     setError(null);
-    await add({ amountMinor, contributedOn: date, note, memberId: member });
+    if (!(await add({ amountMinor, contributedOn: date, note, memberId: member }))) return;
     setSheet(false);
     setAmount('');
     setNote('');
@@ -106,7 +118,10 @@ export function GoalDetailPage() {
   async function archive() {
     if (!goal) return;
     await archiveGoal(db, goal.id, today);
-    toast(t('goal.detail.archived'));
+    toast(t('goal.detail.archived'), {
+      label: t('history.undo'),
+      onClick: () => void updateGoal(db, goal.id, { archivedAt: null }),
+    });
     void navigate('/planung', { replace: true });
   }
 
@@ -140,6 +155,7 @@ export function GoalDetailPage() {
           {t('goal.savedOf', { saved: money(savedMinor), target: money(goal.targetMinor) })}
         </p>
         <GoalStats goal={goal} savedMinor={savedMinor} dev={dev} today={today} />
+        {goal.conflict ? <ConflictBadge entity="goal" rowId={goal.id} /> : null}
       </Card>
 
       {goal.archivedAt ? (
@@ -149,6 +165,7 @@ export function GoalDetailPage() {
           {suggestion > 0n ? (
             <Button
               variant="secondary"
+              busy={busy}
               onClick={() =>
                 void add({
                   amountMinor: Number(suggestion),
@@ -162,6 +179,7 @@ export function GoalDetailPage() {
             </Button>
           ) : null}
           <Button
+            disabled={busy}
             onClick={() => {
               setError(null);
               setDate(today);
@@ -209,7 +227,10 @@ export function GoalDetailPage() {
                     <button
                       type="button"
                       className={styles.iconBtn}
-                      aria-label={t('goal.contrib.delete', { date: day })}
+                      aria-label={t('goal.contrib.delete', {
+                        amount: money(c.amountMinor),
+                        date: day,
+                      })}
                       onClick={() => void remove(c)}
                     >
                       <TrashIcon size={20} />
@@ -265,7 +286,9 @@ export function GoalDetailPage() {
             />
           </div>
           <FormError message={error} />
-          <Button onClick={() => void submit()}>{t('common.save')}</Button>
+          <Button busy={busy} onClick={() => void submit()}>
+            {t('common.save')}
+          </Button>
           <Button variant="secondary" onClick={() => setSheet(false)}>
             {t('common.cancel')}
           </Button>

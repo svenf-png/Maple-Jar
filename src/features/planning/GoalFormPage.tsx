@@ -3,12 +3,13 @@ import { useNavigate, useParams } from 'react-router';
 import { createGoal, InvalidPatchError, updateGoal } from '../../data/actions';
 import { db } from '../../data/db';
 import { MEMBER_COLORS } from '../../data/household';
-import { useGoals, useLoaded } from '../../data/repos';
+import { useContributions, useGoals, useLoaded } from '../../data/repos';
 import { type Currency, parseDecimalToMinor } from '../../domain/money';
 import { addMonths } from '../../domain/schedule';
 import { t, useLang } from '../../i18n/t';
 import { type CategoryIconKey, categoryIcons } from '../../icons/category-icons';
 import { Button, TextField } from '../../ui';
+import { ConflictBadge } from '../conflict/ConflictBadge';
 import { ColorPicker } from '../setup/ColorPicker';
 import { minorToInput, todayIso } from '../shared/helpers';
 import { AmountFields, DateRow } from './FormFields';
@@ -39,6 +40,7 @@ export function GoalFormPage() {
   const loaded = useLoaded();
   const editing = id ? goals.find((g) => g.id === id && !g.deleted) : undefined;
   const today = todayIso();
+  const hasContributions = useContributions().some((c) => c.goalId === id && !c.deleted);
 
   const [name, setName] = useState('');
   const [icon, setIcon] = useState<string>('sparplan');
@@ -109,6 +111,7 @@ export function GoalFormPage() {
           currency={currency}
           onAmount={setAmount}
           onCurrency={setCurrency}
+          currencyLocked={editing != null && hasContributions}
         />
         <DateRow label={t('goal.form.startsOn')} value={startsOn} onChange={setStartsOn} />
         <DateRow label={t('goal.form.targetDate')} value={targetDate} onChange={setTargetDate} />
@@ -137,6 +140,7 @@ export function GoalFormPage() {
           <ColorPicker label={t('goal.form.color')} value={color} onChange={setColor} />
         </div>
       </div>
+      {editing?.conflict ? <ConflictBadge entity="goal" rowId={editing.id} /> : null}
       <FormError message={error} />
       <Button busy={busy} onClick={() => void save()}>
         {t('common.save')}

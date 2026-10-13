@@ -8,7 +8,7 @@ import { getLocale, t } from '../../i18n/t';
 import { Button, CategoryTile, StatusPill } from '../../ui';
 import { BottomSheet } from '../shared/BottomSheet';
 import styles from './GoalReached.module.css';
-import { monthsSpan, reachedSeenKey } from './plan-helpers';
+import { monthsSpan, reachedSeenKey, spanFrom } from './plan-helpers';
 
 /**
  * Zeigt „Sparziel erreicht“ einmal pro Person und Ziel. Gemerkt wird lokal pro Gerät und Konto
@@ -46,7 +46,7 @@ interface Props {
 export function GoalReached({ goal, savedMinor, today, open, onClose }: Props) {
   const locale = getLocale();
   const months = monthsSpan(goal.startsOn, today);
-  const range = { from: goal.startsOn, to: today };
+  const range = { from: spanFrom(goal.startsOn, today), to: today };
   const dayOpts = { month: 'short', year: 'numeric' } as const;
   const duration = t(months === 1 ? 'goal.reached.durationOne' : 'goal.reached.duration', {
     n: months,

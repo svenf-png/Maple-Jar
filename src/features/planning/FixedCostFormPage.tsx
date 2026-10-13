@@ -14,6 +14,7 @@ import { type Currency, parseDecimalToMinor } from '../../domain/money';
 import { t, useLang } from '../../i18n/t';
 import { type CategoryIconKey, categoryIcons } from '../../icons/category-icons';
 import { Button, Chip, TextField, useToast } from '../../ui';
+import { ConflictBadge } from '../conflict/ConflictBadge';
 import { minorToInput, todayIso } from '../shared/helpers';
 import { AmountFields, CheckRow, RepeatFields } from './FormFields';
 import { FormError, FormShell } from './FormShell';
@@ -177,6 +178,7 @@ export function FixedCostFormPage() {
           onChange={setAutobook}
         />
       </div>
+      {editing?.conflict ? <ConflictBadge entity="fixedCost" rowId={editing.id} /> : null}
       <FormError message={error} />
       <Button busy={busy} onClick={() => void save()}>
         {t('common.save')}

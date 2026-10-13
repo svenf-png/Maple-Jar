@@ -12,6 +12,7 @@ export function AmountFields(props: {
   currency: Currency;
   onAmount: (v: string) => void;
   onCurrency: (c: Currency) => void;
+  currencyLocked?: boolean;
 }) {
   return (
     <div className={styles.amountRow}>
@@ -22,15 +23,20 @@ export function AmountFields(props: {
         value={props.amount}
         onChange={(e) => props.onAmount(e.target.value)}
       />
-      <Segmented
-        label={t('form.currency')}
-        value={props.currency}
-        options={[
-          { value: 'CAD', label: 'CAD' },
-          { value: 'EUR', label: 'EUR' },
-        ]}
-        onChange={props.onCurrency}
-      />
+      <fieldset className={styles.lock} disabled={props.currencyLocked === true}>
+        <Segmented
+          label={t('form.currency')}
+          value={props.currency}
+          options={[
+            { value: 'CAD', label: 'CAD' },
+            { value: 'EUR', label: 'EUR' },
+          ]}
+          onChange={props.onCurrency}
+        />
+        {props.currencyLocked ? (
+          <p className={styles.hint}>{t('goal.form.currencyLocked')}</p>
+        ) : null}
+      </fieldset>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import type { RepeatUnit } from '../../domain/model';
 import { type Currency, parseDecimalToMinor } from '../../domain/money';
 import { t, useLang } from '../../i18n/t';
 import { Button, Segmented, TextField, useToast } from '../../ui';
+import { ConflictBadge } from '../conflict/ConflictBadge';
 import { minorToInput, todayIso } from '../shared/helpers';
 import { AmountFields, RepeatFields } from './FormFields';
 import { FormError, FormShell } from './FormShell';
@@ -147,6 +148,7 @@ export function IncomeFormPage() {
           onEndsOn={setEndsOn}
         />
       </div>
+      {editing?.conflict ? <ConflictBadge entity="income" rowId={editing.id} /> : null}
       <FormError message={error} />
       <Button busy={busy} onClick={() => void save()}>
         {t('common.save')}

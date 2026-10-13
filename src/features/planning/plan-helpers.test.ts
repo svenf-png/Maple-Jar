@@ -9,6 +9,7 @@ import {
   nextOccurrence,
   parseSignedMinor,
   reachedSeenKey,
+  spanFrom,
 } from './plan-helpers';
 
 const rule = (o: object) => ({
@@ -46,6 +47,13 @@ describe('monthlyCadTotal', () => {
   it('ohne Kurs bleibt EUR draußen und wird gemeldet', () => {
     const r = monthlyCadTotal([rule({}), rule({ currency: 'EUR' })], null, '2026-10-13');
     expect(r).toEqual({ total: 12_000n, incomplete: true });
+  });
+  it('noch nicht gestartete Regeln zählen nicht zur aktuellen Last', () => {
+    const r = monthlyCadTotal([rule({ startsOn: '2026-11-01' }), rule({})], null, '2026-10-13');
+    expect(r.total).toBe(12_000n);
+    expect(monthlyCadTotal([rule({ startsOn: '2026-10-13' })], null, '2026-10-13').total).toBe(
+      12_000n,
+    );
   });
   it('beendete Regeln und einmalige zählen nicht', () => {
     const r = monthlyCadTotal(
@@ -87,6 +95,16 @@ describe('checkRepeat', () => {
       'form.error.end',
     );
   });
+  it('verlangt ein gültiges Startdatum', () => {
+    for (const startsOn of ['', '2026-02-30', 'x', '2026-1-1']) {
+      expect(checkRepeat({ ...base, startsOn, unit: 'month', everyText: '1' }).error).toBe(
+        'form.error.dates',
+      );
+      expect(checkRepeat({ ...base, startsOn, unit: 'once', everyText: '1' }).error).toBe(
+        'form.error.dates',
+      );
+    }
+  });
   it('einmalig ignoriert Intervall und Ende', () => {
     expect(checkRepeat({ ...base, endsOn: '2020-01-01', unit: 'once', everyText: 'x' })).toEqual({
       every: 1,
@@ -115,5 +133,8 @@ describe('reached helpers', () => {
     expect(reachedSeenKey('g', 'u')).toBe('goalReachedSeen:g:u');
     expect(monthsSpan('2026-10-01', '2026-10-13')).toBe(1);
     expect(monthsSpan('2026-07-20', '2026-10-13')).toBe(3);
+    expect(monthsSpan('2027-03-01', '2026-10-13')).toBe(1);
+    expect(spanFrom('2027-03-01', '2026-10-13')).toBe('2026-10-13');
+    expect(spanFrom('2026-07-20', '2026-10-13')).toBe('2026-07-20');
   });
 });

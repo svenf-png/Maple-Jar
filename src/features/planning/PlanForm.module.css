@@ -194,3 +194,12 @@
 .danger {
   color: var(--label);
 }
+.lock {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.lock:disabled button {
+  opacity: 0.5;
+}

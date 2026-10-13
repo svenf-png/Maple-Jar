@@ -35,7 +35,9 @@ export function PlanningPage() {
   const today = todayIso();
   const fx = useTodayRate(household.settings.fxProvider);
   const rateMicro = fx.status === 'ready' ? fx.rate.rateMicro : null;
-  const goals = activeGoals(useGoals());
+  const allGoals = useGoals();
+  const goals = activeGoals(allGoals);
+  const archived = allGoals.filter((g) => !g.deleted && g.archivedAt != null);
   const savedMap = savedByGoal(useContributions());
   const categories = useCategories();
   const fixedCosts = useFixedCosts().filter((f) => !f.deleted);
@@ -45,13 +47,14 @@ export function PlanningPage() {
   // Kopfzeile Sparziele: Summe des Standes in CAD (EUR-Ziele mit dem heutigen Kurs, ohne Kurs weggelassen).
   let goalsTotal = 0n;
   let goalsApprox = false;
+  let goalsIncomplete = false;
   for (const g of goals) {
     const s = savedMap.get(g.id) ?? 0n;
     if (g.currency === 'CAD') goalsTotal += s;
     else if (rateMicro != null) {
       goalsTotal += toCadMinor(s, rateMicro);
       goalsApprox = true;
-    }
+    } else goalsIncomplete = true;
   }
 
   const byNext = <T extends FixedCost | Income>(
@@ -149,6 +152,37 @@ export function PlanningPage() {
           )}
         </section>
 
+        {goalsIncomplete ? <p className={styles.hint}>{t('plan.partial')}</p> : null}
+
+        {archived.length > 0 ? (
+          <section aria-labelledby="pl-archived">
+            <div className={styles.sectionHead}>
+              <h2 id="pl-archived" className={styles.sectionTitle}>
+                {t('plan.section.archived')}
+              </h2>
+            </div>
+            <Card radius="list">
+              <ul className={styles.plain}>
+                {archived.map((g) => (
+                  <li key={g.id} className={styles.item}>
+                    <Link to={`/ziel/${g.id}`} className={styles.rowLink}>
+                      <CategoryTile icon={g.icon} color={g.color} />
+                      <span className={styles.rowText}>
+                        <span className={styles.rowTitle}>{g.name}</span>
+                      </span>
+                    </Link>
+                    {g.conflict ? (
+                      <div className={styles.badgeWrap}>
+                        <ConflictBadge entity="goal" rowId={g.id} />
+                      </div>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </section>
+        ) : null}
+
         <section aria-labelledby="pl-fixed">
           <div className={styles.sectionHead}>
             <h2 id="pl-fixed" className={styles.sectionTitle}>
@@ -173,7 +207,7 @@ export function PlanningPage() {
                       <Link to={`/fixkosten/${row.id}`} className={styles.rowLink}>
                         <CategoryTile
                           icon={cat?.icon ?? 'sonstiges'}
-                          color={cat?.color ?? '#7F7569'}
+                          color={cat?.color ?? 'var(--seg-other)'}
                         />
                         <span className={styles.rowText}>
                           <span className={styles.rowTitle}>{row.name}</span>

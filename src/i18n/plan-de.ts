@@ -85,7 +85,7 @@ export const planDe = {
   'goal.contrib.member': 'Von',
   'goal.contrib.added': 'Beitrag gespeichert',
   'goal.contrib.deleted': 'Beitrag gelöscht',
-  'goal.contrib.delete': 'Beitrag vom {date} löschen',
+  'goal.contrib.delete': 'Beitrag {amount} vom {date} löschen',
   'goal.contrib.error': 'Bitte einen Betrag ungleich 0 eingeben.',
   'goal.reached.pill': 'Sparziel erreicht',
   'goal.reached.title': '{name} ist geschafft!',
@@ -134,6 +134,10 @@ export const planDe = {
   'goal.icon.freizeit': 'Freizeit',
   'goal.icon.mobilitaet': 'Mobilität',
   'goal.icon.kleidung': 'Kleidung',
+  'form.error.dates': 'Bitte ein gültiges Startdatum wählen.',
+  'goal.form.currencyLocked':
+    'Die Währung lässt sich nicht ändern, solange Beiträge vorhanden sind.',
+  'plan.section.archived': 'Archiviert',
 
   // overview (B2)
   'overview.goals.title': 'Sparziele',

@@ -78,10 +78,44 @@ test('Beitrag löschen mit Rückgängig', async ({ page }) => {
   await page.getByLabel('Betrag in CAD').fill('50');
   await page.getByRole('dialog').getByRole('button', { name: 'Speichern' }).click();
   await expect(page.getByText('+ 50,00')).toBeVisible();
-  await page.getByRole('button', { name: /^Beitrag vom .* löschen$/ }).click();
+  await page.getByRole('button', { name: /^Beitrag .* vom .* löschen$/ }).click();
   await expect(page.getByText('Noch keine Beiträge.')).toBeVisible();
   await page.getByRole('button', { name: 'Rückgängig' }).click();
   await expect(page.getByText('+ 50,00')).toBeVisible();
+});
+
+test('Entnahme und Dezimalkomma', async ({ page }) => {
+  await ready(page);
+  await newGoal(page, 'Sparziel C', '1000', iso(0), iso(120));
+  await page.getByRole('button', { name: 'Anderer Betrag' }).click();
+  await page.getByLabel('Betrag in CAD').fill('12,5');
+  await page.getByRole('dialog').getByRole('button', { name: 'Speichern' }).click();
+  await expect(page.getByText('+ 12,50')).toBeVisible();
+  await page.getByRole('button', { name: 'Anderer Betrag' }).click();
+  await page.getByLabel('Betrag in CAD').fill('-5');
+  await page.getByRole('dialog').getByRole('button', { name: 'Speichern' }).click();
+  const withdrawal = page.getByRole('listitem').filter({ hasText: 'Entnahme' });
+  await expect(withdrawal).toHaveCount(1);
+  await expect(withdrawal).toContainText('5,00');
+  await expect(withdrawal).not.toContainText('+ ');
+});
+
+test('Archivieren mit Rückgängig, Währung gesperrt', async ({ page }) => {
+  await ready(page);
+  await newGoal(page, 'Sparziel D', '1000', iso(0), iso(120));
+  await page.getByRole('button', { name: 'Anderer Betrag' }).click();
+  await page.getByLabel('Betrag in CAD').fill('10');
+  await page.getByRole('dialog').getByRole('button', { name: 'Speichern' }).click();
+  await expect(page.getByText('+ 10,00')).toBeVisible();
+  await page.getByRole('link', { name: 'Bearbeiten' }).click();
+  await expect(page.getByRole('button', { name: 'EUR', exact: true })).toBeDisabled();
+  await page.getByRole('link', { name: 'Abbrechen' }).click();
+  await page.getByRole('button', { name: 'Archivieren' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Planung' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Archiviert' })).toBeVisible();
+  await page.getByRole('button', { name: 'Rückgängig' }).click();
+  await expect(page.getByRole('heading', { name: 'Archiviert' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /Sparziel D/ })).toBeVisible();
 });
 
 test('Fixkosten CAD und EUR, Einnahme, Bearbeiten, Löschen', async ({ page }) => {
