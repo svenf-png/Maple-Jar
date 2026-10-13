@@ -2,16 +2,20 @@ import type { ComponentType } from 'react';
 import { createHashRouter, Navigate, type RouteObject } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
 import { ConnectPage } from '../features/connect/ConnectPage';
+import { loadPlanMessages } from '../i18n/plan-messages';
 import { AppShell } from './AppShell';
 import { RedirectIfConnected, RequireConnection, RequireHousehold } from './Guards';
-import { PlaceholderPage } from './PlaceholderPage';
+
+/** Lädt Seite und Planungs-Texte (M3) parallel; gerendert wird erst, wenn beides da ist. */
+const withPlan = async (load: () => Promise<ComponentType>): Promise<ComponentType> =>
+  (await Promise.all([load(), loadPlanMessages()]))[0];
 
 /** Vollbild-Unterseiten (ohne Tabbar), alle nur mit Haushalt erreichbar. */
 function subPages(): RouteObject[] {
-  const page = (path: string, load: () => Promise<ComponentType>): RouteObject => ({
+  const page = (path: string, load: () => Promise<ComponentType>, plan = false): RouteObject => ({
     path,
     lazy: async () => {
-      const Component = await load();
+      const Component = await (plan ? withPlan(load) : load());
       return {
         element: (
           <RequireHousehold>
@@ -36,6 +40,35 @@ function subPages(): RouteObject[] {
       '/kategorien',
       async () => (await import('../features/categories/CategoriesPage')).CategoriesPage,
     ),
+    ...planPages(page),
+  ];
+}
+
+type PageFactory = (
+  path: string,
+  load: () => Promise<ComponentType>,
+  plan?: boolean,
+) => RouteObject;
+
+/** M3-Unterseiten (Planung); alle laden die Planungs-Texte vor dem Rendern. */
+function planPages(page: PageFactory): RouteObject[] {
+  const goalForm = async () => (await import('../features/planning/GoalFormPage')).GoalFormPage;
+  const fixedForm = async () =>
+    (await import('../features/planning/FixedCostFormPage')).FixedCostFormPage;
+  const incomeForm = async () =>
+    (await import('../features/planning/IncomeFormPage')).IncomeFormPage;
+  return [
+    page('/ziel/neu', goalForm, true),
+    page('/ziel/:id/bearbeiten', goalForm, true),
+    page(
+      '/ziel/:id',
+      async () => (await import('../features/planning/GoalDetailPage')).GoalDetailPage,
+      true,
+    ),
+    page('/fixkosten/neu', fixedForm, true),
+    page('/fixkosten/:id', fixedForm, true),
+    page('/einnahme/neu', incomeForm, true),
+    page('/einnahme/:id', incomeForm, true),
   ];
 }
 
@@ -102,7 +135,9 @@ const router = createHashRouter([
       {
         index: true,
         lazy: async () => ({
-          Component: (await import('../features/overview/OverviewPage')).OverviewPage,
+          Component: await withPlan(
+            async () => (await import('../features/overview/OverviewPage')).OverviewPage,
+          ),
         }),
       },
       {
@@ -113,7 +148,11 @@ const router = createHashRouter([
       },
       {
         path: 'planung',
-        element: <PlaceholderPage title="nav.planning" hint="page.planning.hint" />,
+        lazy: async () => ({
+          Component: await withPlan(
+            async () => (await import('../features/planning/PlanningPage')).PlanningPage,
+          ),
+        }),
       },
       {
         path: 'einstellungen',

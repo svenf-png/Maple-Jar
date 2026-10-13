@@ -14,9 +14,6 @@ export const de = {
   'nav.main': 'Hauptnavigation',
   'nav.capture': 'Ausgabe erfassen',
 
-  'page.planning.hint': 'Kommt in Meilenstein 4',
-  'page.empty.title': 'Noch nichts zu sehen',
-
   'status.connected': 'Verbunden',
   'status.offline': 'Offline',
   'status.pending': '{count} warten auf Sync',

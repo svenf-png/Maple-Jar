@@ -1,12 +1,18 @@
 import { useSyncExternalStore } from 'react';
 import { de, type MessageKey } from './de';
 import { en } from './en';
+import type { PlanKey } from './plan-de';
 
 export type Lang = 'de' | 'en';
 export type Locale = 'de-DE' | 'en-CA';
 
 const KEY = 'maple-jar.lang';
-const dictionaries: Record<Lang, Record<MessageKey, string>> = { de, en };
+const dictionaries: Record<Lang, Record<string, string>> = { de, en };
+
+/** Trägt die lazy geladenen Planungs-Texte ein (nur über loadPlanMessages aufrufen). */
+export function registerMessages(lang: Lang, messages: Record<string, string>): void {
+  Object.assign(dictionaries[lang], messages);
+}
 const listeners = new Set<() => void>();
 
 export function detectLang(): Lang {
@@ -46,8 +52,8 @@ export function initLang(): void {
   syncHtmlLang();
 }
 
-export function t(key: MessageKey, params?: Record<string, string | number>): string {
-  const template = dictionaries[current][key] ?? de[key] ?? key;
+export function t(key: MessageKey | PlanKey, params?: Record<string, string | number>): string {
+  const template = dictionaries[current][key] ?? dictionaries.de[key] ?? key;
   if (!params) return template;
   return template.replace(/\{(\w+)\}/g, (m, name: string) => {
     const v = params[name];

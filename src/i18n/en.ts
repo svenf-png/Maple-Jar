@@ -16,9 +16,6 @@ export const en: Record<MessageKey, string> = {
   'nav.main': 'Main navigation',
   'nav.capture': 'Add expense',
 
-  'page.planning.hint': 'Coming in milestone 4',
-  'page.empty.title': 'Nothing to see yet',
-
   'status.connected': 'Connected',
   'status.offline': 'Offline',
   'status.pending': '{count} waiting to sync',
