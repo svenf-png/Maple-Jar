@@ -41,6 +41,17 @@
   font-weight: 600;
   font-size: 12px;
 }
+.fixed {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  color: var(--label2);
+  font-weight: 600;
+  font-size: 12px;
+}
 .amounts {
   display: flex;
   flex-direction: column;

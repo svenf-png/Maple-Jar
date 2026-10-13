@@ -20,6 +20,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
   });
 }
 void loadSession().then(initSyncRuntime);
+if (import.meta.env.VITE_E2E === '1') void import('./data/e2e-seed');
 
 const root = document.getElementById('root');
 if (root) {

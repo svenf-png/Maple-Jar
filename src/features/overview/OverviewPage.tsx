@@ -1,17 +1,22 @@
 import { Link } from 'react-router';
 import { PageHeader } from '../../app/PageHeader';
-import { useBudgets, useCategories, useEntries } from '../../data/repos';
+import { useBudgets, useCategories, useEntries, useFixedCosts } from '../../data/repos';
 import { useReadySession } from '../../data/use-session';
 import { monthSummary } from '../../domain/budget';
 import { monthOf } from '../../domain/model';
 import { formatMoney, formatMonth } from '../../i18n/format';
 import { getLocale, t, useLang } from '../../i18n/t';
 import { CheckIcon, WarnIcon } from '../../icons/ui-icons';
+import { useEntryRate } from '../../platform/use-fx';
 import { useMedia } from '../../platform/use-media';
 import { Card, ProgressBar } from '../../ui';
 import { BudgetRowView } from '../shared/BudgetRowView';
 import { EntryRow } from '../shared/EntryRow';
 import { todayIso } from '../shared/helpers';
+import { DueNext } from './DueNext';
+import { hasSplitData } from './donut-model';
+import { GoalCards } from './GoalCards';
+import { IncomeDonutChart, IncomeLegend, useIncomeSplit } from './IncomeDonut';
 import styles from './OverviewPage.module.css';
 
 export function OverviewPage() {
@@ -23,6 +28,11 @@ export function OverviewPage() {
   const budgets = useBudgets();
   const entries = useEntries();
   const today = todayIso();
+  const fixedCosts = useFixedCosts();
+  const provider = household.settings.fxProvider;
+  const todayRate = useEntryRate('EUR', today, provider).rate;
+  const split = useIncomeSplit(entries, today, todayRate);
+  const showSplit = split !== null && hasSplitData(split);
   const month = monthOf(today);
   const live = entries.filter((e) => !e.deleted);
   const summary = monthSummary({ categories, budgets, entries, month, today });
@@ -87,8 +97,11 @@ export function OverviewPage() {
                   {t(`overview.state.${summary.state === 'none' ? 'ok' : summary.state}`)}
                 </span>
               </div>
-              <div className={`${styles.big} num`}>
-                {formatMoney(summary.remaining, 'CAD', locale)}
+              <div className={styles.heroMain}>
+                <div className={`${styles.big} ${showSplit ? styles.bigWithChart : ''} num`}>
+                  {formatMoney(summary.remaining, 'CAD', locale)}
+                </div>
+                {showSplit ? <IncomeDonutChart split={split} /> : null}
               </div>
               <ProgressBar
                 value={pct}
@@ -112,6 +125,22 @@ export function OverviewPage() {
                 <span className={styles.muted}>{t('overview.perDay')}</span>
                 <strong className="num">{formatMoney(summary.perDay, 'CAD', locale)}</strong>
               </div>
+              {showSplit ? (
+                <div className={styles.perDay}>
+                  <span className={styles.muted}>{t('donut.title')}</span>
+                  <IncomeLegend split={split} />
+                </div>
+              ) : null}
+            </section>
+          </Card>
+        ) : showSplit ? (
+          <Card className={styles.card}>
+            <section className={styles.hero} aria-label={t('donut.title')}>
+              <div className={styles.heroMain}>
+                <span className={styles.donutTitle}>{t('donut.title')}</span>
+                <IncomeDonutChart split={split} />
+              </div>
+              <IncomeLegend split={split} />
             </section>
           </Card>
         ) : null}
@@ -137,6 +166,18 @@ export function OverviewPage() {
             <p className={styles.muted}>{t('overview.noBudgets')}</p>
           )}
         </section>
+
+        <GoalCards today={today} />
+
+        <DueNext
+          fixedCosts={fixedCosts}
+          entries={entries}
+          categories={categories}
+          members={household.members}
+          displayRate={todayRate}
+          provider={provider}
+          today={today}
+        />
 
         <section className={styles.section} aria-labelledby="recent-title">
           <div className={styles.sectionHead}>
