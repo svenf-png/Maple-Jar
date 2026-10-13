@@ -7,6 +7,7 @@ import type { AppEvent, Entity } from './schema';
 export interface FoldContext {
   hasCategory(id: string): boolean;
   hasMember(id: string): boolean;
+  hasGoal(id: string): boolean;
 }
 
 export interface ConflictCandidate {
@@ -42,7 +43,20 @@ export interface FoldRowResult {
 }
 
 /** Entitäten, bei denen gleichzeitige Änderungen am selben Feld einen Konflikt ergeben (sonst Last-Write-Wins). */
-const CONFLICT_ENTITIES: ReadonlySet<Entity> = new Set(['entry']);
+const CONFLICT_ENTITIES: ReadonlySet<Entity> = new Set(['entry', 'income', 'fixedCost', 'goal']);
+
+/** Reihenfolge der Berechnung: Referenzziele vor den Zeilen, die auf sie zeigen. */
+export const FOLD_ORDER: readonly Entity[] = [
+  'category',
+  'member',
+  'settings',
+  'goal',
+  'entry',
+  'budget',
+  'income',
+  'fixedCost',
+  'goalContribution',
+];
 
 export const byHlc = (a: AppEvent, b: AppEvent): number =>
   compareHlc(a.hlc, b.hlc) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
@@ -56,6 +70,17 @@ function refsMissing(e: AppEvent, ctx: FoldContext): boolean {
     if (typeof d.categoryId === 'string' && !ctx.hasCategory(d.categoryId)) return true;
   }
   if (e.entity === 'entry' && typeof d.paidBy === 'string' && !ctx.hasMember(d.paidBy)) return true;
+  if (e.entity === 'income' || e.entity === 'goalContribution') {
+    if (typeof d.memberId === 'string' && !ctx.hasMember(d.memberId)) return true;
+  }
+  if (
+    e.entity === 'fixedCost' &&
+    typeof d.categoryId === 'string' &&
+    !ctx.hasCategory(d.categoryId)
+  )
+    return true;
+  if (e.entity === 'goalContribution' && typeof d.goalId === 'string' && !ctx.hasGoal(d.goalId))
+    return true;
   return false;
 }
 
@@ -117,13 +142,18 @@ export function foldRow(
     }
   }
 
+  // Mehrere `create` derselben Zeile (deterministische ID, z. B. Fixkosten-Buchung auf zwei Geräten) sind keine
+  // Bearbeitungen: Ihre Werte werden nach HLC aufgelöst (Last-Write-Wins) und ergeben nie einen Feldkonflikt.
+  // Nur gleichzeitige `update`s desselben Feldes sind Konflikte; ein `update` schlägt jedes `create`.
   const fields: Record<string, unknown> = {};
   const conflictFields: RowConflict['fields'] = [];
   for (const [field, list] of writes) {
-    const winner = list[list.length - 1] as (typeof list)[number]; // `unique` ist nach HLC sortiert
+    const updates = list.filter((w) => w.e.op === 'update');
+    const creates = list.filter((w) => w.e.op === 'create');
+    const winner = (updates.length > 0 ? updates : creates).at(-1) as (typeof list)[number]; // nach HLC sortiert
     fields[field] = winner.value;
     if (!CONFLICT_ENTITIES.has(entity)) continue;
-    const heads = list.filter((w) => !list.some((o) => o !== w && knows(o.e, w.e)));
+    const heads = updates.filter((w) => !updates.some((o) => o !== w && knows(o.e, w.e)));
     const distinct: typeof heads = [];
     for (const h of heads) if (!distinct.some((d) => same(d.value, h.value))) distinct.push(h);
     if (distinct.length > 1) {
@@ -139,8 +169,18 @@ export function foldRow(
     }
   }
 
-  // Lebenszyklus: der jüngste Eintrag aus create/delete/restore entscheidet.
-  const lifecycle = applied.filter((e) => e.op !== 'update');
+  // Lebenszyklus: das jüngste Ereignis aus create/delete/restore entscheidet. Ein `create`, das ein älteres
+  // `delete` nicht kennt (nicht in seiner base-Kette), belebt nicht wieder: Löschen schlägt ein gleichzeitiges
+  // `create`; nur ein `restore` (oder ein `create`, das das `delete` kennt) macht die Zeile wieder sichtbar.
+  const deletes = applied.filter((e) => e.op === 'delete');
+  const lifecycle = applied.filter(
+    (e) =>
+      e.op !== 'update' &&
+      (e.op !== 'create' ||
+        deletes.every(
+          (d) => compareHlc(d.hlc, e.hlc) >= 0 || (known.get(e.id)?.has(d.id) ?? false),
+        )),
+  );
   const last = lifecycle[lifecycle.length - 1];
   const deleted = last?.op === 'delete';
 
@@ -202,12 +242,14 @@ export function foldAll(
   const rows: FoldedRow[] = [];
   const waiting: string[] = [];
   const categories = new Set<string>();
+  const goals = new Set<string>();
   const ctx: FoldContext = {
     hasCategory: (id) => categories.has(id),
     hasMember: (id) => memberIds.has(id),
+    hasGoal: (id) => goals.has(id),
   };
-  // Kategorien zuerst, damit Referenzen auf sie auflösbar sind.
-  const order: Entity[] = ['category', 'member', 'settings', 'entry', 'budget'];
+  // Referenzierte Entitäten zuerst, damit Referenzen auf sie auflösbar sind.
+  const order = FOLD_ORDER;
   for (const entity of order) {
     for (const [k, list] of groups) {
       if (!k.startsWith(`${entity}:`)) continue;
@@ -216,6 +258,7 @@ export function foldAll(
       if (result.row) {
         rows.push(result.row);
         if (entity === 'category') categories.add(result.row.id);
+        if (entity === 'goal') goals.add(result.row.id);
       }
     }
   }

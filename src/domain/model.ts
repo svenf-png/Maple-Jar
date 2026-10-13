@@ -16,6 +16,7 @@ export interface Entry {
   merchant: string;
   note: string;
   source: 'manual' | 'fixed';
+  fixedCostId?: string;
   deleted: boolean;
   conflict: boolean;
   hlc: string;
@@ -42,11 +43,77 @@ export interface Budget {
   hlc: string;
 }
 
+export type RepeatUnit = 'once' | 'week' | 'month' | 'year';
+
+/** Wiederholungsregel für Einnahmen und Fixkosten. Bei `once` ist `every` 1 und `endsOn` fehlt. */
+export interface RepeatRule {
+  unit: RepeatUnit;
+  every: number;
+  startsOn: string;
+  endsOn?: string | null;
+}
+
+export interface Income extends RepeatRule {
+  id: string;
+  name: string;
+  memberId?: string | null;
+  amountMinor: number;
+  currency: Currency;
+  deleted: boolean;
+  conflict: boolean;
+  hlc: string;
+}
+
+export interface FixedCost extends RepeatRule {
+  id: string;
+  name: string;
+  amountMinor: number;
+  currency: Currency;
+  categoryId: string;
+  icon?: string | null;
+  isSaving: boolean;
+  autobook: boolean;
+  deleted: boolean;
+  conflict: boolean;
+  hlc: string;
+}
+
+export interface Goal {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  targetMinor: number;
+  currency: Currency;
+  startsOn: string;
+  targetDate: string;
+  archivedAt?: string | null;
+  deleted: boolean;
+  conflict: boolean;
+  hlc: string;
+}
+
+export interface GoalContribution {
+  id: string;
+  goalId: string;
+  /** Ganzzahl ≠ 0 in Zielwährung, negativ = Entnahme */
+  amountMinor: number;
+  contributedOn: string;
+  memberId?: string;
+  note: string;
+  deleted: boolean;
+  hlc: string;
+}
+
 type Row = Record<string, unknown>;
 
 export const toEntry = (r: Row): Entry => r as unknown as Entry;
 export const toCategory = (r: Row): Category => r as unknown as Category;
 export const toBudget = (r: Row): Budget => r as unknown as Budget;
+export const toIncome = (r: Row): Income => r as unknown as Income;
+export const toFixedCost = (r: Row): FixedCost => r as unknown as FixedCost;
+export const toGoal = (r: Row): Goal => r as unknown as Goal;
+export const toGoalContribution = (r: Row): GoalContribution => r as unknown as GoalContribution;
 
 /** Betrag in der Basiswährung (CAD-Minor). */
 export const entryCad = (e: Pick<Entry, 'amountMinor' | 'fxRateMicro'>): bigint =>

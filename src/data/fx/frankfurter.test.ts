@@ -55,6 +55,17 @@ describe('fetchRate', () => {
     expect(fn).toHaveBeenCalledTimes(2);
   });
 
+  it('Antwort mit früherem Datum: für heute/Zukunft nicht unter dem erfragten Tag gecacht, für die Vergangenheit schon', async () => {
+    const fn = stub({ date: '2020-01-03', base: 'EUR', quote: 'CAD', rate: 1.5 });
+    await fetchRate('2020-01-04', 'ECB'); // Wochenende in der Vergangenheit: endgültig
+    await fetchRate('2020-01-04', 'ECB');
+    expect(fn).toHaveBeenCalledTimes(1);
+    const future = stub({ date: '2020-01-03', base: 'EUR', quote: 'CAD', rate: 1.5 });
+    await fetchRate('2999-01-04', 'ECB'); // Tageskurs noch nicht da: nicht cachen
+    await fetchRate('2999-01-04', 'ECB');
+    expect(future).toHaveBeenCalledTimes(2);
+  });
+
   it('liefert offline den letzten bekannten Kurs als veraltet', async () => {
     stub({ date: '2027-02-18', base: 'EUR', quote: 'CAD', rate: 1.61 });
     await fetchRate('2027-02-18', 'ECB');

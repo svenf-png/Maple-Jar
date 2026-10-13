@@ -1,6 +1,7 @@
 import { needsRateCatchUp } from '../../domain/fx';
 import type { Currency } from '../../domain/money';
 import type { MapleJarDb } from '../db';
+import { todayIso } from '../today';
 import { appendLocalEvent } from '../write';
 
 export interface RateLookup {
@@ -16,6 +17,7 @@ export interface RateLookup {
 export async function catchUpRates(
   db: MapleJarDb,
   getRate: (date: string, provider: 'ECB' | 'BOC') => Promise<RateLookup>,
+  today: string = todayIso(),
 ): Promise<number> {
   const deviceId = (await db.meta.get('deviceId'))?.value as string | undefined;
   const provider = (
@@ -43,6 +45,8 @@ export async function catchUpRates(
     try {
       const rate = await getRate(row.bookedOn as string, provider);
       if (rate.stale) continue;
+      // Für heute oder später ist ein Kurs mit früherem Datum nur ein Notbehelf: vorläufig lassen.
+      if (rate.date !== row.bookedOn && (row.bookedOn as string) >= today) continue;
       await appendLocalEvent(db, {
         entity: 'entry',
         rowId: row.id,

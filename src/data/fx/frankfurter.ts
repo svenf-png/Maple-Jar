@@ -1,4 +1,5 @@
 import { db } from '../db';
+import { todayIso } from '../today';
 
 export type FxProvider = 'ECB' | 'BOC';
 
@@ -53,9 +54,15 @@ export async function fetchRate(date: string, provider: FxProvider): Promise<FxR
     // Zahl aus JSON.parse ist bereits Float; String-Darstellung genügt bei ≤ 6 Nachkommastellen.
     const rateMicro = parseRateMicro(json.rate);
     const stored: Stored = { rateMicro: rateMicro.toString(), date: json.date };
+    // Für heute oder die Zukunft ist eine Antwort mit früherem Datum nur ein Notbehelf (Tageskurs noch nicht
+    // veröffentlicht): nicht unter dem erfragten Tag zwischenspeichern, damit der Nachzug den echten Kurs holt.
+    const interim = date >= todayIso() && json.date < date;
+    // Parallele Abrufe: der zuletzt bekannte Kurs wird nur durch einen neueren ersetzt.
+    const last = (await db.meta.get(lastKey(provider)))?.value as Stored | undefined;
+    const newer = !last || json.date >= last.date;
     await db.meta.bulkPut([
-      { key: cacheKey(date, provider), value: stored },
-      { key: lastKey(provider), value: stored },
+      ...(interim ? [] : [{ key: cacheKey(date, provider), value: stored }]),
+      ...(newer ? [{ key: lastKey(provider), value: stored }] : []),
     ]);
     return { rateMicro, date: json.date, provider, stale: false };
   } catch (err) {

@@ -1,5 +1,5 @@
 import type { ConflictRow, EventRow, MapleJarDb, MaterialRow } from '../db';
-import { type FoldContext, type FoldedRow, foldRow, rowKey } from './fold';
+import { FOLD_ORDER, type FoldContext, type FoldedRow, foldRow, rowKey } from './fold';
 import type { AppEvent, Entity } from './schema';
 
 // Alle Funktionen hier laufen innerhalb einer Dexie-Transaktion des Aufrufers.
@@ -9,7 +9,7 @@ export interface RowRef {
   rowId: string;
 }
 
-const ORDER: Entity[] = ['category', 'member', 'settings', 'entry', 'budget'];
+const ORDER = FOLD_ORDER;
 
 export const toAppEvent = (row: EventRow): AppEvent => ({
   v: 1,
@@ -87,11 +87,18 @@ export async function refoldRows(
     for (const e of events) {
       if (typeof e.data?.categoryId === 'string') categoryIds.add(e.data.categoryId);
     }
+    const goalIds = new Set<string>();
+    for (const e of events) {
+      if (typeof e.data?.goalId === 'string') goalIds.add(e.data.goalId);
+    }
     const found = await db.category.bulkGet([...categoryIds]);
     const existing = new Set(found.filter((r) => r !== undefined).map((r) => r.id));
+    const foundGoals = await db.goal.bulkGet([...goalIds]);
+    const existingGoals = new Set(foundGoals.filter((r) => r !== undefined).map((r) => r.id));
     const ctx: FoldContext = {
       hasCategory: (id) => existing.has(id),
       hasMember: (id) => memberIds.has(id),
+      hasGoal: (id) => existingGoals.has(id),
     };
     const result = foldRow(ref.entity, events, ctx);
     const table = db[ref.entity];

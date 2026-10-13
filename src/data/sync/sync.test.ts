@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { fixedCostEntryId } from '../../domain/fixed-cost';
+import { bookFixedCost, deleteEntry, runAutobook } from '../actions';
 import { type EventRow, MapleJarDb } from '../db';
 import { CAT_1, categoryData, entryData, ROW_1, uuid } from '../events/test-helpers';
 import { exportEventsJson } from '../export';
@@ -384,8 +386,8 @@ describe('Kurse nachziehen', () => {
     await sync(a);
     await sync(b);
     const rate = async () => ({ rateMicro: 1_450_000n, date: '2027-01-02', stale: false });
-    expect(await catchUpRates(b.db, rate)).toBe(0);
-    expect(await catchUpRates(a.db, rate)).toBe(1);
+    expect(await catchUpRates(b.db, rate, '2027-06-01')).toBe(0);
+    expect(await catchUpRates(a.db, rate, '2027-06-01')).toBe(1);
     const row = await rowOf(a, ROW_1);
     expect(row).toMatchObject({
       fxRateMicro: 1_450_000,
@@ -414,6 +416,159 @@ describe('Kurse nachziehen', () => {
       }),
     ).toBe(0);
     expect((await rowOf(a, ROW_1))?.fxProvisional).toBe(true);
+  });
+
+  it('lässt einen Eintrag von heute vorläufig, solange nur ein Kurs eines früheren Tages vorliegt', async () => {
+    await write(a, { entity: 'category', rowId: CAT_1, op: 'create', data: categoryData() });
+    await write(a, {
+      entity: 'entry',
+      rowId: ROW_1,
+      op: 'create',
+      data: entryData({ currency: 'EUR', fxRateMicro: 1_400_000, fxProvisional: true }),
+    });
+    const earlier = async () => ({ rateMicro: 1_450_000n, date: '2027-01-01', stale: false });
+    expect(await catchUpRates(a.db, earlier, '2027-01-02')).toBe(0);
+    expect((await rowOf(a, ROW_1))?.fxProvisional).toBe(true);
+    // Ein vergangener Tag (Wochenende, Feiertag): früherer Kurs ist endgültig
+    expect(await catchUpRates(a.db, earlier, '2027-01-05')).toBe(1);
+    expect((await rowOf(a, ROW_1))?.fxProvisional).toBe(false);
+  });
+});
+
+describe('Fixkosten-Buchung auf zwei Geräten', () => {
+  const FC = uuid();
+  const DUE = '2027-01-10';
+  async function setup() {
+    await write(a, { entity: 'category', rowId: CAT_1, op: 'create', data: categoryData() });
+    await write(a, {
+      entity: 'fixedCost',
+      rowId: FC,
+      op: 'create',
+      data: {
+        name: 'Streaming-Abo A',
+        amountMinor: 1299,
+        currency: 'CAD',
+        unit: 'month',
+        every: 1,
+        startsOn: '2027-01-10',
+        categoryId: CAT_1,
+        isSaving: false,
+        autobook: true,
+      },
+    });
+    await sync(a);
+    await sync(b);
+    return fixedCostEntryId(FC, DUE);
+  }
+  async function expectOneEntry(id: string) {
+    await sync(a);
+    await sync(b);
+    await sync(a);
+    for (const d of [a, b]) {
+      const rows = (await d.db.entry.toArray()).filter((e) => e.id === id);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({ deleted: false, conflict: false, source: 'fixed' });
+      expect((await d.db.entry.toArray()).filter((e) => !e.deleted)).toHaveLength(1);
+    }
+  }
+
+  it('beide Geräte buchen offline per Autobook: genau ein Eintrag, kein Konflikt', async () => {
+    const id = await setup();
+    expect(await runAutobook(a.db, null, '2027-01-12')).toBe(1);
+    expect(await runAutobook(b.db, null, '2027-01-12')).toBe(1);
+    await expectOneEntry(id);
+  });
+
+  it('Tipp-Buchung (ohne Override) auf A, Autobook auf B: ein Eintrag, kein Konflikt', async () => {
+    const id = await setup();
+    expect(await bookFixedCost(a.db, FC, DUE, null)).toBe('booked');
+    expect(await runAutobook(b.db, null, '2027-01-12')).toBe(1);
+    await expectOneEntry(id);
+  });
+
+  it('auf A gelöschte Autobuchung bleibt gelöscht, wenn B erst synchronisiert und dann Autobook läuft', async () => {
+    const id = await setup();
+    expect(await runAutobook(a.db, null, '2027-01-12')).toBe(1);
+    await sync(a);
+    await sync(b); // B hat den Eintrag
+    await deleteEntry(a.db, id);
+    await sync(a);
+    await sync(b); // erst Sync, dann Autobook (Reihenfolge der Laufzeit)
+    expect(await runAutobook(b.db, null, '2027-01-12')).toBe(0);
+    await sync(b);
+    await sync(a);
+    for (const d of [a, b]) expect((await d.db.entry.get(id))?.deleted).toBe(true);
+  });
+});
+
+describe('Fixkosten-Buchung: Löschen und Kurse', () => {
+  const FC = uuid();
+  const DUE = '2027-01-10';
+  async function setup(currency: 'CAD' | 'EUR') {
+    await write(a, { entity: 'category', rowId: CAT_1, op: 'create', data: categoryData() });
+    await write(a, {
+      entity: 'fixedCost',
+      rowId: FC,
+      op: 'create',
+      data: {
+        name: 'Abo A',
+        amountMinor: 1299,
+        currency,
+        unit: 'month',
+        every: 1,
+        startsOn: DUE,
+        categoryId: CAT_1,
+        isSaving: false,
+        autobook: true,
+      },
+    });
+    await sync(a);
+    await sync(b);
+    return fixedCostEntryId(FC, DUE);
+  }
+
+  it('A löscht vor dem Push, B bucht gleichzeitig denselben Eintrag: bleibt gelöscht', async () => {
+    const id = await setup('CAD');
+    expect(await runAutobook(a.db, null, '2027-01-12')).toBe(1);
+    await deleteEntry(a.db, id); // noch nicht gepusht
+    expect(await runAutobook(b.db, null, '2027-01-12')).toBe(1); // B kennt das Löschen nicht
+    await sync(a);
+    await sync(b);
+    await sync(a);
+    for (const d of [a, b]) {
+      expect(await d.db.entry.get(id)).toMatchObject({ deleted: true, conflict: false });
+    }
+  });
+
+  it('EUR: gleicher Eintrag mit anderem Kurs auf zwei Geräten ergibt keinen Konflikt, Nachzug heilt', async () => {
+    const id = await setup('EUR');
+    await runAutobook(
+      a.db,
+      { rateMicro: 1_500_000n, date: '2027-01-10', stale: false },
+      '2027-01-12',
+    );
+    await runAutobook(
+      b.db,
+      { rateMicro: 1_480_000n, date: '2027-01-08', stale: true },
+      '2027-01-12',
+    );
+    await sync(a);
+    await sync(b);
+    await sync(a);
+    for (const d of [a, b]) {
+      const row = await d.db.entry.get(id);
+      expect(row?.conflict).toBe(false);
+      expect(await d.db.conflicts.count()).toBe(0);
+    }
+    const ra = await a.db.entry.get(id);
+    const rb = await b.db.entry.get(id);
+    expect(ra?.fxRateMicro).toBe(rb?.fxRateMicro); // beide Geräte gleicher Stand
+    // Der Kursnachzug des erstellenden Geräts repariert vorläufige Kurse
+    if (ra?.fxProvisional) {
+      const fixer = ra.createdByDevice === a.deviceId ? a : b;
+      const rate = async () => ({ rateMicro: 1_510_000n, date: '2027-01-10', stale: false });
+      expect(await catchUpRates(fixer.db, rate, '2027-06-01')).toBe(1);
+    }
   });
 });
 
