@@ -11,7 +11,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await setupHousehold(page);
       await go(page, '#/planung');
       await expect(page.getByRole('heading', { level: 1, name: 'Planung' })).toBeVisible();
-      await expect(page.getByText('In Arbeit')).toBeVisible();
+      await expect(page.getByText('Noch kein Sparziel')).toBeVisible();
       const results = await new AxeBuilder({ page }).analyze();
       expect(
         results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
