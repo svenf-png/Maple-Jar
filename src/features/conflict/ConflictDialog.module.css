@@ -1,0 +1,113 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  padding: var(--s-1) var(--s-3);
+  min-height: 32px;
+  border-radius: var(--r-pill);
+  background: var(--infoTint);
+  color: var(--info);
+  font-size: 13px;
+  font-weight: 600;
+  border: 0;
+  cursor: pointer;
+}
+.intro {
+  color: var(--label2);
+  margin-bottom: var(--s-4);
+}
+.versions {
+  border: 0;
+  padding: 0;
+  margin: 0 0 var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.version {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-field);
+  background: var(--fill2);
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+.version:has(input:checked) {
+  border-color: var(--acc);
+  background: var(--card);
+}
+.version:has(input:focus-visible) {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.head input {
+  accent-color: var(--acc);
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+.who {
+  font-weight: 700;
+}
+.when {
+  margin-left: auto;
+  color: var(--label2);
+  font-size: 13px;
+}
+.fields {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--s-1) var(--s-3);
+  font-size: 15px;
+}
+.fields dt {
+  color: var(--label2);
+}
+.fields dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.diff {
+  font-weight: 700;
+  color: var(--info);
+  background: var(--infoTint);
+  border-radius: var(--r-field);
+  padding: 0 var(--s-2);
+  justify-self: end;
+}
+.hint {
+  color: var(--label2);
+  font-size: 13px;
+  margin-bottom: var(--s-3);
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.error {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--warn);
+  background: var(--warnTint);
+  border-radius: var(--r-field);
+  padding: var(--s-2) var(--s-3);
+  margin-bottom: var(--s-3);
+}

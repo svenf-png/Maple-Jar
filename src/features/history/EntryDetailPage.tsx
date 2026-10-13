@@ -1,14 +1,17 @@
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { deleteEntry, restoreEntry } from '../../data/actions';
 import { db } from '../../data/db';
-import { useCategories, useEntries, useEntryEvents } from '../../data/repos';
+import { useCategories, useEntries, useEntryEvents, useFixedCosts } from '../../data/repos';
 import { useReadySession } from '../../data/use-session';
 import { entryHistory } from '../../domain/activity';
 import { entryCad } from '../../domain/model';
 import { formatDay, formatMoney, formatRate } from '../../i18n/format';
+import { loadPlanMessages } from '../../i18n/plan-messages';
 import { getLocale, t, useLang } from '../../i18n/t';
 import { InfoIcon, TrashIcon, WarnIcon } from '../../icons/ui-icons';
 import { Button, Card, CategoryTile, ListRow, useToast } from '../../ui';
+import { useConflictDialog } from '../conflict/use-conflict-dialog';
 import { dayLabel, dayOfMs, memberName, todayIso } from '../shared/helpers';
 import { activityText } from './ActivityFeed';
 import styles from './EntryDetailPage.module.css';
@@ -25,6 +28,15 @@ export function EntryDetailPage() {
   const events = useEntryEvents();
   const entry = entries.find((e) => e.id === id);
   const category = categories.find((c) => c.id === entry?.categoryId);
+  const fixedCosts = useFixedCosts();
+  const fixedCost = fixedCosts.find((f) => f.id === entry?.fixedCostId);
+  const conflictDialog = useConflictDialog('entry', id);
+  // Die Texte für Konflikt und Fixkosten-Verweis liegen im Planungs-Paket (lazy).
+  const needsPlan = Boolean(entry?.conflict || entry?.source === 'fixed');
+  const [planReady, setPlanReady] = useState(false);
+  useEffect(() => {
+    if (needsPlan) void loadPlanMessages().then(() => setPlanReady(true));
+  }, [needsPlan]);
 
   if (!entry) {
     return (
@@ -111,7 +123,18 @@ export function EntryDetailPage() {
           <span>
             <strong>{t('history.conflict')}</strong> {t('detail.conflictText')}
           </span>
+          {planReady ? (
+            <Button variant="secondary" onClick={() => void conflictDialog.show()}>
+              {t('conflict.title')}
+            </Button>
+          ) : null}
         </div>
+      ) : null}
+      {conflictDialog.dialog}
+      {planReady && entry.source === 'fixed' && fixedCost ? (
+        <Link to={`/fixkosten/${fixedCost.id}`} className={styles.back}>
+          {t('conflict.fromFixed', { name: fixedCost.name })}
+        </Link>
       ) : null}
 
       <Card className={styles.card}>
