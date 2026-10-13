@@ -68,11 +68,13 @@ describe('dueNext', () => {
     expect(await dueNext([fc], [], '2027-02-09', 7)).toHaveLength(0); // 35 Tage zurück: 36. Tag des Fensters
     expect(await dueNext([fc], [], '2027-02-08', 7)).toHaveLength(1); // 34 Tage zurück: Fenster = 35 Tage inkl. heute
   });
-  it('gebuchte und gelöschte Buchungen erscheinen nicht', async () => {
+  it('gebuchte Buchungen erscheinen nicht, gelöschte (Rückgängig) wieder als deleted', async () => {
     const fc = fixedCost({ id: 'fa', startsOn: '2027-02-12', unit: 'once' });
     const id = await fixedCostEntryId('fa', '2027-02-12');
     expect(await dueNext([fc], [entry({ id })], today, 7)).toEqual([]);
-    expect(await dueNext([fc], [entry({ id, deleted: true })], today, 7)).toEqual([]);
+    expect(await dueNext([fc], [entry({ id, deleted: true })], today, 7)).toEqual([
+      { fixedCostId: 'fa', dueOn: '2027-02-12', entryId: id, state: 'deleted' },
+    ]);
     const open = await dueNext([fc], [], today, 7);
     expect(open).toEqual([{ fixedCostId: 'fa', dueOn: '2027-02-12', entryId: id, state: 'open' }]);
   });

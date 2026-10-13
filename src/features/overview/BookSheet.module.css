@@ -1,0 +1,51 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.headText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.big {
+  font-size: 22px;
+  font-weight: 700;
+}
+.facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px var(--s-4);
+  font-size: 15px;
+}
+.facts dt {
+  color: var(--label2);
+}
+.facts dd {
+  margin: 0;
+  text-align: right;
+}
+.error {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--s-2) var(--s-3);
+  border-radius: 10px;
+  background: var(--warnTint);
+  color: var(--warn);
+  font-weight: 600;
+  font-size: 14px;
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}

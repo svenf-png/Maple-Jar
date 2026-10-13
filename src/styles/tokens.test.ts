@@ -60,6 +60,36 @@ describe.each([
   });
 });
 
+const segs = ['seg-fixed', 'seg-budget', 'seg-other', 'seg-saving'] as const;
+const resolveVar = (vars: Record<string, string>, name: string): string => {
+  const v = vars[name] as string;
+  const ref = /^var\(--([\w-]+)\)$/.exec(v);
+  return ref ? resolveVar(vars, ref[1] as string) : v;
+};
+
+describe.each([
+  ['hell', light],
+  ['dunkel (data-theme)', dark],
+  ['dunkel (Media-Query)', darkMedia],
+])('Donut-Segmente %s', (_name, vars) => {
+  const seg = (n: string) => resolveVar(vars, n);
+  const card = vars.card as string;
+  it.each([...segs, 'seg-overflow'])('%s ≥ 3:1 auf card', (n) => {
+    expect(contrast(seg(n), card), n).toBeGreaterThanOrEqual(3);
+  });
+  it('Nachbarsegmente unterscheiden sich in der Helligkeit (≥ 1,2:1)', () => {
+    const order = [...segs, 'seg-free'];
+    for (let i = 0; i < order.length - 1; i++) {
+      const [a, b] = [order[i], order[i + 1]] as [string, string];
+      expect(contrast(seg(a), seg(b)), `${a}/${b}`).toBeGreaterThanOrEqual(1.2);
+    }
+  });
+  it('Überlauf ist von allen Segmenten unterscheidbar und nutzt nie --acc', () => {
+    for (const n of segs) expect(seg('seg-overflow')).not.toBe(seg(n));
+    for (const n of [...segs, 'seg-free', 'seg-overflow']) expect(vars[n]).not.toBe('var(--acc)');
+  });
+});
+
 describe('Dunkel-Varianten sind identisch', () => {
   it('Media-Query und data-theme definieren dieselben Werte', () => {
     const { onCat: _a, ...rest } = dark;

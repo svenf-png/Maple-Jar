@@ -275,6 +275,9 @@ export const updateIncome = (db: MapleJarDb, id: string, patch: IncomePatch) =>
 export const deleteIncome = (db: MapleJarDb, id: string) =>
   appendLocalEvent(db, { entity: 'income', rowId: id, op: 'delete' });
 
+export const restoreIncome = (db: MapleJarDb, id: string) =>
+  appendLocalEvent(db, { entity: 'income', rowId: id, op: 'restore' });
+
 export interface FixedCostInput extends RepeatInput {
   name: string;
   amountMinor: number;
@@ -291,6 +294,9 @@ export const updateFixedCost = (db: MapleJarDb, id: string, patch: FixedCostPatc
   updateFields(db, 'fixedCost', id, patch);
 export const deleteFixedCost = (db: MapleJarDb, id: string) =>
   appendLocalEvent(db, { entity: 'fixedCost', rowId: id, op: 'delete' });
+
+export const restoreFixedCost = (db: MapleJarDb, id: string) =>
+  appendLocalEvent(db, { entity: 'fixedCost', rowId: id, op: 'restore' });
 
 export interface GoalInput {
   name: string;

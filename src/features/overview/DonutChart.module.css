@@ -1,0 +1,35 @@
+.svg {
+  flex: none;
+  display: block;
+}
+.fixed {
+  stroke: var(--seg-fixed);
+}
+.budget {
+  stroke: var(--seg-budget);
+}
+.other {
+  stroke: var(--seg-other);
+}
+.saving {
+  stroke: var(--seg-saving);
+}
+.free {
+  stroke: var(--seg-free);
+}
+.overflow {
+  stroke: var(--seg-overflow);
+}
+.sweep {
+  stroke-dashoffset: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sweep {
+    animation: sweep 600ms ease-out;
+  }
+  @keyframes sweep {
+    from {
+      stroke-dashoffset: var(--len);
+    }
+  }
+}

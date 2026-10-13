@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { de } from './de';
 import { en } from './en';
 import { formatMoney, formatMonth, formatRate } from './format';
+import { planDe } from './plan-de';
+import { planEn } from './plan-en';
+import { loadPlanMessages } from './plan-messages';
 import { setLang, t } from './t';
 
 const nbsp = ' ';
@@ -34,6 +37,30 @@ describe('t()', () => {
     for (const key of Object.keys(de) as Array<keyof typeof de>) {
       expect(ph(en[key]), key).toEqual(ph(de[key]));
     }
+  });
+});
+
+describe('Planungs-Texte (lazy)', () => {
+  const ph = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
+
+  it('EN hat exakt dieselben Schlüssel wie DE', () => {
+    expect(Object.keys(planEn).sort()).toEqual(Object.keys(planDe).sort());
+  });
+  it('Platzhalter stimmen überein', () => {
+    for (const key of Object.keys(planDe) as Array<keyof typeof planDe>) {
+      expect(ph(planEn[key]), key).toEqual(ph(planDe[key]));
+    }
+  });
+  it('keine Überschneidung mit den Entry-Schlüsseln', () => {
+    for (const key of Object.keys(planDe)) expect(key in de, key).toBe(false);
+  });
+  it('loadPlanMessages registriert beide Sprachen in t()', async () => {
+    await loadPlanMessages();
+    setLang('de');
+    expect(t('plan.title')).toBe('Planung');
+    setLang('en');
+    expect(t('plan.title')).toBe('Planning');
+    setLang('de');
   });
 });
 
