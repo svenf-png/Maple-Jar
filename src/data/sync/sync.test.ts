@@ -386,8 +386,8 @@ describe('Kurse nachziehen', () => {
     await sync(a);
     await sync(b);
     const rate = async () => ({ rateMicro: 1_450_000n, date: '2027-01-02', stale: false });
-    expect(await catchUpRates(b.db, rate)).toBe(0);
-    expect(await catchUpRates(a.db, rate)).toBe(1);
+    expect(await catchUpRates(b.db, rate, '2027-06-01')).toBe(0);
+    expect(await catchUpRates(a.db, rate, '2027-06-01')).toBe(1);
     const row = await rowOf(a, ROW_1);
     expect(row).toMatchObject({
       fxRateMicro: 1_450_000,
@@ -416,6 +416,22 @@ describe('Kurse nachziehen', () => {
       }),
     ).toBe(0);
     expect((await rowOf(a, ROW_1))?.fxProvisional).toBe(true);
+  });
+
+  it('lässt einen Eintrag von heute vorläufig, solange nur ein Kurs eines früheren Tages vorliegt', async () => {
+    await write(a, { entity: 'category', rowId: CAT_1, op: 'create', data: categoryData() });
+    await write(a, {
+      entity: 'entry',
+      rowId: ROW_1,
+      op: 'create',
+      data: entryData({ currency: 'EUR', fxRateMicro: 1_400_000, fxProvisional: true }),
+    });
+    const earlier = async () => ({ rateMicro: 1_450_000n, date: '2027-01-01', stale: false });
+    expect(await catchUpRates(a.db, earlier, '2027-01-02')).toBe(0);
+    expect((await rowOf(a, ROW_1))?.fxProvisional).toBe(true);
+    // Ein vergangener Tag (Wochenende, Feiertag): früherer Kurs ist endgültig
+    expect(await catchUpRates(a.db, earlier, '2027-01-05')).toBe(1);
+    expect((await rowOf(a, ROW_1))?.fxProvisional).toBe(false);
   });
 });
 
@@ -551,7 +567,7 @@ describe('Fixkosten-Buchung: Löschen und Kurse', () => {
     if (ra?.fxProvisional) {
       const fixer = ra.createdByDevice === a.deviceId ? a : b;
       const rate = async () => ({ rateMicro: 1_510_000n, date: '2027-01-10', stale: false });
-      expect(await catchUpRates(fixer.db, rate)).toBe(1);
+      expect(await catchUpRates(fixer.db, rate, '2027-06-01')).toBe(1);
     }
   });
 });
