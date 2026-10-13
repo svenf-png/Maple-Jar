@@ -485,6 +485,77 @@ describe('Fixkosten-Buchung auf zwei Geräten', () => {
   });
 });
 
+describe('Fixkosten-Buchung: Löschen und Kurse', () => {
+  const FC = uuid();
+  const DUE = '2027-01-10';
+  async function setup(currency: 'CAD' | 'EUR') {
+    await write(a, { entity: 'category', rowId: CAT_1, op: 'create', data: categoryData() });
+    await write(a, {
+      entity: 'fixedCost',
+      rowId: FC,
+      op: 'create',
+      data: {
+        name: 'Abo A',
+        amountMinor: 1299,
+        currency,
+        unit: 'month',
+        every: 1,
+        startsOn: DUE,
+        categoryId: CAT_1,
+        isSaving: false,
+        autobook: true,
+      },
+    });
+    await sync(a);
+    await sync(b);
+    return fixedCostEntryId(FC, DUE);
+  }
+
+  it('A löscht vor dem Push, B bucht gleichzeitig denselben Eintrag: bleibt gelöscht', async () => {
+    const id = await setup('CAD');
+    expect(await runAutobook(a.db, null, '2027-01-12')).toBe(1);
+    await deleteEntry(a.db, id); // noch nicht gepusht
+    expect(await runAutobook(b.db, null, '2027-01-12')).toBe(1); // B kennt das Löschen nicht
+    await sync(a);
+    await sync(b);
+    await sync(a);
+    for (const d of [a, b]) {
+      expect(await d.db.entry.get(id)).toMatchObject({ deleted: true, conflict: false });
+    }
+  });
+
+  it('EUR: gleicher Eintrag mit anderem Kurs auf zwei Geräten ergibt keinen Konflikt, Nachzug heilt', async () => {
+    const id = await setup('EUR');
+    await runAutobook(
+      a.db,
+      { rateMicro: 1_500_000n, date: '2027-01-10', stale: false },
+      '2027-01-12',
+    );
+    await runAutobook(
+      b.db,
+      { rateMicro: 1_480_000n, date: '2027-01-08', stale: true },
+      '2027-01-12',
+    );
+    await sync(a);
+    await sync(b);
+    await sync(a);
+    for (const d of [a, b]) {
+      const row = await d.db.entry.get(id);
+      expect(row?.conflict).toBe(false);
+      expect(await d.db.conflicts.count()).toBe(0);
+    }
+    const ra = await a.db.entry.get(id);
+    const rb = await b.db.entry.get(id);
+    expect(ra?.fxRateMicro).toBe(rb?.fxRateMicro); // beide Geräte gleicher Stand
+    // Der Kursnachzug des erstellenden Geräts repariert vorläufige Kurse
+    if (ra?.fxProvisional) {
+      const fixer = ra.createdByDevice === a.deviceId ? a : b;
+      const rate = async () => ({ rateMicro: 1_510_000n, date: '2027-01-10', stale: false });
+      expect(await catchUpRates(fixer.db, rate)).toBe(1);
+    }
+  });
+});
+
 describe('Export', () => {
   it('exportiert alle Ereignisse als JSON, sortiert nach HLC', async () => {
     await write(a, { entity: 'category', rowId: CAT_1, op: 'create', data: categoryData() });

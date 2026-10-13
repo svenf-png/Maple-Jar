@@ -7,7 +7,7 @@ import { addDays, occurrences } from './schedule';
 // Die ID-Ableitung ist asynchron (crypto.subtle). Alle Funktionen, die IDs brauchen, sind asynchron;
 // rein synchrone Verbraucher (z. B. income-split) bekommen die IDs vorberechnet als `OccurrenceIds`.
 
-/** Autobook und „überfällig“ schauen höchstens so viele Tage zurück. */
+/** Autobook und „überfällig“ schauen höchstens so viele Tage zurück (heute eingeschlossen). */
 export const LOOKBACK_DAYS = 35;
 
 export type BookingState = 'open' | 'booked' | 'deleted';
@@ -48,23 +48,40 @@ export function bookingState(entryId: string, entries: readonly Entry[]): Bookin
   return found.deleted ? 'deleted' : 'booked';
 }
 
-export const isBooked = (state: BookingState): boolean => state === 'booked';
+/**
+ * Je Fixkosten das späteste `bookedOn` unter den Einträgen mit `source: 'fixed'` (auch gelöschte).
+ * Fälligkeiten bis einschließlich diesem Tag gelten als abgedeckt (siehe `dueWithIds`).
+ */
+export function latestFixedBookings(entries: readonly Entry[]): Map<string, string> {
+  const latest = new Map<string, string>();
+  for (const e of entries) {
+    if (e.source !== 'fixed' || !e.fixedCostId) continue;
+    const cur = latest.get(e.fixedCostId);
+    if (cur === undefined || e.bookedOn > cur) latest.set(e.fixedCostId, e.bookedOn);
+  }
+  return latest;
+}
 
-/** Alle Fälligkeiten der (nicht gelöschten) Fixkosten in `from`..`to` mit ID und Zustand, nach Datum sortiert. */
+/**
+ * Alle Fälligkeiten der (nicht gelöschten) Fixkosten in `from`..`to` mit ID und Zustand, nach Datum sortiert.
+ * Eine Fälligkeit, deren Tag nicht nach dem spätesten gebuchten Fixkosten-Eintrag derselben Fixkosten liegt, gilt
+ * als `booked` (abgedeckt), auch wenn ihre eigene ID unbekannt ist: so bucht eine geänderte Terminregel
+ * (z. B. anderer Starttag) keinen Zeitraum doppelt.
+ */
 export async function dueWithIds(
   fixedCosts: readonly FixedCost[],
   entries: readonly Entry[],
   from: string,
   to: string,
 ): Promise<DueItem[]> {
-  const byId = new Map(entries.map((e) => [e.id, e]));
+  const latest = latestFixedBookings(entries);
   const items: DueItem[] = [];
   for (const fc of fixedCosts) {
     if (fc.deleted) continue;
     for (const dueOn of occurrences(fc, from, to)) {
       const entryId = await fixedCostEntryId(fc.id, dueOn);
-      const found = byId.get(entryId);
-      const state: BookingState = !found ? 'open' : found.deleted ? 'deleted' : 'booked';
+      let state = bookingState(entryId, entries);
+      if (state === 'open' && dueOn <= (latest.get(fc.id) ?? '')) state = 'booked';
       items.push({ fixedCostId: fc.id, dueOn, entryId, state });
     }
   }
@@ -89,7 +106,7 @@ export async function occurrenceIds(
 }
 
 /**
- * „Als Nächstes fällig“: offene Fälligkeiten von `today - 35 Tage` (überfällige) bis `today + horizonDays`,
+ * „Als Nächstes fällig“: offene Fälligkeiten der letzten 35 Tage (überfällige, heute eingeschlossen) bis `today + horizonDays`,
  * nach Datum sortiert. Gebuchte und gelöschte Buchungen erscheinen nicht.
  */
 export async function dueNext(
@@ -101,7 +118,7 @@ export async function dueNext(
   const items = await dueWithIds(
     fixedCosts,
     entries,
-    addDays(today, -LOOKBACK_DAYS),
+    addDays(today, -(LOOKBACK_DAYS - 1)),
     addDays(today, horizonDays),
   );
   return items.filter((i) => i.state === 'open');
@@ -109,7 +126,7 @@ export async function dueNext(
 
 /**
  * Fälligkeiten, die beim Start bzw. nach dem Sync automatisch gebucht werden: `autobook`, Fälligkeit in
- * `today - 35 Tage`..`today`, Zustand `open`. Ein gelöschter gebuchter Eintrag (`deleted`) wird NICHT neu gebucht.
+ * in den letzten 35 Tagen (heute eingeschlossen) bis `today`, Zustand `open`. Ein gelöschter gebuchter Eintrag (`deleted`) wird NICHT neu gebucht.
  */
 export async function autobookCandidates(
   fixedCosts: readonly FixedCost[],
@@ -117,7 +134,7 @@ export async function autobookCandidates(
   today: string,
 ): Promise<DueItem[]> {
   const auto = fixedCosts.filter((fc) => fc.autobook && !fc.deleted);
-  const items = await dueWithIds(auto, entries, addDays(today, -LOOKBACK_DAYS), today);
+  const items = await dueWithIds(auto, entries, addDays(today, -(LOOKBACK_DAYS - 1)), today);
   return items.filter((i) => i.state === 'open');
 }
 
@@ -144,6 +161,10 @@ export function bookingDraft(
 ): BookingDraft | null {
   const choice = chooseRate(fixedCost.currency, dueOn, rate);
   if (!choice) return null;
+  // Ein Kurs, der nicht für den Fälligkeitstag gilt (Rückfall, letzter bekannter), ist nie endgültig:
+  // der Kursnachzug des erstellenden Geräts holt den Tageskurs nach.
+  const provisional =
+    choice.provisional || (fixedCost.currency === 'EUR' && rate !== null && rate.date !== dueOn);
   return {
     amountMinor: fixedCost.amountMinor,
     currency: fixedCost.currency,
@@ -153,7 +174,7 @@ export function bookingDraft(
     fixedCostId: fixedCost.id,
     fxRateMicro: choice.rateMicro,
     fxRateDate: choice.rateDate,
-    fxProvisional: choice.provisional,
+    fxProvisional: provisional,
   };
 }
 

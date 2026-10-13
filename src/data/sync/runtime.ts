@@ -17,7 +17,7 @@ let unsubLocal: (() => void) | null = null;
 let outboxWatch: { unsubscribe(): void } | null = null;
 let householdFetched = false;
 
-/** Kurs wie in der Erfassung: Tageskurs (max. 3 s), sonst letzter bekannter, sonst null. */
+/** Kurs wie in der Erfassung, für den Tag `day`: Tageskurs (max. 3 s), sonst letzter bekannter, sonst null. */
 async function knownRate(provider: FxProvider, day: string): Promise<KnownRate | null> {
   const timeout = new Promise<null>((r) => setTimeout(() => r(null), 3000));
   const fetched = navigator.onLine
@@ -39,14 +39,11 @@ function autobook(): Promise<void> {
     try {
       const day = todayIso();
       const { runAutobook } = await import('../actions');
-      const needsRate = await db.fixedCost
-        .filter((f) => !f.deleted && f.autobook === true && f.currency === 'EUR')
-        .count();
       const provider = (
         (await db.meta.get('household'))?.value as { settings?: { fxProvider?: FxProvider } }
       )?.settings?.fxProvider;
-      const rate = needsRate > 0 && provider ? await knownRate(provider, day) : null;
-      await runAutobook(db, rate, day);
+      // Kurs je Fälligkeitstag (nicht der von heute); ein Kurs eines anderen Tages bucht vorläufig.
+      await runAutobook(db, provider ? (dueOn) => knownRate(provider, dueOn) : null, day);
     } catch {
       // Nächster Lauf versucht es erneut.
     }

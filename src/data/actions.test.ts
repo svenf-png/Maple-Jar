@@ -15,6 +15,7 @@ import {
   deleteEntry,
   deleteFixedCost,
   deleteIncome,
+  InvalidPatchError,
   NoRateError,
   restoreEntry,
   runAutobook,
@@ -291,6 +292,39 @@ describe('Einnahmen, Fixkosten, Sparziele', () => {
     expect((await db.goal.get(goal))?.archivedAt).toBe('2027-07-01');
   });
 
+  it('ungültiger Patch (zusammengeführter Stand verletzt Regeln) wirft und schreibt nichts', async () => {
+    const inc = await createIncome(db, {
+      ...rule,
+      name: 'Gehalt A',
+      amountMinor: 1000,
+      currency: 'CAD',
+    });
+    const fc = await createFixedCost(db, {
+      ...rule,
+      endsOn: '2027-12-31',
+      name: 'Miete A',
+      amountMinor: 100,
+      currency: 'CAD',
+      categoryId: cat,
+      isSaving: false,
+      autobook: false,
+    });
+    const goal = await createGoal(db, goalInput);
+    const before = await db.events.count();
+    await expect(updateFixedCost(db, fc, { startsOn: '2028-01-01' })).rejects.toBeInstanceOf(
+      InvalidPatchError,
+    ); // Start nach Ende
+    await expect(updateIncome(db, inc, { unit: 'once', every: 2 })).rejects.toBeInstanceOf(
+      InvalidPatchError,
+    );
+    await expect(updateGoal(db, goal, { targetDate: '2027-01-01' })).rejects.toBeInstanceOf(
+      InvalidPatchError,
+    ); // Zieldatum nicht nach Start
+    expect(await db.events.count()).toBe(before);
+    // Ende zugleich löschen macht den Patch gültig
+    expect(await updateFixedCost(db, fc, { startsOn: '2028-01-01', endsOn: null })).toBe(true);
+  });
+
   it('Beitrag: anlegen, Entnahme, löschen; ungültiger Betrag wirft', async () => {
     const goal = await createGoal(db, goalInput);
     const id = await addContribution(db, {
@@ -372,10 +406,53 @@ describe('Fixkosten buchen', () => {
     expect(await fixedEntries()).toHaveLength(1);
   });
 
-  it('bookFixedCost: Override für den Zahler', async () => {
+  it('bookFixedCost: Override wird als eigenes update nach dem deterministischen create geschrieben', async () => {
     const fc = await createFixedCost(db, fcInput({ autobook: false }));
+    const id = await fixedCostEntryId(fc, '2027-02-10');
     await bookFixedCost(db, fc, '2027-02-10', null, { paidBy: OTHER });
     expect((await fixedEntries())[0]?.paidBy).toBe(OTHER);
+    const evs = (await db.events.where('[entity+rowId]').equals(['entry', id]).toArray()).sort(
+      (x, y) => (x.hlc < y.hlc ? -1 : 1),
+    );
+    expect(evs.map((e) => e.op)).toEqual(['create', 'update']);
+    expect(evs[0]?.data?.paidBy).toBe(USER); // Standard-Zahler: kleinste Nutzer-ID
+    expect(evs[1]?.data).toEqual({ paidBy: OTHER });
+  });
+
+  it('runAutobook: ohne Haushaltsmitglieder wird nichts gebucht', async () => {
+    await db.meta.put({ key: 'household', value: { members: [] } });
+    await createFixedCost(db, fcInput());
+    expect(await runAutobook(db, null, '2027-02-20')).toBe(0);
+    expect(await fixedEntries()).toHaveLength(0);
+  });
+
+  it('runAutobook: Kurs je Fälligkeitstag; Kurs eines anderen Tages bucht vorläufig', async () => {
+    await createFixedCost(db, fcInput({ currency: 'EUR', startsOn: '2027-01-20' }));
+    const asked: string[] = [];
+    const n = await runAutobook(
+      db,
+      async (dueOn) => {
+        asked.push(dueOn);
+        // Tageskurs nur für den 20.02.; sonst ein Rückfall auf einen anderen Tag
+        return dueOn === '2027-02-20'
+          ? { rateMicro: 1_500_000n, date: dueOn, stale: false }
+          : { rateMicro: 1_400_000n, date: '2027-01-01', stale: false };
+      },
+      '2027-02-21',
+    );
+    expect(n).toBe(2);
+    expect(new Set(asked)).toEqual(new Set(['2027-01-20', '2027-02-20']));
+    const byDate = Object.fromEntries((await fixedEntries()).map((e) => [e.bookedOn, e]));
+    expect(byDate['2027-02-20']).toMatchObject({ fxRateMicro: 1_500_000, fxProvisional: false });
+    expect(byDate['2027-01-20']).toMatchObject({ fxRateMicro: 1_400_000, fxProvisional: true });
+  });
+
+  it('runAutobook: geänderter Starttag bucht keinen Zeitraum doppelt', async () => {
+    const fc = await createFixedCost(db, fcInput({ startsOn: '2027-01-15' }));
+    expect(await runAutobook(db, null, '2027-02-20')).toBe(1); // 15.02.
+    await updateFixedCost(db, fc, { startsOn: '2027-01-01' });
+    expect(await runAutobook(db, null, '2027-02-20')).toBe(0); // 01.02. ist abgedeckt
+    expect((await fixedEntries()).map((e) => e.bookedOn)).toEqual(['2027-02-15']);
   });
 
   it('bookFixedCost: EUR ohne Kurs wirft NoRateError, veralteter Kurs ist vorläufig', async () => {

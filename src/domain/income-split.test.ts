@@ -197,6 +197,23 @@ describe('incomeSplit', () => {
     expect(s.incomeCadMinor).toBe(2_500n);
   });
 
+  it('Fälligkeit zählt nicht, wenn ein späterer Fixkosten-Eintrag derselben Fixkosten sie abdeckt', async () => {
+    const fc = fixedCost({ id: 'fx-c', amountMinor: 80_000, startsOn: '2027-02-01' });
+    const booked = entry({
+      amountMinor: 80_000,
+      source: 'fixed',
+      fixedCostId: 'fx-c',
+      bookedOn: '2027-02-05', // Termin war früher am 5., jetzt am 1.
+      categoryId: CAT_A,
+    });
+    const s = await split({
+      incomes: [income({ amountMinor: 200_000 })],
+      fixedCosts: [fc],
+      entries: [booked],
+    });
+    expect(amounts(s).fixed).toBe(80_000n); // nur der Eintrag, nicht zusätzlich die Fälligkeit
+  });
+
   it('keine Doppelzählung: gebuchte Fixkosten zählen genau einmal', async () => {
     const fc = fixedCost({ id: 'fx-a', amountMinor: 80_000, startsOn: '2027-02-01' });
     const id = await fixedCostEntryId('fx-a', '2027-02-01');

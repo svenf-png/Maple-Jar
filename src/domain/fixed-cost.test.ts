@@ -7,7 +7,6 @@ import {
   dueNext,
   dueWithIds,
   fixedCostEntryId,
-  isBooked,
   occurrenceIds,
 } from './fixed-cost';
 import type { KnownRate } from './fx';
@@ -39,9 +38,6 @@ describe('Buchungszustand', () => {
     expect(bookingState('x', [])).toBe('open');
     expect(bookingState('x', [entry({ id: 'x' })])).toBe('booked');
     expect(bookingState('x', [entry({ id: 'x', deleted: true })])).toBe('deleted');
-    expect(isBooked('booked')).toBe(true);
-    expect(isBooked('deleted')).toBe(false);
-    expect(isBooked('open')).toBe(false);
   });
 });
 
@@ -69,8 +65,8 @@ describe('dueNext', () => {
   });
   it('nicht älter als 35 Tage', async () => {
     const fc = fixedCost({ id: 'fa', startsOn: '2027-01-05', unit: 'once' });
-    expect(await dueNext([fc], [], '2027-02-10', 7)).toHaveLength(0); // 36 Tage zurück
-    expect(await dueNext([fc], [], '2027-02-09', 7)).toHaveLength(1); // genau 35 Tage
+    expect(await dueNext([fc], [], '2027-02-09', 7)).toHaveLength(0); // 35 Tage zurück: 36. Tag des Fensters
+    expect(await dueNext([fc], [], '2027-02-08', 7)).toHaveLength(1); // 34 Tage zurück: Fenster = 35 Tage inkl. heute
   });
   it('gebuchte und gelöschte Buchungen erscheinen nicht', async () => {
     const fc = fixedCost({ id: 'fa', startsOn: '2027-02-12', unit: 'once' });
@@ -99,8 +95,8 @@ describe('autobookCandidates', () => {
     const c = await autobookCandidates([auto, manual], [], today);
     expect(c.map((i) => [i.fixedCostId, i.dueOn])).toEqual([['fa', '2027-02-01']]);
     const old = fixedCost({ id: 'fc', autobook: true, startsOn: '2027-01-05', unit: 'once' });
-    expect(await autobookCandidates([old], [], '2027-02-10')).toEqual([]);
-    expect(await autobookCandidates([old], [], '2027-02-09')).toHaveLength(1);
+    expect(await autobookCandidates([old], [], '2027-02-09')).toEqual([]); // 35 Tage zurück
+    expect(await autobookCandidates([old], [], '2027-02-08')).toHaveLength(1); // 34 Tage zurück
   });
   it('bereits gebuchte werden nicht erneut vorgeschlagen', async () => {
     const fc = fixedCost({ id: 'fa', autobook: true, startsOn: '2027-02-01', unit: 'once' });
@@ -159,6 +155,12 @@ describe('bookingDraft', () => {
       fxProvisional: true,
     });
   });
+  it('EUR: Kurs eines anderen Tages ist nie endgültig, auch wenn nicht veraltet', () => {
+    const fc = fixedCost({ currency: 'EUR', amountMinor: 999 });
+    const other: KnownRate = { rateMicro: 1_450_000n, date: '2027-02-09', stale: false };
+    expect(bookingDraft(fc, '2027-02-10', other)?.fxProvisional).toBe(true);
+    expect(bookingDraft(fc, '2027-02-09', other)?.fxProvisional).toBe(false);
+  });
   it('EUR ohne Kurs: null', () => {
     expect(bookingDraft(fixedCost({ currency: 'EUR' }), '2027-02-10', null)).toBeNull();
   });
@@ -169,5 +171,27 @@ describe('defaultPayer', () => {
     expect(defaultPayer([{ userId: 'b' }, { userId: 'a' }])).toBe('a');
     expect(defaultPayer([{ userId: 'a' }, { userId: 'b' }])).toBe('a');
     expect(defaultPayer([])).toBeNull();
+  });
+});
+
+describe('abgedeckte Fälligkeiten (geänderte Terminregel)', () => {
+  it('nach einem gebuchten späteren Termin wird nichts davor erneut vorgeschlagen oder gebucht', async () => {
+    // Termin war am 15., wurde auf den 1. verlegt: 15.01. gebucht, 01.01. und 15.01. bei neuer Regel nicht doppelt
+    const fc = fixedCost({ id: 'fa', autobook: true, startsOn: '2027-01-01', unit: 'month' });
+    const booked = entry({
+      id: 'zz',
+      source: 'fixed',
+      fixedCostId: 'fa',
+      bookedOn: '2027-01-15',
+    });
+    const c = await autobookCandidates([fc], [booked], '2027-02-10');
+    expect(c.map((i) => i.dueOn)).toEqual(['2027-02-01']);
+    const due = await dueNext([fc], [booked], '2027-02-10', 0);
+    expect(due.map((i) => i.dueOn)).toEqual(['2027-02-01']);
+    // gelöschte Buchung deckt ebenfalls ab
+    const del = { ...booked, deleted: true };
+    expect((await autobookCandidates([fc], [del], '2027-02-10')).map((i) => i.dueOn)).toEqual([
+      '2027-02-01',
+    ]);
   });
 });

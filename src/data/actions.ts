@@ -10,6 +10,7 @@ import { chooseRate, type KnownRate } from '../domain/fx';
 import { monthOf, type RepeatUnit, toEntry, toFixedCost } from '../domain/model';
 import type { Currency } from '../domain/money';
 import type { MapleJarDb } from './db';
+import { validateCreateData } from './events/schema';
 import { appendLocalEvent } from './write';
 
 export interface NewEntryInput {
@@ -197,7 +198,18 @@ const clean = (patch: object): Record<string, unknown> =>
       .map(([k, v]) => [k, k === 'name' && typeof v === 'string' ? v.trim() : v]),
   );
 
-/** Schreibt nur Felder, die sich vom materialisierten Stand unterscheiden. `null` löscht ein optionales Feld. */
+export class InvalidPatchError extends Error {
+  override name = 'InvalidPatchError';
+  constructor() {
+    super('Patch makes the row invalid');
+  }
+}
+
+/**
+ * Schreibt nur Felder, die sich vom materialisierten Stand unterscheiden. `null` löscht ein optionales Feld.
+ * Der zusammengeführte Stand (aktuell + Patch) wird vorab gegen die `create`-Regeln geprüft; bei Verstoß
+ * wirft die Funktion `InvalidPatchError` und schreibt nichts.
+ */
 async function updateFields(
   db: MapleJarDb,
   entity: 'income' | 'fixedCost' | 'goal',
@@ -212,6 +224,10 @@ async function updateFields(
       data[k] = v;
   }
   if (Object.keys(data).length === 0) return false;
+  const merged = Object.fromEntries(
+    Object.entries({ ...current, ...data }).filter(([, v]) => v !== null && v !== undefined),
+  );
+  if (!validateCreateData(entity, merged)) throw new InvalidPatchError();
   await appendLocalEvent(db, { entity, rowId: id, op: 'update', data });
   return true;
 }
@@ -310,13 +326,9 @@ const sessionUser = async (db: MapleJarDb): Promise<string> => {
   return id;
 };
 
-/** Standard-Zahler aus dem Haushalt (siehe `defaultPayer`), sonst der angemeldete Nutzer. */
-async function payerOf(db: MapleJarDb): Promise<string> {
-  const members = (
-    (await db.meta.get('household'))?.value as { members?: Array<{ userId: string }> } | undefined
-  )?.members;
-  return defaultPayer(members ?? []) ?? (await sessionUser(db));
-}
+const householdMembers = async (db: MapleJarDb): Promise<Array<{ userId: string }>> =>
+  ((await db.meta.get('household'))?.value as { members?: Array<{ userId: string }> } | undefined)
+    ?.members ?? [];
 
 async function createFixedEntry(
   db: MapleJarDb,
@@ -339,7 +351,9 @@ async function createFixedEntry(
 /**
  * Bucht eine Fälligkeit mit deterministischer Eintrags-ID (zwei Geräte erzeugen denselben Eintrag).
  * Ausdrücklich gelöschte Buchung: wiederherstellen. Wirft `NoRateError` bei EUR ohne bekannten Kurs.
- * Zahler: `options.paidBy`, sonst der Standard-Zahler des Haushalts.
+ * Das `create` trägt immer den Standard-Zahler des Haushalts (`defaultPayer`, ohne Mitglieder der angemeldete Nutzer),
+ * damit gleichzeitige Buchungen identisch sind. Ein abweichender `options.paidBy` wird als eigenes `update` danach
+ * geschrieben.
  */
 export async function bookFixedCost(
   db: MapleJarDb,
@@ -358,37 +372,51 @@ export async function bookFixedCost(
     await appendLocalEvent(db, { entity: 'entry', rowId, op: 'restore' });
     return 'restored';
   }
-  await createFixedEntry(
-    db,
-    rowId,
-    toFixedCost(fcRow),
-    dueOn,
-    rate,
-    options.paidBy ?? (await payerOf(db)),
-  );
+  const payer = defaultPayer(await householdMembers(db)) ?? (await sessionUser(db));
+  await createFixedEntry(db, rowId, toFixedCost(fcRow), dueOn, rate, payer);
+  if (options.paidBy && options.paidBy !== payer) {
+    await appendLocalEvent(db, {
+      entity: 'entry',
+      rowId,
+      op: 'update',
+      data: { paidBy: options.paidBy },
+    });
+  }
   return 'booked';
 }
+
+/** Kurs für eine Fälligkeit: fester Kurs, keiner, oder eine Abfrage je Fälligkeitstag (z. B. Tageskurs). */
+export type RateSource = KnownRate | null | ((dueOn: string) => Promise<KnownRate | null>);
 
 /**
  * Bucht alle fälligen Autobook-Fixkosten der letzten 35 Tage, die noch offen sind. Gelöschte Buchungen werden
  * nie neu gebucht. EUR ohne Kurs wird übersprungen; Fehler einzelner Fälligkeiten brechen den Lauf nicht ab.
- * Gibt die Anzahl neu gebuchter Einträge zurück.
+ * Ohne Haushaltsmitglieder wird nichts gebucht (kein Zahler ableitbar). Der Kurs wird je Fälligkeitstag
+ * (einmal pro Lauf zwischengespeichert) erfragt. Gibt die Anzahl neu gebuchter Einträge zurück.
  */
 export async function runAutobook(
   db: MapleJarDb,
-  rate: KnownRate | null,
+  rate: RateSource,
   today: string,
 ): Promise<number> {
+  const paidBy = defaultPayer(await householdMembers(db));
+  if (!paidBy) return 0;
   const fixedCosts = (await db.fixedCost.toArray()).map(toFixedCost);
   const entries = (await db.entry.filter((e) => e.source === 'fixed').toArray()).map(toEntry);
   const fcById = new Map(fixedCosts.map((f) => [f.id, f]));
-  const paidBy = await payerOf(db);
+  const cache = new Map<string, KnownRate | null>();
+  const rateFor = async (dueOn: string): Promise<KnownRate | null> => {
+    if (typeof rate !== 'function') return rate;
+    if (!cache.has(dueOn)) cache.set(dueOn, await rate(dueOn).catch(() => null));
+    return cache.get(dueOn) ?? null;
+  };
   let booked = 0;
   for (const item of await autobookCandidates(fixedCosts, entries, today)) {
     const fc = fcById.get(item.fixedCostId);
     if (!fc) continue;
     try {
-      await createFixedEntry(db, item.entryId, fc, item.dueOn, rate, paidBy);
+      const r = fc.currency === 'EUR' ? await rateFor(item.dueOn) : null;
+      await createFixedEntry(db, item.entryId, fc, item.dueOn, r, paidBy);
       booked++;
     } catch {
       // EUR ohne Kurs, ungültiges Ereignis o. Ä.: später erneut versuchen.

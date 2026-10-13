@@ -55,18 +55,19 @@ export function requiredMonthly(
   return (remaining + months - 1n) / months;
 }
 
-export const suggestedContribution = requiredMonthly;
-
 export interface PlanDeviation {
   status: GoalStatus;
   /** Soll-Stand heute nach linearem Plan (nach Tagen von startsOn bis targetDate). */
   plannedMinor: bigint;
   /** Rückstand auf den Plan, nie negativ. */
   behindMinor: bigint;
-  /** Betrag, der noch fehlt, um beim Soll-Stand in einem Monat (heute + 1 Monat, höchstens targetDate) im Plan zu sein. */
-  backOnPlanMinor: bigint;
-  /** Monatserster (`YYYY-MM-01`) des Monats, auf den sich backOnPlanMinor bezieht. */
-  backOnPlanMonth: string;
+  /**
+   * Betrag, der noch fehlt, um beim Soll-Stand in einem Monat (heute + 1 Monat, höchstens targetDate) im Plan zu sein.
+   * `null`, wenn das Ziel überfällig ist (kein Planmonat in der Zukunft).
+   */
+  backOnPlanMinor: bigint | null;
+  /** Monatserster (`YYYY-MM-01`) des Monats, auf den sich backOnPlanMinor bezieht; `null` bei überfälligen Zielen. */
+  backOnPlanMonth: string | null;
 }
 
 function plannedAt(
@@ -101,7 +102,7 @@ export function planDeviation(
     status,
     plannedMinor: planned,
     behindMinor: behind,
-    backOnPlanMinor: needed > 0n ? needed : 0n,
-    backOnPlanMonth: `${horizon.slice(0, 7)}-01`,
+    backOnPlanMinor: status === 'overdue' ? null : needed > 0n ? needed : 0n,
+    backOnPlanMonth: status === 'overdue' ? null : `${horizon.slice(0, 7)}-01`,
   };
 }

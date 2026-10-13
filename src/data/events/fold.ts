@@ -142,13 +142,18 @@ export function foldRow(
     }
   }
 
+  // Mehrere `create` derselben Zeile (deterministische ID, z. B. Fixkosten-Buchung auf zwei Geräten) sind keine
+  // Bearbeitungen: Ihre Werte werden nach HLC aufgelöst (Last-Write-Wins) und ergeben nie einen Feldkonflikt.
+  // Nur gleichzeitige `update`s desselben Feldes sind Konflikte; ein `update` schlägt jedes `create`.
   const fields: Record<string, unknown> = {};
   const conflictFields: RowConflict['fields'] = [];
   for (const [field, list] of writes) {
-    const winner = list[list.length - 1] as (typeof list)[number]; // `unique` ist nach HLC sortiert
+    const updates = list.filter((w) => w.e.op === 'update');
+    const creates = list.filter((w) => w.e.op === 'create');
+    const winner = (updates.length > 0 ? updates : creates).at(-1) as (typeof list)[number]; // nach HLC sortiert
     fields[field] = winner.value;
     if (!CONFLICT_ENTITIES.has(entity)) continue;
-    const heads = list.filter((w) => !list.some((o) => o !== w && knows(o.e, w.e)));
+    const heads = updates.filter((w) => !updates.some((o) => o !== w && knows(o.e, w.e)));
     const distinct: typeof heads = [];
     for (const h of heads) if (!distinct.some((d) => same(d.value, h.value))) distinct.push(h);
     if (distinct.length > 1) {
@@ -164,8 +169,18 @@ export function foldRow(
     }
   }
 
-  // Lebenszyklus: der jüngste Eintrag aus create/delete/restore entscheidet.
-  const lifecycle = applied.filter((e) => e.op !== 'update');
+  // Lebenszyklus: das jüngste Ereignis aus create/delete/restore entscheidet. Ein `create`, das ein älteres
+  // `delete` nicht kennt (nicht in seiner base-Kette), belebt nicht wieder: Löschen schlägt ein gleichzeitiges
+  // `create`; nur ein `restore` (oder ein `create`, das das `delete` kennt) macht die Zeile wieder sichtbar.
+  const deletes = applied.filter((e) => e.op === 'delete');
+  const lifecycle = applied.filter(
+    (e) =>
+      e.op !== 'update' &&
+      (e.op !== 'create' ||
+        deletes.every(
+          (d) => compareHlc(d.hlc, e.hlc) >= 0 || (known.get(e.id)?.has(d.id) ?? false),
+        )),
+  );
   const last = lifecycle[lifecycle.length - 1];
   const deleted = last?.op === 'delete';
 

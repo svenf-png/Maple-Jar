@@ -1,5 +1,5 @@
 import { limitFor } from './budget';
-import { type OccurrenceIds, occurrenceKey } from './fixed-cost';
+import { latestFixedBookings, type OccurrenceIds, occurrenceKey } from './fixed-cost';
 import type { KnownRate } from './fx';
 import {
   type Budget,
@@ -72,7 +72,8 @@ export function percentsOf(values: readonly bigint[]): number[] {
  * Anteil am Einkommen, Monat bis heute. Annahmen:
  * - Einnahmen/Fixkosten-Fälligkeiten in EUR werden mit `rate` umgerechnet; ohne Kurs entfallen sie.
  * - Eine Fälligkeit zählt genau einmal: ist ihr Eintrag (ID) vorhanden und nicht gelöscht, zählt der Eintrag
- *   (mit seinem eigenen Kurs, wenn sein Datum im Monat liegt); ist er gelöscht, zählt nichts; sonst die Fälligkeit.
+ *   (mit seinem eigenen Kurs, wenn sein Datum im Monat liegt); ist er gelöscht, zählt nichts; sonst die Fälligkeit, außer ein Fixkosten-Eintrag derselben Fixkosten liegt am selben oder
+ *   einem späteren Tag (dann ist die Fälligkeit abgedeckt, z. B. nach geänderter Terminregel).
  * - Beiträge zählen, wenn positiv und im Monat bis heute (auch zu archivierten Zielen); unbekanntes Ziel = CAD.
  */
 export function incomeSplit(input: IncomeSplitInput): IncomeSplit {
@@ -115,9 +116,12 @@ export function incomeSplit(input: IncomeSplitInput): IncomeSplit {
     }
   }
 
+  const latestBooked = latestFixedBookings(input.entries);
   for (const fc of input.fixedCosts) {
     if (fc.deleted) continue;
     for (const dueOn of occurrences(fc, month, today)) {
+      // Abgedeckt durch einen späteren gebuchten Eintrag derselben Fixkosten (wie bei Autobook/dueNext).
+      if (dueOn <= (latestBooked.get(fc.id) ?? '')) continue;
       const id = input.fixedEntryIds.get(occurrenceKey(fc.id, dueOn));
       if (id !== undefined && entryById.has(id)) continue; // gebucht (zählt als Eintrag) oder gelöscht
       const cad = convert(fc.amountMinor, fc.currency);

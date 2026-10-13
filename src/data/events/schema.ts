@@ -168,6 +168,19 @@ const updateSchemas = {
   goal: z.partial(z.strictObject(goalUpdate)).check(atLeastOne),
 } as const;
 
+/**
+ * Prüft vollständige Zeilendaten (Felder von `create`) gegen Schema und Verfeinerungen (z. B. Ende nicht vor Start).
+ * Dient dazu, einen Änderungswunsch vor dem Schreiben gegen den zusammengeführten Stand zu prüfen.
+ */
+export function validateCreateData(
+  entity: Exclude<Entity, 'goalContribution'>,
+  data: Record<string, unknown>,
+): boolean {
+  const known = new Set(Object.keys(fieldSchemas[entity]));
+  const picked = Object.fromEntries(Object.entries(data).filter(([k]) => known.has(k)));
+  return createSchemas[entity].safeParse(picked).success;
+}
+
 const envelope = z.strictObject({
   v: z.literal(SCHEMA_VERSION),
   id: z.uuid(),
