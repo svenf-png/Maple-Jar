@@ -16,6 +16,7 @@ import {
   deleteFixedCost,
   deleteIncome,
   InvalidPatchError,
+  NoHouseholdError,
   NoRateError,
   restoreEntry,
   runAutobook,
@@ -426,25 +427,64 @@ describe('Fixkosten buchen', () => {
     expect(await fixedEntries()).toHaveLength(0);
   });
 
-  it('runAutobook: Kurs je Fälligkeitstag; Kurs eines anderen Tages bucht vorläufig', async () => {
+  it('runAutobook: Kurse je Fälligkeitstag gleichzeitig; Notbehelfskurs bucht nur für heute vorläufig', async () => {
     await createFixedCost(db, fcInput({ currency: 'EUR', startsOn: '2027-01-20' }));
     const asked: string[] = [];
+    let release: () => void = () => {};
+    const both = new Promise<void>((r) => {
+      release = r;
+    });
+    let sequential = false;
     const n = await runAutobook(
       db,
       async (dueOn) => {
         asked.push(dueOn);
-        // Tageskurs nur für den 20.02.; sonst ein Rückfall auf einen anderen Tag
-        return dueOn === '2027-02-20'
+        if (asked.length === 2) release();
+        // sequentielle Abfrage käme nie zu zweit an
+        await Promise.race([
+          both,
+          new Promise((r) => setTimeout(r, 300)).then(() => (sequential = true)),
+        ]);
+        // Tageskurs nur für den 20.01.; sonst ein früheres Anbieterdatum
+        return dueOn === '2027-01-20'
           ? { rateMicro: 1_500_000n, date: dueOn, stale: false }
-          : { rateMicro: 1_400_000n, date: '2027-01-01', stale: false };
+          : { rateMicro: 1_400_000n, date: '2027-02-19', stale: false };
       },
-      '2027-02-21',
+      '2027-02-20',
     );
+    expect(sequential).toBe(false);
     expect(n).toBe(2);
     expect(new Set(asked)).toEqual(new Set(['2027-01-20', '2027-02-20']));
     const byDate = Object.fromEntries((await fixedEntries()).map((e) => [e.bookedOn, e]));
-    expect(byDate['2027-02-20']).toMatchObject({ fxRateMicro: 1_500_000, fxProvisional: false });
-    expect(byDate['2027-01-20']).toMatchObject({ fxRateMicro: 1_400_000, fxProvisional: true });
+    expect(byDate['2027-01-20']).toMatchObject({ fxRateMicro: 1_500_000, fxProvisional: false });
+    expect(byDate['2027-02-20']).toMatchObject({ fxRateMicro: 1_400_000, fxProvisional: true });
+  });
+
+  it('bookFixedCost ohne Haushaltsmitglieder wirft NoHouseholdError', async () => {
+    await db.meta.put({ key: 'household', value: { members: [] } });
+    const fc = await createFixedCost(db, fcInput({ autobook: false }));
+    await expect(bookFixedCost(db, fc, '2027-02-10', null)).rejects.toBeInstanceOf(
+      NoHouseholdError,
+    );
+    expect(await fixedEntries()).toHaveLength(0);
+  });
+
+  it('Patch an bereits ungültiger Zeile (gleichzeitiger Merge) ist erlaubt, an gültiger nicht', async () => {
+    const fc = await createFixedCost(db, fcInput({ autobook: false, endsOn: '2027-12-31' }));
+    // Zeile wird durch zwei gleichzeitige Änderungen ungültig: Start nach Ende
+    await appendLocalEvent(db, {
+      entity: 'fixedCost',
+      rowId: fc,
+      op: 'update',
+      data: { startsOn: '2028-02-01' },
+    });
+    expect((await db.fixedCost.get(fc))?.startsOn).toBe('2028-02-01');
+    // Reparatur über das Ende ist erlaubt, obwohl die Zeile vorher ungültig war
+    expect(await updateFixedCost(db, fc, { endsOn: null })).toBe(true);
+    // jetzt gültig: ein Patch, der sie ungültig macht, wird abgelehnt
+    await expect(updateFixedCost(db, fc, { endsOn: '2027-01-01' })).rejects.toBeInstanceOf(
+      InvalidPatchError,
+    );
   });
 
   it('runAutobook: geänderter Starttag bucht keinen Zeitraum doppelt', async () => {

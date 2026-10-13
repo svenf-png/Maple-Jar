@@ -133,7 +133,7 @@ describe('bookingDraft', () => {
   const rate: KnownRate = { rateMicro: 1_450_000n, date: '2027-02-09', stale: true };
   it('CAD: Kurs 1, Datum = Fälligkeit', () => {
     const fc = fixedCost({ id: 'fa', amountMinor: 120_000, categoryId: 'kat-a' });
-    expect(bookingDraft(fc, '2027-02-01', null)).toEqual({
+    expect(bookingDraft(fc, '2027-02-01', null, '2027-02-01')).toEqual({
       amountMinor: 120_000,
       currency: 'CAD',
       bookedOn: '2027-02-01',
@@ -147,7 +147,7 @@ describe('bookingDraft', () => {
   });
   it('EUR mit Kurs: vorläufig, wenn der Kurs veraltet ist', () => {
     const fc = fixedCost({ currency: 'EUR', amountMinor: 999 });
-    const d = bookingDraft(fc, '2027-02-10', rate);
+    const d = bookingDraft(fc, '2027-02-10', rate, '2027-02-10');
     expect(d).toMatchObject({
       currency: 'EUR',
       fxRateMicro: 1_450_000,
@@ -158,11 +158,22 @@ describe('bookingDraft', () => {
   it('EUR: Kurs eines anderen Tages ist nie endgültig, auch wenn nicht veraltet', () => {
     const fc = fixedCost({ currency: 'EUR', amountMinor: 999 });
     const other: KnownRate = { rateMicro: 1_450_000n, date: '2027-02-09', stale: false };
-    expect(bookingDraft(fc, '2027-02-10', other)?.fxProvisional).toBe(true);
-    expect(bookingDraft(fc, '2027-02-09', other)?.fxProvisional).toBe(false);
+    // heute/Zukunft: früheres Datum des Anbieters ist ein Notbehelf, der Nachzug holt den Tageskurs
+    expect(bookingDraft(fc, '2027-02-10', other, '2027-02-10')?.fxProvisional).toBe(true);
+    expect(bookingDraft(fc, '2027-02-09', other, '2027-02-09')?.fxProvisional).toBe(false);
+  });
+  it('EUR: für einen vergangenen Tag ist ein früheres Anbieterdatum (Wochenende) endgültig', () => {
+    const fc = fixedCost({ currency: 'EUR', amountMinor: 999 });
+    const fri: KnownRate = { rateMicro: 1_500_000n, date: '2027-01-01', stale: false };
+    expect(bookingDraft(fc, '2027-01-02', fri, '2027-01-05')?.fxProvisional).toBe(false);
+    expect(
+      bookingDraft(fc, '2027-01-02', { ...fri, stale: true }, '2027-01-05')?.fxProvisional,
+    ).toBe(true);
   });
   it('EUR ohne Kurs: null', () => {
-    expect(bookingDraft(fixedCost({ currency: 'EUR' }), '2027-02-10', null)).toBeNull();
+    expect(
+      bookingDraft(fixedCost({ currency: 'EUR' }), '2027-02-10', null, '2027-02-10'),
+    ).toBeNull();
   });
 });
 
@@ -188,9 +199,52 @@ describe('abgedeckte Fälligkeiten (geänderte Terminregel)', () => {
     expect(c.map((i) => i.dueOn)).toEqual(['2027-02-01']);
     const due = await dueNext([fc], [booked], '2027-02-10', 0);
     expect(due.map((i) => i.dueOn)).toEqual(['2027-02-01']);
-    // gelöschte Buchung deckt ebenfalls ab
+    // gelöschte (verwaiste) Buchung deckt ebenfalls ab
     const del = { ...booked, deleted: true };
     expect((await autobookCandidates([fc], [del], '2027-02-10')).map((i) => i.dueOn)).toEqual([
+      '2027-02-01',
+    ]);
+  });
+});
+
+describe('Abdeckung nur durch verwaiste Einträge', () => {
+  it('C2: früh gebuchter Zukunftstermin versteckt ältere offene Fälligkeiten nicht', async () => {
+    const fc = fixedCost({ id: 'fw', startsOn: '2027-02-01', unit: 'week' });
+    const before = await dueNext([fc], [], '2027-02-10', 7);
+    const next = before.at(-1);
+    if (!next) throw new Error('no due');
+    const early = entry({
+      id: next.entryId,
+      source: 'fixed',
+      fixedCostId: 'fw',
+      bookedOn: next.dueOn,
+    });
+    const after = await dueNext([fc], [early], '2027-02-10', 7);
+    expect(after.map((i) => i.dueOn)).toEqual(before.slice(0, -1).map((i) => i.dueOn));
+    expect(before.length).toBeGreaterThan(1);
+  });
+
+  it('C1: nachträglich verschobenes bookedOn eines aktuellen Termins deckt keinen anderen ab', async () => {
+    const fc = fixedCost({ id: 'fa', startsOn: '2027-01-01', unit: 'month', autobook: true });
+    const id = await fixedCostEntryId('fa', '2027-01-01');
+    const moved = entry({ id, source: 'fixed', fixedCostId: 'fa', bookedOn: '2027-02-03' });
+    expect((await dueNext([fc], [moved], '2027-02-10', 0)).map((i) => i.dueOn)).toEqual([
+      '2027-02-01',
+    ]);
+    expect((await autobookCandidates([fc], [moved], '2027-02-10')).map((i) => i.dueOn)).toEqual([
+      '2027-02-01',
+    ]);
+  });
+
+  it('Termin in weiter Zukunft gebucht (jenseits des Horizonts): bleibt aktuell, deckt nichts ab', async () => {
+    const fc = fixedCost({ id: 'fm', startsOn: '2027-01-01', unit: 'month' });
+    const far = entry({
+      id: await fixedCostEntryId('fm', '2027-06-01'),
+      source: 'fixed',
+      fixedCostId: 'fm',
+      bookedOn: '2027-06-01',
+    });
+    expect((await dueNext([fc], [far], '2027-02-10', 0)).map((i) => i.dueOn)).toEqual([
       '2027-02-01',
     ]);
   });

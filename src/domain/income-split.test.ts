@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fixedCostEntryId, occurrenceIds } from './fixed-cost';
+import { coverageByFixedCost, fixedCostEntryId, occurrenceIds } from './fixed-cost';
 import type { KnownRate } from './fx';
 import { type IncomeSplitInput, incomeSplit, percentsOf } from './income-split';
 import { budget, CAT_A, CAT_B, contribution, entry, fixedCost, goal, income } from './test-data';
@@ -20,7 +20,8 @@ async function split(over: Partial<IncomeSplitInput> = {}) {
     ...over,
   };
   const fixedEntryIds = await occurrenceIds(base.fixedCosts, '2027-02-01', today);
-  return incomeSplit({ ...base, fixedEntryIds });
+  const coveredUntil = await coverageByFixedCost(base.fixedCosts, base.entries, today);
+  return incomeSplit({ ...base, fixedEntryIds, coveredUntil });
 }
 
 const amounts = (s: Awaited<ReturnType<typeof split>>) =>
@@ -212,6 +213,25 @@ describe('incomeSplit', () => {
       entries: [booked],
     });
     expect(amounts(s).fixed).toBe(80_000n); // nur der Eintrag, nicht zusätzlich die Fälligkeit
+  });
+
+  it('Eintrag mit aktueller Fälligkeits-ID und verschobenem Datum deckt andere Fälligkeiten nicht ab', async () => {
+    const fc = fixedCost({ id: 'fx-d', amountMinor: 80_000, startsOn: '2027-01-05' });
+    const moved = entry({
+      id: await fixedCostEntryId('fx-d', '2027-01-05'),
+      amountMinor: 80_000,
+      source: 'fixed',
+      fixedCostId: 'fx-d',
+      bookedOn: '2027-02-08', // Januar-Termin, im Februar bezahlt
+      categoryId: CAT_A,
+    });
+    const s = await split({
+      incomes: [income({ amountMinor: 300_000 })],
+      fixedCosts: [fc],
+      entries: [moved],
+    });
+    // 05.02. ist fällig und offen (80 000) plus der verschobene Januar-Eintrag im Februar (80 000)
+    expect(amounts(s).fixed).toBe(160_000n);
   });
 
   it('keine Doppelzählung: gebuchte Fixkosten zählen genau einmal', async () => {

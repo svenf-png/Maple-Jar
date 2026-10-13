@@ -17,11 +17,17 @@ let unsubLocal: (() => void) | null = null;
 let outboxWatch: { unsubscribe(): void } | null = null;
 let householdFetched = false;
 
-/** Kurs wie in der Erfassung, für den Tag `day`: Tageskurs (max. 3 s), sonst letzter bekannter, sonst null. */
-async function knownRate(provider: FxProvider, day: string): Promise<KnownRate | null> {
-  const timeout = new Promise<null>((r) => setTimeout(() => r(null), 3000));
+/**
+ * Kurs wie in der Erfassung, für den Tag `day`: Tageskurs, sonst letzter bekannter, sonst null. `deadline` löst nach
+ * dem gemeinsamen Zeitlimit des ganzen Autobook-Laufs mit `null` auf.
+ */
+async function knownRate(
+  provider: FxProvider,
+  day: string,
+  deadline: Promise<null>,
+): Promise<KnownRate | null> {
   const fetched = navigator.onLine
-    ? await Promise.race([fetchRate(day, provider).catch(() => null), timeout])
+    ? await Promise.race([fetchRate(day, provider).catch(() => null), deadline])
     : null;
   const r = fetched ?? (await lastKnownRate(provider));
   return r ? { rateMicro: r.rateMicro, date: r.date, stale: r.stale } : null;
@@ -42,8 +48,21 @@ function autobook(): Promise<void> {
       const provider = (
         (await db.meta.get('household'))?.value as { settings?: { fxProvider?: FxProvider } }
       )?.settings?.fxProvider;
-      // Kurs je Fälligkeitstag (nicht der von heute); ein Kurs eines anderen Tages bucht vorläufig.
-      await runAutobook(db, provider ? (dueOn) => knownRate(provider, dueOn) : null, day);
+      // Kurs je Fälligkeitstag (nicht der von heute), alle gleichzeitig unter EINEM Zeitlimit von 3 s für den ganzen
+      // Lauf; ein Kurs eines anderen Tages bucht (heute/Zukunft) vorläufig.
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const deadline = new Promise<null>((r) => {
+        timer = setTimeout(() => r(null), 3000);
+      });
+      try {
+        await runAutobook(
+          db,
+          provider ? (dueOn) => knownRate(provider, dueOn, deadline) : null,
+          day,
+        );
+      } finally {
+        clearTimeout(timer);
+      }
     } catch {
       // Nächster Lauf versucht es erneut.
     }

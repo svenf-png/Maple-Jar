@@ -11,6 +11,7 @@ import { monthOf, type RepeatUnit, toEntry, toFixedCost } from '../domain/model'
 import type { Currency } from '../domain/money';
 import type { MapleJarDb } from './db';
 import { validateCreateData } from './events/schema';
+import { todayIso } from './today';
 import { appendLocalEvent } from './write';
 
 export interface NewEntryInput {
@@ -207,8 +208,8 @@ export class InvalidPatchError extends Error {
 
 /**
  * Schreibt nur Felder, die sich vom materialisierten Stand unterscheiden. `null` löscht ein optionales Feld.
- * Der zusammengeführte Stand (aktuell + Patch) wird vorab gegen die `create`-Regeln geprüft; bei Verstoß
- * wirft die Funktion `InvalidPatchError` und schreibt nichts.
+ * War die Zeile gültig, wird der zusammengeführte Stand (aktuell + Patch) vorab gegen die `create`-Regeln geprüft;
+ * bei Verstoß wirft die Funktion `InvalidPatchError` und schreibt nichts. Eine schon ungültige Zeile darf geändert werden.
  */
 async function updateFields(
   db: MapleJarDb,
@@ -224,10 +225,16 @@ async function updateFields(
       data[k] = v;
   }
   if (Object.keys(data).length === 0) return false;
-  const merged = Object.fromEntries(
-    Object.entries({ ...current, ...data }).filter(([, v]) => v !== null && v !== undefined),
-  );
-  if (!validateCreateData(entity, merged)) throw new InvalidPatchError();
+  const present = (row: object) =>
+    Object.fromEntries(Object.entries(row).filter(([, v]) => v !== null && v !== undefined));
+  // Nur ablehnen, wenn der Patch eine gültige Zeile ungültig macht (eine durch gleichzeitiges Zusammenführen
+  // bereits ungültige Zeile muss sich reparieren lassen).
+  if (
+    validateCreateData(entity, present(current)) &&
+    !validateCreateData(entity, present({ ...current, ...data }))
+  ) {
+    throw new InvalidPatchError();
+  }
   await appendLocalEvent(db, { entity, rowId: id, op: 'update', data });
   return true;
 }
@@ -318,13 +325,14 @@ export const addContribution = (db: MapleJarDb, input: ContributionInput) =>
 export const deleteContribution = (db: MapleJarDb, id: string) =>
   appendLocalEvent(db, { entity: 'goalContribution', rowId: id, op: 'delete' });
 
-export type BookResult = 'booked' | 'already' | 'restored';
+export class NoHouseholdError extends Error {
+  override name = 'NoHouseholdError';
+  constructor() {
+    super('Household has no members');
+  }
+}
 
-const sessionUser = async (db: MapleJarDb): Promise<string> => {
-  const id = (await db.meta.get('userId'))?.value;
-  if (typeof id !== 'string') throw new Error('No session');
-  return id;
-};
+export type BookResult = 'booked' | 'already' | 'restored';
 
 const householdMembers = async (db: MapleJarDb): Promise<Array<{ userId: string }>> =>
   ((await db.meta.get('household'))?.value as { members?: Array<{ userId: string }> } | undefined)
@@ -337,8 +345,9 @@ async function createFixedEntry(
   dueOn: string,
   rate: KnownRate | null,
   paidBy: string,
+  today: string,
 ): Promise<void> {
-  const draft = bookingDraft(fc, dueOn, rate);
+  const draft = bookingDraft(fc, dueOn, rate, today);
   if (!draft) throw new NoRateError();
   await appendLocalEvent(db, {
     entity: 'entry',
@@ -351,7 +360,7 @@ async function createFixedEntry(
 /**
  * Bucht eine Fälligkeit mit deterministischer Eintrags-ID (zwei Geräte erzeugen denselben Eintrag).
  * Ausdrücklich gelöschte Buchung: wiederherstellen. Wirft `NoRateError` bei EUR ohne bekannten Kurs.
- * Das `create` trägt immer den Standard-Zahler des Haushalts (`defaultPayer`, ohne Mitglieder der angemeldete Nutzer),
+ * Das `create` trägt immer den Standard-Zahler des Haushalts (`defaultPayer`; ohne Mitglieder wirft die Funktion `NoHouseholdError`),
  * damit gleichzeitige Buchungen identisch sind. Ein abweichender `options.paidBy` wird als eigenes `update` danach
  * geschrieben.
  */
@@ -360,7 +369,7 @@ export async function bookFixedCost(
   fixedCostId: string,
   dueOn: string,
   rate: KnownRate | null,
-  options: { paidBy?: string } = {},
+  options: { paidBy?: string; today?: string } = {},
 ): Promise<BookResult> {
   const fcRow = await db.fixedCost.get(fixedCostId);
   if (!fcRow) throw new Error('Fixed cost not found');
@@ -372,8 +381,17 @@ export async function bookFixedCost(
     await appendLocalEvent(db, { entity: 'entry', rowId, op: 'restore' });
     return 'restored';
   }
-  const payer = defaultPayer(await householdMembers(db)) ?? (await sessionUser(db));
-  await createFixedEntry(db, rowId, toFixedCost(fcRow), dueOn, rate, payer);
+  const payer = defaultPayer(await householdMembers(db));
+  if (!payer) throw new NoHouseholdError();
+  await createFixedEntry(
+    db,
+    rowId,
+    toFixedCost(fcRow),
+    dueOn,
+    rate,
+    payer,
+    options.today ?? todayIso(),
+  );
   if (options.paidBy && options.paidBy !== payer) {
     await appendLocalEvent(db, {
       entity: 'entry',
@@ -410,13 +428,19 @@ export async function runAutobook(
     if (!cache.has(dueOn)) cache.set(dueOn, await rate(dueOn).catch(() => null));
     return cache.get(dueOn) ?? null;
   };
+  const candidates = await autobookCandidates(fixedCosts, entries, today);
+  // Kurse aller verschiedenen EUR-Fälligkeitstage gleichzeitig holen (die Quelle hat ein gemeinsames Zeitlimit).
+  const eurDates = new Set(
+    candidates.filter((i) => fcById.get(i.fixedCostId)?.currency === 'EUR').map((i) => i.dueOn),
+  );
+  await Promise.all([...eurDates].map((d) => rateFor(d)));
   let booked = 0;
-  for (const item of await autobookCandidates(fixedCosts, entries, today)) {
+  for (const item of candidates) {
     const fc = fcById.get(item.fixedCostId);
     if (!fc) continue;
     try {
       const r = fc.currency === 'EUR' ? await rateFor(item.dueOn) : null;
-      await createFixedEntry(db, item.entryId, fc, item.dueOn, r, paidBy);
+      await createFixedEntry(db, item.entryId, fc, item.dueOn, r, paidBy, today);
       booked++;
     } catch {
       // EUR ohne Kurs, ungültiges Ereignis o. Ä.: später erneut versuchen.
