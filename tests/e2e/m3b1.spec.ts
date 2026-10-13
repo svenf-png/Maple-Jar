@@ -23,7 +23,13 @@ async function ready(page: Page) {
   await setupHousehold(page);
 }
 
-async function newGoal(page: Page, name: string, target: string, startsOn: string, targetDate: string) {
+async function newGoal(
+  page: Page,
+  name: string,
+  target: string,
+  startsOn: string,
+  targetDate: string,
+) {
   await go(page, '#/ziel/neu');
   await page.getByLabel('Name', { exact: true }).fill(name);
   await page.getByLabel('Zielbetrag', { exact: true }).fill(target);
@@ -119,10 +125,13 @@ for (const scheme of ['light', 'dark'] as const) {
       await page.getByLabel('Name', { exact: true }).fill('Gehalt A');
       await page.getByLabel('Betrag', { exact: true }).fill('3000');
       await page.getByRole('button', { name: 'Speichern' }).click();
+      await expect(page.getByRole('heading', { level: 1, name: 'Planung' })).toBeVisible();
       await newGoal(page, 'Sparziel A', '100', iso(-60), iso(60));
       const axe = async () => {
         const r = await new AxeBuilder({ page }).analyze();
-        expect(r.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`)).toEqual([]);
+        expect(
+          r.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
+        ).toEqual([]);
       };
       await axe();
       await go(page, '#/planung');
@@ -139,10 +148,13 @@ for (const scheme of ['light', 'dark'] as const) {
       }
       await go(page, '#/planung');
       await page.getByRole('link', { name: /Sparziel A/ }).click();
+      await expect(page.getByRole('heading', { level: 1, name: 'Sparziel A' })).toBeVisible();
+      await axe();
       await page.getByRole('button', { name: 'Anderer Betrag' }).click();
       await page.getByLabel('Betrag in CAD').fill('100');
       await page.getByRole('dialog').getByRole('button', { name: 'Speichern' }).click();
       await expect(page.getByRole('dialog', { name: 'Sparziel A ist geschafft!' })).toBeVisible();
+      await page.waitForTimeout(800); // Einblend-Animation des Sheets abwarten (Kontrastprüfung)
       await axe();
     });
   });

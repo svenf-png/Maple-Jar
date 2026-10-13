@@ -154,21 +154,8 @@
   background: var(--fill);
   color: var(--label);
 }
-.conflictBtn {
-  appearance: none;
-  border: 0;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
+.badgeWrap {
   margin: 0 var(--s-4) var(--s-3);
-  min-height: 44px;
-  padding: 0 12px;
-  border-radius: var(--r-pill);
-  background: var(--infoTint);
-  color: var(--info);
-  font-weight: 600;
-  font-size: 13px;
 }
 .statRow {
   display: flex;

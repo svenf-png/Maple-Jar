@@ -1,4 +1,4 @@
-import { type ComponentType, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { PageHeader } from '../../app/PageHeader';
 import {
@@ -13,30 +13,18 @@ import { activeGoals, planDeviation, savedByGoal } from '../../domain/goals';
 import type { FixedCost, Income } from '../../domain/model';
 import { toCadMinor } from '../../domain/money';
 import { formatDay, formatMoney } from '../../i18n/format';
-import { loadPlanMessages } from '../../i18n/plan-messages';
 import { getLocale, t, useLang } from '../../i18n/t';
-import { InfoIcon, PlusIcon } from '../../icons/ui-icons';
+import { PlusIcon } from '../../icons/ui-icons';
 import { useTodayRate } from '../../platform/use-fx';
 import { useMedia } from '../../platform/use-media';
 import { Button, Card, CategoryTile, EmptyState } from '../../ui';
+import { ConflictBadge } from '../conflict/ConflictBadge';
 import { BottomSheet } from '../shared/BottomSheet';
 import { memberName, todayIso } from '../shared/helpers';
 import { amountWithOriginal, dueLabel, perMonthLabel, repeatLabel } from '../shared/plan-format';
 import { GoalStats } from './GoalParts';
 import styles from './PlanningPage.module.css';
 import { monthlyCadTotal, nextOccurrence } from './plan-helpers';
-
-type ConflictProps = {
-  entity: 'income' | 'fixedCost' | 'goal';
-  rowId: string;
-  open: boolean;
-  onClose: () => void;
-};
-interface Dlg {
-  entity: ConflictProps['entity'];
-  rowId: string;
-  Component: ComponentType<ConflictProps>;
-}
 
 export function PlanningPage() {
   useLang();
@@ -53,23 +41,6 @@ export function PlanningPage() {
   const fixedCosts = useFixedCosts().filter((f) => !f.deleted);
   const incomes = useIncomes().filter((i) => !i.deleted);
   const [adding, setAdding] = useState(false);
-  const [dlg, setDlg] = useState<Dlg | null>(null);
-
-  async function openConflict(entity: Dlg['entity'], rowId: string) {
-    await loadPlanMessages();
-    const { ConflictDialog } = await import('../conflict/ConflictDialog');
-    setDlg({ entity, rowId, Component: ConflictDialog });
-  }
-  const conflictPill = (entity: Dlg['entity'], rowId: string) => (
-    <button
-      type="button"
-      className={styles.conflictBtn}
-      onClick={() => void openConflict(entity, rowId)}
-    >
-      <InfoIcon size={14} />
-      {t('history.conflict')}
-    </button>
-  );
 
   // Kopfzeile Sparziele: Summe des Standes in CAD (EUR-Ziele mit dem heutigen Kurs, ohne Kurs weggelassen).
   let goalsTotal = 0n;
@@ -165,7 +136,11 @@ export function PlanningPage() {
                         </span>
                         <GoalStats goal={g} savedMinor={s} dev={dev} today={today} />
                       </Link>
-                      {g.conflict ? conflictPill('goal', g.id) : null}
+                      {g.conflict ? (
+                        <div className={styles.badgeWrap}>
+                          <ConflictBadge entity="goal" rowId={g.id} />
+                        </div>
+                      ) : null}
                     </Card>
                   </li>
                 );
@@ -221,7 +196,11 @@ export function PlanningPage() {
                           ) : null}
                         </span>
                       </Link>
-                      {row.conflict ? conflictPill('fixedCost', row.id) : null}
+                      {row.conflict ? (
+                        <div className={styles.badgeWrap}>
+                          <ConflictBadge entity="fixedCost" rowId={row.id} />
+                        </div>
+                      ) : null}
                     </li>
                   );
                 })}
@@ -267,7 +246,11 @@ export function PlanningPage() {
                           ) : null}
                         </span>
                       </Link>
-                      {row.conflict ? conflictPill('income', row.id) : null}
+                      {row.conflict ? (
+                        <div className={styles.badgeWrap}>
+                          <ConflictBadge entity="income" rowId={row.id} />
+                        </div>
+                      ) : null}
                     </li>
                   );
                 })}
@@ -300,9 +283,6 @@ export function PlanningPage() {
           ))}
         </div>
       </BottomSheet>
-      {dlg ? (
-        <dlg.Component entity={dlg.entity} rowId={dlg.rowId} open onClose={() => setDlg(null)} />
-      ) : null}
     </>
   );
 }
