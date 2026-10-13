@@ -1,0 +1,73 @@
+.legendBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.row {
+  display: grid;
+  grid-template-columns: 12px 1fr auto 44px;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: 14px;
+}
+.swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  background: currentColor;
+}
+.fixed {
+  color: var(--seg-fixed);
+}
+.budget {
+  color: var(--seg-budget);
+}
+.other {
+  color: var(--seg-other);
+}
+.saving {
+  color: var(--seg-saving);
+}
+.free {
+  color: var(--seg-free);
+  outline: 1px solid var(--sep);
+}
+.label {
+  color: var(--label);
+}
+.amount {
+  color: var(--label);
+}
+.percent {
+  color: var(--label2);
+  text-align: right;
+}
+.warnRow {
+  grid-template-columns: 16px 1fr;
+  color: var(--warn);
+  background: var(--warnTint);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-weight: 600;
+}
+.warnRow .label {
+  color: var(--warn);
+}
+.hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--label2);
+}
+.hintLink {
+  color: var(--acc);
+  text-decoration: none;
+  font-weight: 600;
+}

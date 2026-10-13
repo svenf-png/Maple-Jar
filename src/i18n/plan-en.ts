@@ -33,6 +33,36 @@ export const planEn: Record<PlanKey, string> = {
   // planning (B1)
 
   // overview (B2)
+  'overview.goals.title': 'Savings goals',
+  'overview.goals.all': 'All',
+  'overview.goals.of': '{pct}% of {target}',
+  'overview.due.title': 'Due next',
+  'overview.due.overdue': 'Overdue',
+  'overview.due.book': 'Book as paid',
+  'overview.due.booked': '{name} booked',
+  'overview.due.already': 'Already booked',
+  'overview.due.noRate': 'No exchange rate available. Please try again later.',
+  'overview.due.noHousehold': 'No household member found.',
+  'overview.due.error': 'Booking failed. Please try again.',
+  'overview.due.rateLoading': 'Loading rate …',
+  'overview.due.date': 'Due on',
+  'overview.due.category': 'Category',
+  'overview.due.payer': 'Paid by',
+  'overview.due.cancel': 'Cancel',
+  'donut.seg.fixed': 'Fixed costs',
+  'donut.seg.budget': 'Budgeted spending',
+  'donut.seg.other': 'Other spending',
+  'donut.seg.saving': 'Saving',
+  'donut.seg.free': 'Free',
+  'donut.part': '{label} {percent}%',
+  'donut.pct': '{percent}%',
+  'donut.aria.normal': 'Share of income of {total}: {parts}.',
+  'donut.aria.noIncome': 'No income yet. Spending this month {total}: {parts}.',
+  'donut.aria.overflow': 'Spending of {total} is {over} above income: {parts}.',
+  'donut.overflow': 'Above income: {amount} ({percent}% of spending)',
+  'donut.noIncome': 'No income recorded yet. The ring shows your spending.',
+  'donut.addIncome': 'Add income',
+  'fixed.badge': 'Fixed cost',
 
   // conflict (B3)
 };

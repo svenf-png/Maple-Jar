@@ -33,6 +33,36 @@ export const planDe = {
   // planning (B1)
 
   // overview (B2)
+  'overview.goals.title': 'Sparziele',
+  'overview.goals.all': 'Alle',
+  'overview.goals.of': '{pct} % von {target}',
+  'overview.due.title': 'Als Nächstes fällig',
+  'overview.due.overdue': 'Überfällig',
+  'overview.due.book': 'Als bezahlt buchen',
+  'overview.due.booked': '{name} gebucht',
+  'overview.due.already': 'Bereits gebucht',
+  'overview.due.noRate': 'Kein Wechselkurs verfügbar. Bitte später erneut versuchen.',
+  'overview.due.noHousehold': 'Kein Haushaltsmitglied vorhanden.',
+  'overview.due.error': 'Buchen fehlgeschlagen. Bitte erneut versuchen.',
+  'overview.due.rateLoading': 'Kurs wird geladen …',
+  'overview.due.date': 'Fällig am',
+  'overview.due.category': 'Kategorie',
+  'overview.due.payer': 'Bezahlt von',
+  'overview.due.cancel': 'Abbrechen',
+  'donut.seg.fixed': 'Fixkosten',
+  'donut.seg.budget': 'Budget-Ausgaben',
+  'donut.seg.other': 'Andere Ausgaben',
+  'donut.seg.saving': 'Sparen',
+  'donut.seg.free': 'Frei',
+  'donut.part': '{label} {percent} %',
+  'donut.pct': '{percent} %',
+  'donut.aria.normal': 'Anteil am Einkommen von {total}: {parts}.',
+  'donut.aria.noIncome': 'Noch keine Einnahmen. Ausgaben dieses Monats {total}: {parts}.',
+  'donut.aria.overflow': 'Ausgaben von {total} liegen {over} über den Einnahmen: {parts}.',
+  'donut.overflow': 'Über den Einnahmen: {amount} ({percent} % der Ausgaben)',
+  'donut.noIncome': 'Noch keine Einnahmen erfasst. Der Kreis zeigt deine Ausgaben.',
+  'donut.addIncome': 'Einnahme hinzufügen',
+  'fixed.badge': 'Fixkosten',
 
   // conflict (B3)
 } as const;

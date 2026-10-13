@@ -54,6 +54,22 @@
   font-weight: 700;
   letter-spacing: -0.03em;
 }
+.heroMain {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+.bigWithChart {
+  font-size: 38px;
+  line-height: 44px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.donutTitle {
+  font-size: 17px;
+  font-weight: 600;
+}
 .heroMeta {
   display: flex;
   justify-content: space-between;
