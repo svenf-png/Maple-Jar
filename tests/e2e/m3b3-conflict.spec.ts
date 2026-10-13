@@ -205,6 +205,13 @@ test('Löschen gegen Bearbeiten: A stellt wieder her', async ({ browser }) => {
   await b.context.close();
 });
 
+// axe misst Kontraste sonst mitten in der Einblend-Animation des Sheets (vor allem in WebKit).
+async function animationsDone(page: Page): Promise<void> {
+  await page.waitForFunction(() =>
+    document.getAnimations().every((a) => a.playState !== 'running'),
+  );
+}
+
 for (const scheme of ['light', 'dark'] as const) {
   test(`axe Konflikt-Dialog (${scheme})`, async ({ browser }) => {
     test.setTimeout(180_000);
@@ -216,6 +223,7 @@ for (const scheme of ['light', 'dark'] as const) {
     const dialog = d.a.page.getByRole('dialog');
     await expect(dialog.getByRole('heading', { name: 'Zwei Versionen gefunden' })).toBeVisible();
     await dialog.getByRole('radio', { name: /Version von Person B/ }).check();
+    await animationsDone(d.a.page);
     const results = await new AxeBuilder({ page: d.a.page }).analyze();
     expect(
       results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
@@ -244,6 +252,7 @@ for (const scheme of ['light', 'dark'] as const) {
     ).toBeVisible();
     await expect(dialog.getByText('Geänderte Werte')).toBeVisible();
     await expect(dialog.getByText(/95,00/)).toBeVisible();
+    await animationsDone(d.a.page);
     const results = await new AxeBuilder({ page: d.a.page }).analyze();
     expect(
       results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
