@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FxProvider } from '../../data/fx/frankfurter';
 import type { HouseholdMember } from '../../data/household';
 import { type DueItem, dueNext } from '../../domain/fixed-cost';
 import type { KnownRate } from '../../domain/fx';
 import type { Category, Entry, FixedCost } from '../../domain/model';
+import { formatApprox } from '../../i18n/format';
 import { getLocale, t } from '../../i18n/t';
 import { WarnIcon } from '../../icons/ui-icons';
 import { Card, CategoryTile } from '../../ui';
@@ -37,6 +38,7 @@ export function DueNext({
   const locale = getLocale();
   const [items, setItems] = useState<DueItem[]>([]);
   const [open, setOpen] = useState<DueItem | null>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     let alive = true;
@@ -58,7 +60,7 @@ export function DueNext({
   return (
     <section className={sectionStyles.section} aria-labelledby="due-title">
       <div className={sectionStyles.sectionHead}>
-        <h2 id="due-title" className="type-title2">
+        <h2 id="due-title" ref={headingRef} tabIndex={-1} className="type-title2">
           {t('overview.due.title')}
         </h2>
       </div>
@@ -73,13 +75,19 @@ export function DueNext({
               locale,
             );
             const overdue = due.dueOn < today;
+            const amountText = amt.cad
+              ? amt.approximate
+                ? formatApprox(amt.cad)
+                : amt.cad
+              : (amt.eur ?? '');
+            const whenText = `${overdue ? `${t('overview.due.overdue')} · ` : ''}${dueLabel(due.dueOn, today, locale)}`;
             return (
               <li key={due.entryId}>
                 <button
                   type="button"
                   className={styles.row}
                   onClick={() => setOpen(due)}
-                  aria-label={`${t('overview.due.book')}: ${fc.name}`}
+                  aria-label={`${t('overview.due.book')}: ${fc.name}, ${whenText}, ${amountText}`}
                 >
                   <CategoryTile
                     icon={cat?.icon ?? 'sonstiges'}
@@ -89,14 +97,11 @@ export function DueNext({
                     <span className={styles.name}>{fc.name}</span>
                     <span className={`${styles.when} ${overdue ? styles.overdue : ''}`}>
                       {overdue ? <WarnIcon size={14} /> : null}
-                      {overdue ? `${t('overview.due.overdue')} · ` : ''}
-                      {dueLabel(due.dueOn, today, locale)}
+                      {whenText}
                     </span>
                   </span>
                   <span className={styles.amounts}>
-                    <span className={`${styles.amount} num`}>
-                      {amt.cad ? `${amt.approximate ? '≈ ' : ''}${amt.cad}` : (amt.eur ?? '')}
-                    </span>
+                    <span className={`${styles.amount} num`}>{amountText}</span>
                     {amt.eur && amt.cad ? (
                       <span className={`${styles.orig} num`}>{amt.eur}</span>
                     ) : null}
@@ -114,6 +119,7 @@ export function DueNext({
         provider={provider}
         today={today}
         onClose={() => setOpen(null)}
+        onBooked={() => setTimeout(() => headingRef.current?.focus(), 0)}
       />
     </section>
   );

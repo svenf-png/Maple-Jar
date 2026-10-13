@@ -147,6 +147,7 @@ export const planEn: Record<PlanKey, string> = {
   'overview.due.book': 'Book as paid',
   'overview.due.booked': '{name} booked',
   'overview.due.already': 'Already booked',
+  'overview.due.restored': '{name} booked again',
   'overview.due.noRate': 'No exchange rate available. Please try again later.',
   'overview.due.noHousehold': 'No household member found.',
   'overview.due.error': 'Booking failed. Please try again.',
@@ -172,7 +173,8 @@ export const planEn: Record<PlanKey, string> = {
 
   // conflict (B3)
   'conflict.heading': 'Two versions found',
-  'conflict.intro': 'You both changed this while a device was offline. Which version should stay?',
+  'conflict.intro':
+    'Two devices saved different values at the same time. Which version should apply?',
   'conflict.pick': 'Choose a version',
   'conflict.yours': 'Your version',
   'conflict.versionOf': "{name}'s version",
@@ -191,6 +193,11 @@ export const planEn: Record<PlanKey, string> = {
   'conflict.deleteTitle': 'Restore or leave deleted?',
   'conflict.deleteText':
     'One person deleted this while another changed it. Restore it or leave it deleted?',
+  'conflict.edited': 'Changed values',
+  'conflict.change': '{before} → {after}',
+  'conflict.deletedNotice':
+    'This was deleted on one device. You can keep a version, which restores it, or leave it deleted.',
+  'conflict.keepRestore': 'Keep version and restore',
   'conflict.restore': 'Restore',
   'conflict.keepDeleted': 'Leave deleted',
   'conflict.fromFixed': 'From fixed costs: {name}',

@@ -11,7 +11,7 @@ import { coverageByFixedCost, type OccurrenceIds, occurrenceIds } from '../../do
 import type { KnownRate } from '../../domain/fx';
 import { type IncomeSplit, incomeSplit } from '../../domain/income-split';
 import { type Entry, monthOf } from '../../domain/model';
-import { formatMoney } from '../../i18n/format';
+import { formatApprox, formatMoney } from '../../i18n/format';
 import { getLocale, t } from '../../i18n/t';
 import { WarnIcon } from '../../icons/ui-icons';
 import { DonutChart } from './DonutChart';
@@ -100,7 +100,10 @@ export function IncomeDonutChart({ split }: { split: IncomeSplit }) {
 
 export function IncomeLegend({ split }: { split: IncomeSplit }) {
   const locale = getLocale();
-  const approx = split.approximate ? '≈ ' : '';
+  const money = (minor: bigint) => {
+    const text = formatMoney(minor, 'CAD', locale);
+    return split.approximate ? formatApprox(text) : text;
+  };
   return (
     <div className={styles.legendBox}>
       <ul className={styles.legend}>
@@ -108,10 +111,7 @@ export function IncomeLegend({ split }: { split: IncomeSplit }) {
           <li key={r.kind} className={styles.row} data-kind={r.kind}>
             <span className={`${styles.swatch} ${styles[r.kind]}`} aria-hidden="true" />
             <span className={styles.label}>{t(SEG_LABEL[r.kind])}</span>
-            <span className={`${styles.amount} num`}>
-              {approx}
-              {formatMoney(r.cadMinor, 'CAD', locale)}
-            </span>
+            <span className={`${styles.amount} num`}>{money(r.cadMinor)}</span>
             <span className={`${styles.percent} num`}>
               {t('donut.pct', { percent: r.percent })}
             </span>
@@ -122,7 +122,7 @@ export function IncomeLegend({ split }: { split: IncomeSplit }) {
             <WarnIcon size={16} />
             <span className={styles.label}>
               {t('donut.overflow', {
-                amount: `${approx}${formatMoney(split.overflow.cadMinor, 'CAD', locale)}`,
+                amount: money(split.overflow.cadMinor),
                 percent: split.overflow.percentOfTotal,
               })}
             </span>

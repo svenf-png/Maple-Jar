@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   type ConflictEntity,
   confirmDelete,
@@ -19,7 +19,7 @@ import { BottomSheet } from '../shared/BottomSheet';
 import { memberName } from '../shared/helpers';
 import styles from './ConflictDialog.module.css';
 import { useConflict } from './use-conflict';
-import { differingFields, type Version, versionsOf } from './versions';
+import { differingFields, editsOf, type Version, versionsOf } from './versions';
 
 export type { ConflictEntity };
 
@@ -69,15 +69,32 @@ export function ConflictDialog({ entity, rowId, open, onClose }: Props) {
   const toast = useToast();
   const { household, userId } = useReadySession();
   const categories = useCategories();
-  const conflict = useConflict(entity, rowId);
   const row = useLiveQuery(() => db[entity].get(rowId), [entity, rowId], undefined);
   const [picked, setPicked] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [resolved, setResolved] = useState(false);
+  const events = useLiveQuery(
+    () => db.events.where('[entity+rowId]').equals([entity, rowId]).toArray(),
+    [entity, rowId],
+    [],
+  );
+  // Den Konflikt festhalten, solange aufgelöst wird: sonst blitzt „bereits gelöst“ auf, bevor der Dialog schließt.
+  const latched = useRef<typeof live>(undefined);
+  const live = useConflict(entity, rowId);
+  if (live) latched.current = live;
+  const conflict = live ?? (busy || resolved ? latched.current : undefined);
+  useEffect(() => {
+    if (!open) {
+      setResolved(false);
+      latched.current = undefined;
+    }
+  }, [open]);
 
   const finish = () => {
     toast(t('conflict.resolved'));
     setPicked(null);
+    setResolved(true);
     onClose();
   };
   const run = async (action: () => Promise<unknown>) => {
@@ -93,9 +110,22 @@ export function ConflictDialog({ entity, rowId, open, onClose }: Props) {
     }
   };
 
-  const versions: Version[] = conflict && row ? versionsOf(conflict, row) : [];
+  const isDeleted = row?.deleted === true;
+  const versions: Version[] = conflict && row ? versionsOf(conflict, row, events) : [];
   const shown = conflict ? differingFields(conflict, versions) : [];
-  const sameAuthor = new Set(versions.map((v) => v.author)).size < versions.length;
+  const latest = versions.at(-1);
+
+  // Unterscheiden sich die Versionen in keinem sichtbaren Feld, gibt es nichts zu entscheiden: die jüngste gilt.
+  const auto = useRef(false);
+  useEffect(() => {
+    if (!open) auto.current = false;
+    if (!open || auto.current || busy || !conflict || conflict.kind !== 'fields') return;
+    if (isDeleted || !latest || shown.length > 0) return;
+    auto.current = true;
+    void run(() => keepVersion(db, entity, rowId, latest.values));
+  });
+
+  const sharedAuthor = new Set(versions.map((v) => v.author)).size < versions.length;
   const time = (ms: number) =>
     formatDate(new Date(ms), locale, {
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -105,16 +135,13 @@ export function ConflictDialog({ entity, rowId, open, onClose }: Props) {
       minute: '2-digit',
     });
   const who = (v: Version) =>
-    sameAuthor
-      ? t('conflict.versionAt', { time: time(v.at) })
-      : v.author === userId
-        ? t('conflict.yours')
-        : t('conflict.versionOf', { name: memberName(household.members, v.author) });
+    v.author === userId
+      ? t('conflict.yours')
+      : t('conflict.versionOf', { name: memberName(household.members, v.author) });
 
-  const show = (field: string, v: Version): string => {
-    const value = v.values[field];
+  const show = (field: string, value: unknown, currencyValue: unknown): string => {
     if (value === null || value === undefined || value === '') return t('conflict.none');
-    const currency = (v.values.currency ?? row?.currency) === 'EUR' ? 'EUR' : 'CAD';
+    const currency = (currencyValue ?? row?.currency) === 'EUR' ? 'EUR' : 'CAD';
     if (MONEY_FIELDS.has(field) && typeof value === 'number')
       return formatMoney(value, currency, locale);
     if (field === 'fxRateMicro' && typeof value === 'number')
@@ -130,8 +157,8 @@ export function ConflictDialog({ entity, rowId, open, onClose }: Props) {
   };
 
   const chosen = versions.find((v) => v.eventId === picked);
-  const others = versions.filter((v) => v.eventId !== picked);
-  const valuesOf = (v: Version) => v.values;
+  const edits = conflict?.kind === 'deleteVsEdit' ? editsOf(conflict, events) : [];
+  const editedCurrency = edits.find((e) => e.field === 'currency')?.after;
 
   return (
     <BottomSheet
@@ -149,6 +176,26 @@ export function ConflictDialog({ entity, rowId, open, onClose }: Props) {
       ) : conflict.kind === 'deleteVsEdit' ? (
         <>
           <p className={styles.intro}>{t('conflict.deleteText')}</p>
+          {edits.length > 0 ? (
+            <>
+              <h3 className={styles.subhead}>{t('conflict.edited')}</h3>
+              <dl className={`${styles.fields} ${styles.edits}`}>
+                {edits.map((e) => (
+                  <div key={e.field} style={{ display: 'contents' }}>
+                    <dt>{t(LABELS[e.field] ?? 'conflict.field.other')}</dt>
+                    <dd>
+                      <span className="num">
+                        {t('conflict.change', {
+                          before: show(e.field, e.before, editedCurrency),
+                          after: show(e.field, e.after, editedCurrency),
+                        })}
+                      </span>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </>
+          ) : null}
           {failed ? <FailNote /> : null}
           <div className={styles.actions}>
             <Button busy={busy} onClick={() => void run(() => restoreRow(db, entity, rowId))}>
@@ -166,6 +213,12 @@ export function ConflictDialog({ entity, rowId, open, onClose }: Props) {
       ) : (
         <>
           <p className={styles.intro}>{t('conflict.intro')}</p>
+          {isDeleted ? (
+            <p className={styles.notice} role="note">
+              <WarnIcon size={16} />
+              {t('conflict.deletedNotice')}
+            </p>
+          ) : null}
           <fieldset className={styles.versions}>
             <legend className={styles.legend}>{t('conflict.pick')}</legend>
             {versions.map((v) => (
@@ -178,14 +231,16 @@ export function ConflictDialog({ entity, rowId, open, onClose }: Props) {
                     onChange={() => setPicked(v.eventId)}
                   />
                   <span className={styles.who}>{who(v)}</span>
-                  <span className={`${styles.when} num`}>{time(v.at)}</span>
+                  {sharedAuthor ? <span className={`${styles.when} num`}>{time(v.at)}</span> : null}
                 </span>
                 <dl className={styles.fields}>
                   {shown.map((f) => (
                     <div key={f} style={{ display: 'contents' }}>
                       <dt>{t(LABELS[f] ?? 'conflict.field.other')}</dt>
                       <dd>
-                        <span className={`${styles.diff} num`}>{show(f, v)}</span>
+                        <span className={`${styles.diff} num`}>
+                          {show(f, v.values[f], v.values.currency)}
+                        </span>
                       </dd>
                     </div>
                   ))}
@@ -200,22 +255,35 @@ export function ConflictDialog({ entity, rowId, open, onClose }: Props) {
               busy={busy}
               disabled={!chosen}
               onClick={() =>
-                chosen && void run(() => keepVersion(db, entity, rowId, valuesOf(chosen)))
+                chosen && void run(() => keepVersion(db, entity, rowId, chosen.values))
               }
             >
-              {t('conflict.keep')}
+              {isDeleted ? t('conflict.keepRestore') : t('conflict.keep')}
             </Button>
             {entity === 'entry' ? (
               <Button
                 variant="secondary"
                 busy={busy}
-                disabled={!chosen}
                 onClick={() =>
-                  chosen &&
-                  void run(() => keepBoth(db, rowId, valuesOf(chosen), others.map(valuesOf)))
+                  void run(() =>
+                    keepBoth(
+                      db,
+                      rowId,
+                      versions.map((v) => ({ eventId: v.eventId, values: v.values })),
+                    ),
+                  )
                 }
               >
                 {t('conflict.keepBoth')}
+              </Button>
+            ) : null}
+            {isDeleted && latest ? (
+              <Button
+                variant="secondary"
+                busy={busy}
+                onClick={() => void run(() => confirmDelete(db, entity, rowId, latest.values))}
+              >
+                {t('conflict.keepDeleted')}
               </Button>
             ) : null}
             <Button variant="text" onClick={onClose}>

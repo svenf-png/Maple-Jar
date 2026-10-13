@@ -1,9 +1,7 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import type { HouseholdMember } from '../../data/household';
 import { type Category, type Entry, entryCad } from '../../domain/model';
 import { formatMoney } from '../../i18n/format';
-import { loadPlanMessages } from '../../i18n/plan-messages';
 import { getLocale, t } from '../../i18n/t';
 import { CalendarIcon, InfoIcon } from '../../icons/ui-icons';
 import { CategoryTile } from '../../ui';
@@ -20,11 +18,8 @@ interface Props {
 export function EntryRow({ entry, category, members }: Props) {
   const locale = getLocale();
   const fixed = entry.source === 'fixed';
-  // Plan-Texte (Kennzeichnung „Fixkosten“) sind lazy; die Marke erscheint, sobald sie geladen sind.
-  const [planReady, setPlanReady] = useState(false);
-  useEffect(() => {
-    if (fixed) void loadPlanMessages().then(() => setPlanReady(true));
-  }, [fixed]);
+  // Die Plan-Texte laden die Routen (Übersicht, Verlauf) vor dem Rendern; fehlen sie, entfällt die Marke.
+  const fixedLabel = fixed ? t('fixed.badge') : '';
   const title = entry.merchant || category?.name || '';
   const sub = [category?.name, memberName(members, entry.paidBy)].filter(Boolean).join(' · ');
   return (
@@ -34,10 +29,10 @@ export function EntryRow({ entry, category, members }: Props) {
         <span className={styles.title}>{title}</span>
         <span className={styles.sub}>
           {sub}
-          {fixed && planReady ? (
+          {fixed && fixedLabel !== 'fixed.badge' ? (
             <span className={styles.fixed}>
               <CalendarIcon size={14} />
-              {t('fixed.badge')}
+              {fixedLabel}
             </span>
           ) : null}
           {entry.conflict ? (

@@ -144,7 +144,8 @@ export async function occurrenceIds(
 
 /**
  * „Als Nächstes fällig“: offene Fälligkeiten der letzten 35 Tage (überfällige, heute eingeschlossen) bis `today + horizonDays`,
- * nach Datum sortiert. Gebuchte und gelöschte Buchungen erscheinen nicht.
+ * nach Datum sortiert. Gebuchte erscheinen nicht; eine gelöschte Buchung (Rückgängig) gilt als nicht gebucht und
+ * erscheint wieder (Zustand `deleted`, Buchen stellt den Eintrag wieder her). Autobook bucht sie nie neu.
  */
 export async function dueNext(
   fixedCosts: readonly FixedCost[],
@@ -158,7 +159,7 @@ export async function dueNext(
     addDays(today, -(LOOKBACK_DAYS - 1)),
     addDays(today, horizonDays),
   );
-  return items.filter((i) => i.state === 'open');
+  return items.filter((i) => i.state !== 'booked');
 }
 
 /**

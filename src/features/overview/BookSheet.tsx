@@ -22,6 +22,8 @@ interface Props {
   provider: FxProvider;
   today: string;
   onClose: () => void;
+  /** Nach erfolgreicher Buchung (der Aufrufer setzt den Fokus um). */
+  onBooked?: () => void;
 }
 
 const errorKey = (e: unknown) =>
@@ -32,7 +34,7 @@ const errorKey = (e: unknown) =>
       : 'overview.due.error';
 
 /** „Als bezahlt buchen“: vorbelegt aus der Fixkosten-Vorlage, bestätigen genügt. */
-export function BookSheet({ item, category, members, provider, today, onClose }: Props) {
+export function BookSheet({ item, category, members, provider, today, onClose, onBooked }: Props) {
   const toast = useToast();
   const locale = getLocale();
   const [payer, setPayer] = useState<string | null>(null);
@@ -64,11 +66,17 @@ export function BookSheet({ item, category, members, provider, today, onClose }:
       const entryId = item.due.entryId;
       if (result === 'already') toast(t('overview.due.already'));
       else
-        toast(t('overview.due.booked', { name: fc.name }), {
-          label: t('history.undo'),
-          onClick: () => void deleteEntry(db, entryId),
-        });
+        toast(
+          t(result === 'restored' ? 'overview.due.restored' : 'overview.due.booked', {
+            name: fc.name,
+          }),
+          {
+            label: t('history.undo'),
+            onClick: () => void deleteEntry(db, entryId),
+          },
+        );
       close();
+      onBooked?.();
     } catch (e) {
       setError(t(errorKey(e)));
     } finally {
