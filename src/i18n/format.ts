@@ -14,6 +14,9 @@ export function formatMoney(minor: bigint | number, currency: Currency, locale: 
   );
 }
 
+/** Kennzeichnet einen umgerechneten Betrag als ungefähr („≈ 12,00 CA$“). */
+export const formatApprox = (text: string): string => `≈ ${text}`;
+
 export function formatDate(
   date: Date | string,
   locale: Locale,

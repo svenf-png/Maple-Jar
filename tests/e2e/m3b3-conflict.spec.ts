@@ -186,7 +186,7 @@ test('Löschen gegen Bearbeiten: A stellt wieder her', async ({ browser }) => {
   await a.page.getByRole('button', { name: 'Konflikt lösen' }).click();
   const dialog = a.page.getByRole('dialog');
   await expect(
-    dialog.getByRole('heading', { name: 'Gelöscht oder wiederherstellen?' }),
+    dialog.getByRole('heading', { name: 'Wiederherstellen oder gelöscht lassen?' }),
   ).toBeVisible();
   const before = d.server.events.length;
   await dialog.getByRole('button', { name: 'Wiederherstellen' }).click();
@@ -216,6 +216,34 @@ for (const scheme of ['light', 'dark'] as const) {
     const dialog = d.a.page.getByRole('dialog');
     await expect(dialog.getByRole('heading', { name: 'Zwei Versionen gefunden' })).toBeVisible();
     await dialog.getByRole('radio', { name: /Version von Person B/ }).check();
+    const results = await new AxeBuilder({ page: d.a.page }).analyze();
+    expect(
+      results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
+    ).toEqual([]);
+    await d.a.context.close();
+    await d.b.context.close();
+  });
+}
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`axe Konflikt-Dialog Löschen gegen Bearbeiten (${scheme})`, async ({ browser }) => {
+    test.setTimeout(180_000);
+    const d = await twoDevices(browser, scheme);
+    await d.a.page.getByRole('button', { name: 'Eintrag löschen' }).click();
+    await expect(d.a.page).toHaveURL(/#\/verlauf/);
+    await editAmount(d.b.page, '95');
+    await d.a.context.setOffline(false);
+    await d.b.context.setOffline(false);
+    await resync(d.a.page, d.detailUrl);
+    await resync(d.b.page, d.detailUrl);
+    await resync(d.a.page, d.detailUrl);
+    await d.a.page.getByRole('button', { name: 'Konflikt lösen' }).click();
+    const dialog = d.a.page.getByRole('dialog');
+    await expect(
+      dialog.getByRole('heading', { name: 'Wiederherstellen oder gelöscht lassen?' }),
+    ).toBeVisible();
+    await expect(dialog.getByText('Geänderte Werte')).toBeVisible();
+    await expect(dialog.getByText(/95,00/)).toBeVisible();
     const results = await new AxeBuilder({ page: d.a.page }).analyze();
     expect(
       results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),

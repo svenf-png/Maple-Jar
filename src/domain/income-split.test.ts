@@ -269,7 +269,7 @@ describe('incomeSplit', () => {
     expect(amounts(s).fixed).toBe(10_000n);
   });
 
-  it('gelöschte Buchung: Fälligkeit zählt weder als Eintrag noch erneut', async () => {
+  it('gelöschte Buchung (Rückgängig) gilt als nicht gebucht: die Fälligkeit zählt', async () => {
     const fc = fixedCost({ id: 'fx-b', amountMinor: 80_000, startsOn: '2027-02-01' });
     const id = await fixedCostEntryId('fx-b', '2027-02-01');
     const s = await split({
@@ -286,7 +286,7 @@ describe('incomeSplit', () => {
         }),
       ],
     });
-    expect(amounts(s).fixed).toBe(0n);
+    expect(amounts(s).fixed).toBe(80_000n);
   });
 
   it('Sparen-Fixkosten (gebucht und fällig) zählen als Sparen, nicht als Fixkosten', async () => {

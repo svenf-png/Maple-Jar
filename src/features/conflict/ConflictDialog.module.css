@@ -3,7 +3,7 @@
   align-items: center;
   gap: var(--s-1);
   padding: var(--s-1) var(--s-3);
-  min-height: 32px;
+  min-height: 44px;
   border-radius: var(--r-pill);
   background: var(--infoTint);
   color: var(--info);
@@ -110,4 +110,23 @@
   border-radius: var(--r-field);
   padding: var(--s-2) var(--s-3);
   margin-bottom: var(--s-3);
+}
+.subhead {
+  margin: 0 0 var(--s-2);
+  font-size: 15px;
+  font-weight: 700;
+}
+.edits {
+  margin-bottom: var(--s-4);
+}
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-4);
+  padding: var(--s-3);
+  border-radius: var(--r-field);
+  background: var(--warnTint);
+  color: var(--warn);
+  font-size: 14px;
 }

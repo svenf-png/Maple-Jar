@@ -74,7 +74,7 @@ export function percentsOf(values: readonly bigint[]): number[] {
  * Anteil am Einkommen, Monat bis heute. Annahmen:
  * - Einnahmen/Fixkosten-Fälligkeiten in EUR werden mit `rate` umgerechnet; ohne Kurs entfallen sie.
  * - Eine Fälligkeit zählt genau einmal: ist ihr Eintrag (ID) vorhanden und nicht gelöscht, zählt der Eintrag
- *   (mit seinem eigenen Kurs, wenn sein Datum im Monat liegt); ist er gelöscht, zählt nichts; sonst die Fälligkeit, außer sie ist durch einen verwaisten Eintrag abgedeckt (`coveredUntil`, Überbleibsel einer
+ *   (mit seinem eigenen Kurs, wenn sein Datum im Monat liegt); ist er gelöscht oder fehlt, zählt die Fälligkeit, außer sie ist durch einen verwaisten Eintrag abgedeckt (`coveredUntil`, Überbleibsel einer
  *   geänderten Terminregel).
  * - Beiträge zählen, wenn positiv und im Monat bis heute (auch zu archivierten Zielen); unbekanntes Ziel = CAD.
  */
@@ -124,7 +124,8 @@ export function incomeSplit(input: IncomeSplitInput): IncomeSplit {
       // Abgedeckt durch einen verwaisten Eintrag derselben Fixkosten (wie bei Autobook/dueNext).
       if (dueOn <= (input.coveredUntil.get(fc.id) ?? '')) continue;
       const id = input.fixedEntryIds.get(occurrenceKey(fc.id, dueOn));
-      if (id !== undefined && entryById.has(id)) continue; // gebucht (zählt als Eintrag) oder gelöscht
+      // Gebucht zählt als Eintrag; ein gelöschter gebuchter Eintrag gilt als nicht gebucht (M3.md §2.3).
+      if (id !== undefined && entryById.get(id)?.deleted === false) continue;
       const cad = convert(fc.amountMinor, fc.currency);
       if (fc.isSaving) saving += cad;
       else fixed += cad;

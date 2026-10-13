@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { differingFields, versionsOf } from '../features/conflict/versions';
+import { updateEntry } from './actions';
 import { confirmDelete, keepBoth, keepVersion, restoreRow } from './conflict-actions';
 import { MapleJarDb } from './db';
 import { CAT_1, categoryData, entryData, ROW_1 } from './events/test-helpers';
@@ -131,6 +133,14 @@ beforeEach(async () => {
   await settle(a, b);
 });
 
+/** Versionen des offenen Konflikts wie der Dialog sie bildet. */
+const versionsFor = async (d: Device) => {
+  const conflict = await d.db.conflicts.get(`entry:${ROW_1}`);
+  const row = await d.db.entry.get(ROW_1);
+  const events = await d.db.events.where('[entity+rowId]').equals(['entry', ROW_1]).toArray();
+  return versionsOf(conflict as never, row as never, events);
+};
+
 const both = async (fn: (d: Device) => Promise<void>) => {
   await fn(a);
   await fn(b);
@@ -162,17 +172,100 @@ describe('Konflikt auflösen über zwei Geräte', () => {
     await write(a, { entity: 'entry', rowId: ROW_1, op: 'update', data: { amountMinor: 9000 } });
     await write(b, { entity: 'entry', rowId: ROW_1, op: 'update', data: { amountMinor: 9500 } });
     await settle(a, b);
-    const ids = await keepBoth(a.db, ROW_1, { amountMinor: 9000 }, [{ amountMinor: 9500 }]);
+    const ids = await keepBoth(a.db, ROW_1, await versionsFor(a));
     expect(ids).toHaveLength(1);
     await settle(a, b);
     await both(async (d) => {
       expect(await d.db.conflicts.count()).toBe(0);
-      expect((await d.db.entry.get(ROW_1))?.amountMinor).toBe(9000);
+      const live = (await d.db.entry.toArray()).filter((e) => !e.deleted);
+      expect(live.map((e) => e.amountMinor).sort()).toEqual([9000, 9500]);
       expect(await d.db.entry.get(ids[0] as string)).toMatchObject({
-        amountMinor: 9500,
         source: 'manual',
         deleted: false,
       });
+    });
+  });
+
+  it('keepBoth auf beiden Geräten (auch mit gegensätzlicher Auswahl): genau eine Kopie, kein neuer Konflikt', async () => {
+    await write(a, { entity: 'entry', rowId: ROW_1, op: 'update', data: { amountMinor: 9000 } });
+    await write(b, { entity: 'entry', rowId: ROW_1, op: 'update', data: { amountMinor: 9500 } });
+    await settle(a, b);
+    const idsA = await keepBoth(a.db, ROW_1, await versionsFor(a));
+    const idsB = await keepBoth(b.db, ROW_1, await versionsFor(b));
+    expect(idsA).toEqual(idsB);
+    await settle(a, b);
+    await both(async (d) => {
+      const live = (await d.db.entry.toArray()).filter((e) => !e.deleted);
+      expect(live.map((e) => e.amountMinor).sort()).toEqual([9000, 9500]);
+      expect(await d.db.conflicts.count()).toBe(0);
+    });
+  });
+
+  it('Währung bleibt mit dem Betrag zusammen: Version von B ergibt CAD 70,00, nicht EUR', async () => {
+    await updateEntry(a.db, ROW_1, {
+      currency: 'EUR',
+      amountMinor: 5000,
+      rate: { rateMicro: 1_500_000, rateDate: '2027-01-02' } as never,
+    });
+    await write(b, { entity: 'entry', rowId: ROW_1, op: 'update', data: { amountMinor: 7000 } });
+    await settle(a, b);
+    const conflict = await b.db.conflicts.get(`entry:${ROW_1}`);
+    const row = await b.db.entry.get(ROW_1);
+    const events = await b.db.events.where('[entity+rowId]').equals(['entry', ROW_1]).toArray();
+    const versions = versionsOf(conflict as never, row as never, events);
+    expect(differingFields(conflict as never, versions)).toContain('currency');
+    const mine = versions.find((v) => v.author === B.userId);
+    expect(mine?.values).toMatchObject({ amountMinor: 7000, currency: 'CAD' });
+    await keepVersion(b.db, 'entry', ROW_1, mine?.values ?? {});
+    await settle(a, b);
+    await both(async (d) =>
+      expect(await d.db.entry.get(ROW_1)).toMatchObject({
+        amountMinor: 7000,
+        currency: 'CAD',
+        fxRateMicro: 1_000_000,
+        conflict: false,
+      }),
+    );
+  });
+
+  it('Feldkonflikt mit gleichzeitigem Löschen: keepVersion stellt wieder her, atomar', async () => {
+    await write(a, { entity: 'entry', rowId: ROW_1, op: 'update', data: { amountMinor: 9000 } });
+    await write(b, { entity: 'entry', rowId: ROW_1, op: 'update', data: { amountMinor: 9500 } });
+    await write(b, { entity: 'entry', rowId: ROW_1, op: 'delete' });
+    await settle(a, b);
+    expect((await a.db.conflicts.get(`entry:${ROW_1}`))?.kind).toBe('fields');
+    expect((await a.db.entry.get(ROW_1))?.deleted).toBe(true);
+    await keepVersion(a.db, 'entry', ROW_1, { amountMinor: 9000 });
+    await settle(a, b);
+    await both(async (d) => {
+      expect(await d.db.entry.get(ROW_1)).toMatchObject({ amountMinor: 9000, deleted: false });
+      expect(await d.db.conflicts.count()).toBe(0);
+    });
+  });
+
+  it('Feldkonflikt mit gleichzeitigem Löschen: confirmDelete lässt gelöscht und beendet den Konflikt', async () => {
+    await write(a, { entity: 'entry', rowId: ROW_1, op: 'update', data: { amountMinor: 9000 } });
+    await write(b, { entity: 'entry', rowId: ROW_1, op: 'update', data: { amountMinor: 9500 } });
+    await write(b, { entity: 'entry', rowId: ROW_1, op: 'delete' });
+    await settle(a, b);
+    await confirmDelete(a.db, 'entry', ROW_1, { amountMinor: 9000 });
+    await settle(a, b);
+    await both(async (d) => {
+      expect(await d.db.entry.get(ROW_1)).toMatchObject({ deleted: true, conflict: false });
+      expect(await d.db.conflicts.count()).toBe(0);
+    });
+  });
+
+  it('keepVersion sortiert auch bei vorgehender Uhr des Partners (2 Tage) hinter alle Köpfe', async () => {
+    await write(a, { entity: 'entry', rowId: ROW_1, op: 'update', data: { amountMinor: 9000 } });
+    b.now += 2 * 86_400_000;
+    await write(b, { entity: 'entry', rowId: ROW_1, op: 'update', data: { amountMinor: 9500 } });
+    await settle(a, b);
+    await keepVersion(a.db, 'entry', ROW_1, { amountMinor: 9000 });
+    await settle(a, b);
+    await both(async (d) => {
+      expect(await d.db.entry.get(ROW_1)).toMatchObject({ amountMinor: 9000, conflict: false });
+      expect(await d.db.conflicts.count()).toBe(0);
     });
   });
 

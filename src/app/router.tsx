@@ -143,7 +143,9 @@ const router = createHashRouter([
       {
         path: 'verlauf',
         lazy: async () => ({
-          Component: (await import('../features/history/HistoryPage')).HistoryPage,
+          Component: await withPlan(
+            async () => (await import('../features/history/HistoryPage')).HistoryPage,
+          ),
         }),
       },
       {

@@ -144,6 +144,7 @@ export const planDe = {
   'overview.due.book': 'Als bezahlt buchen',
   'overview.due.booked': '{name} gebucht',
   'overview.due.already': 'Bereits gebucht',
+  'overview.due.restored': '{name} wieder gebucht',
   'overview.due.noRate': 'Kein Wechselkurs verfügbar. Bitte später erneut versuchen.',
   'overview.due.noHousehold': 'Kein Haushaltsmitglied vorhanden.',
   'overview.due.error': 'Buchen fehlgeschlagen. Bitte erneut versuchen.',
@@ -170,7 +171,7 @@ export const planDe = {
   // conflict (B3)
   'conflict.heading': 'Zwei Versionen gefunden',
   'conflict.intro':
-    'Ihr habt diese Angaben beide geändert, während ein Gerät offline war. Welche Version soll bleiben?',
+    'Zwei Geräte haben gleichzeitig unterschiedliche Werte gespeichert. Welche Version soll gelten?',
   'conflict.pick': 'Version auswählen',
   'conflict.yours': 'Deine Version',
   'conflict.versionOf': 'Version von {name}',
@@ -186,9 +187,14 @@ export const planDe = {
   'conflict.none': 'Leer',
   'conflict.yes': 'Ja',
   'conflict.no': 'Nein',
-  'conflict.deleteTitle': 'Gelöscht oder wiederherstellen?',
+  'conflict.deleteTitle': 'Wiederherstellen oder gelöscht lassen?',
   'conflict.deleteText':
     'Eine Person hat dies gelöscht, während eine andere es geändert hat. Soll es wiederhergestellt werden oder gelöscht bleiben?',
+  'conflict.edited': 'Geänderte Werte',
+  'conflict.change': '{before} → {after}',
+  'conflict.deletedNotice':
+    'Auf einem Gerät wurde dies gelöscht. Du kannst eine Version behalten und damit wiederherstellen oder es gelöscht lassen.',
+  'conflict.keepRestore': 'Version behalten und wiederherstellen',
   'conflict.restore': 'Wiederherstellen',
   'conflict.keepDeleted': 'Gelöscht lassen',
   'conflict.fromFixed': 'Aus Fixkosten: {name}',

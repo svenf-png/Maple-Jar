@@ -96,9 +96,16 @@ test('Fixkosten: Rückgängig nach dem Buchen stellt die Fälligkeit wieder her'
   await page.getByRole('dialog').getByRole('button', { name: 'Als bezahlt buchen' }).click();
   await expect(page.getByRole('heading', { name: 'Als Nächstes fällig' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Rückgängig' }).click();
-  await expect(page.getByRole('button', { name: /Streaming-Abo A/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Streaming-Abo A/ })).toBeVisible();
   await go(page, '#/verlauf');
   await expect(page.getByRole('link').filter({ hasText: 'Fixkosten' })).toHaveCount(0);
+  // Erneut buchen stellt den gelöschten Eintrag wieder her (kein zweiter Eintrag).
+  await go(page, '#/');
+  await page.getByRole('button', { name: /Streaming-Abo A/ }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Als bezahlt buchen' }).click();
+  await expect(page.getByText('Streaming-Abo A wieder gebucht')).toBeVisible();
+  await go(page, '#/verlauf');
+  await expect(page.getByRole('link').filter({ hasText: 'Fixkosten' })).toHaveCount(1);
 });
 
 test('Fixkosten: überfällig ist markiert (Amber, Icon, Text)', async ({ page }) => {
