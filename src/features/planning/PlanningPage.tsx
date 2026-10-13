@@ -12,7 +12,7 @@ import { useReadySession } from '../../data/use-session';
 import { activeGoals, planDeviation, savedByGoal } from '../../domain/goals';
 import type { FixedCost, Income } from '../../domain/model';
 import { toCadMinor } from '../../domain/money';
-import { formatDay, formatMoney } from '../../i18n/format';
+import { formatApprox, formatDay, formatMoney } from '../../i18n/format';
 import { getLocale, t, useLang } from '../../i18n/t';
 import { PlusIcon } from '../../icons/ui-icons';
 import { useTodayRate } from '../../platform/use-fx';
@@ -100,8 +100,12 @@ export function PlanningPage() {
             </h2>
             {goals.length > 0 ? (
               <span className={`${styles.sectionSum} num`}>
-                {goalsApprox ? '≈ ' : ''}
-                {t('plan.goals.total', { amount: formatMoney(goalsTotal, 'CAD', locale) })}
+                {(() => {
+                  const total = t('plan.goals.total', {
+                    amount: formatMoney(goalsTotal, 'CAD', locale),
+                  });
+                  return goalsApprox ? formatApprox(total) : total;
+                })()}
               </span>
             ) : null}
           </div>
@@ -223,7 +227,7 @@ export function PlanningPage() {
                         </span>
                         <span className={styles.amounts}>
                           <span className={`${styles.amount} num`}>
-                            {v.cad ? `${v.approximate ? '≈ ' : ''}${v.cad}` : v.eur}
+                            {v.cad ? (v.approximate ? formatApprox(v.cad) : v.cad) : v.eur}
                           </span>
                           {v.cad && v.eur ? (
                             <span className={`${styles.orig} num`}>{v.eur}</span>
@@ -273,7 +277,7 @@ export function PlanningPage() {
                         <span className={styles.amounts}>
                           <span className={`${styles.amount} ${styles.income} num`}>
                             <span className={styles.srOnly}>{t('plan.incomeLabel')}: </span>+{' '}
-                            {v.cad ? `${v.approximate ? '≈ ' : ''}${v.cad}` : v.eur}
+                            {v.cad ? (v.approximate ? formatApprox(v.cad) : v.cad) : v.eur}
                           </span>
                           {v.cad && v.eur ? (
                             <span className={`${styles.orig} num`}>{v.eur}</span>
