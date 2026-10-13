@@ -48,25 +48,58 @@ export function bookingState(entryId: string, entries: readonly Entry[]): Bookin
   return found.deleted ? 'deleted' : 'booked';
 }
 
+const idCache = new Map<string, string>();
+async function cachedEntryId(fixedCostId: string, dueOn: string): Promise<string> {
+  const key = occurrenceKey(fixedCostId, dueOn);
+  let id = idCache.get(key);
+  if (id === undefined) {
+    id = await fixedCostEntryId(fixedCostId, dueOn);
+    idCache.set(key, id);
+  }
+  return id;
+}
+
 /**
- * Je Fixkosten das späteste `bookedOn` unter den Einträgen mit `source: 'fixed'` (auch gelöschte).
- * Fälligkeiten bis einschließlich diesem Tag gelten als abgedeckt (siehe `dueWithIds`).
+ * Abdeckung durch verwaiste Einträge: je Fixkosten das späteste `bookedOn` unter den Fixkosten-Einträgen
+ * (`source: 'fixed'`, auch gelöschte), deren ID zu KEINER Fälligkeit der aktuellen Regel gehört (Überbleibsel einer
+ * geänderten Terminregel). Fälligkeiten bis einschließlich diesem Tag gelten als abgedeckt. Einträge mit der ID einer
+ * aktuellen Fälligkeit markieren nur diese selbst (gebucht/gelöscht), ihr `bookedOn` deckt nichts anderes ab.
+ * `to`: spätester Tag, den der Aufrufer betrachtet; die Fälligkeits-IDs der Regel werden ab `startsOn` bis
+ * zum späteren aus `to` und dem letzten Buchungstag plus 400 Tage berechnet (früh gebuchte Zukunftstermine bleiben
+ * so als aktuell erkennbar). Ergebnis nur für Fixkosten mit Treffer.
  */
-export function latestFixedBookings(entries: readonly Entry[]): Map<string, string> {
-  const latest = new Map<string, string>();
+export async function coverageByFixedCost(
+  fixedCosts: readonly FixedCost[],
+  entries: readonly Entry[],
+  to: string,
+): Promise<Map<string, string>> {
+  const byFc = new Map<string, Entry[]>();
   for (const e of entries) {
     if (e.source !== 'fixed' || !e.fixedCostId) continue;
-    const cur = latest.get(e.fixedCostId);
-    if (cur === undefined || e.bookedOn > cur) latest.set(e.fixedCostId, e.bookedOn);
+    const list = byFc.get(e.fixedCostId);
+    if (list) list.push(e);
+    else byFc.set(e.fixedCostId, [e]);
   }
-  return latest;
+  const covered = new Map<string, string>();
+  for (const fc of fixedCosts) {
+    const list = byFc.get(fc.id);
+    if (!list) continue;
+    const latest = list.reduce((m, e) => (e.bookedOn > m ? e.bookedOn : m), '');
+    const end = addDays(latest > to ? latest : to, 400);
+    const current = new Set<string>();
+    for (const dueOn of occurrences(fc, fc.startsOn, end))
+      current.add(await cachedEntryId(fc.id, dueOn));
+    let cover = '';
+    for (const e of list) if (!current.has(e.id) && e.bookedOn > cover) cover = e.bookedOn;
+    if (cover) covered.set(fc.id, cover);
+  }
+  return covered;
 }
 
 /**
  * Alle Fälligkeiten der (nicht gelöschten) Fixkosten in `from`..`to` mit ID und Zustand, nach Datum sortiert.
- * Eine Fälligkeit, deren Tag nicht nach dem spätesten gebuchten Fixkosten-Eintrag derselben Fixkosten liegt, gilt
- * als `booked` (abgedeckt), auch wenn ihre eigene ID unbekannt ist: so bucht eine geänderte Terminregel
- * (z. B. anderer Starttag) keinen Zeitraum doppelt.
+ * Eine offene Fälligkeit, die durch einen verwaisten Eintrag abgedeckt ist (`coverageByFixedCost`), gilt als `booked`:
+ * so bucht eine geänderte Terminregel (z. B. anderer Starttag) keinen Zeitraum doppelt.
  */
 export async function dueWithIds(
   fixedCosts: readonly FixedCost[],
@@ -74,14 +107,18 @@ export async function dueWithIds(
   from: string,
   to: string,
 ): Promise<DueItem[]> {
-  const latest = latestFixedBookings(entries);
+  const covered = await coverageByFixedCost(
+    fixedCosts.filter((f) => !f.deleted),
+    entries,
+    to,
+  );
   const items: DueItem[] = [];
   for (const fc of fixedCosts) {
     if (fc.deleted) continue;
     for (const dueOn of occurrences(fc, from, to)) {
-      const entryId = await fixedCostEntryId(fc.id, dueOn);
+      const entryId = await cachedEntryId(fc.id, dueOn);
       let state = bookingState(entryId, entries);
-      if (state === 'open' && dueOn <= (latest.get(fc.id) ?? '')) state = 'booked';
+      if (state === 'open' && dueOn <= (covered.get(fc.id) ?? '')) state = 'booked';
       items.push({ fixedCostId: fc.id, dueOn, entryId, state });
     }
   }
@@ -158,13 +195,16 @@ export function bookingDraft(
   fixedCost: FixedCost,
   dueOn: string,
   rate: KnownRate | null,
+  today: string,
 ): BookingDraft | null {
   const choice = chooseRate(fixedCost.currency, dueOn, rate);
   if (!choice) return null;
-  // Ein Kurs, der nicht für den Fälligkeitstag gilt (Rückfall, letzter bekannter), ist nie endgültig:
-  // der Kursnachzug des erstellenden Geräts holt den Tageskurs nach.
+  // Veralteter Kurs (Rückfall) ist nie endgültig. Für heute oder die Zukunft gilt das auch, wenn der Anbieter ein
+  // früheres Datum liefert (Tageskurs noch nicht veröffentlicht): der Kursnachzug holt ihn nach. Für vergangene
+  // Tage ist die Antwort mit früherem Datum (Wochenende, Feiertag) endgültig.
   const provisional =
-    choice.provisional || (fixedCost.currency === 'EUR' && rate !== null && rate.date !== dueOn);
+    choice.provisional ||
+    (fixedCost.currency === 'EUR' && rate !== null && dueOn >= today && rate.date !== dueOn);
   return {
     amountMinor: fixedCost.amountMinor,
     currency: fixedCost.currency,
