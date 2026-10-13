@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { differingFields, versionsOf } from '../features/conflict/versions';
+import { differingFields, keptValues, versionsOf } from '../features/conflict/versions';
 import { updateEntry } from './actions';
 import { confirmDelete, keepBoth, keepVersion, restoreRow } from './conflict-actions';
 import { MapleJarDb } from './db';
@@ -266,6 +266,71 @@ describe('Konflikt auflösen über zwei Geräte', () => {
     await both(async (d) => {
       expect(await d.db.entry.get(ROW_1)).toMatchObject({ amountMinor: 9000, conflict: false });
       expect(await d.db.conflicts.count()).toBe(0);
+    });
+  });
+
+  it('Geldsatz kommt aus dem jüngsten Kopf der Seite: spätere Währungsänderung (eigenes Ereignis) geht nicht verloren', async () => {
+    await write(a, { entity: 'entry', rowId: ROW_1, op: 'update', data: { amountMinor: 9000 } });
+    await write(b, { entity: 'entry', rowId: ROW_1, op: 'update', data: { amountMinor: 9500 } });
+    await write(b, {
+      entity: 'entry',
+      rowId: ROW_1,
+      op: 'update',
+      data: {
+        currency: 'EUR',
+        fxRateMicro: 1_500_000,
+        fxRateDate: '2027-01-04',
+        fxProvisional: false,
+      },
+    });
+    await settle(a, b);
+    const conflict = await b.db.conflicts.get(`entry:${ROW_1}`);
+    const versions = await versionsFor(b);
+    const mine = versions.find((v) => v.author === B.userId);
+    expect(mine?.values).toMatchObject({
+      amountMinor: 9500,
+      currency: 'EUR',
+      fxRateMicro: 1_500_000,
+    });
+    expect(differingFields(conflict as never, versions)).toContain('currency');
+    await keepVersion(b.db, 'entry', ROW_1, keptValues(conflict as never, mine as never, versions));
+    await settle(a, b);
+    await both(async (d) => {
+      expect(await d.db.conflicts.count()).toBe(0);
+      expect(await d.db.entry.get(ROW_1)).toMatchObject({
+        amountMinor: 9500,
+        currency: 'EUR',
+        fxRateMicro: 1_500_000,
+        conflict: false,
+      });
+    });
+  });
+
+  it('Auto-Auflösen eines Nur-Kursdatum-Konflikts schreibt nur strittige Felder: gleichzeitige Betragsänderung bleibt konfliktfrei', async () => {
+    await write(a, {
+      entity: 'entry',
+      rowId: ROW_1,
+      op: 'update',
+      data: { fxRateDate: '2027-01-03' },
+    });
+    await write(b, {
+      entity: 'entry',
+      rowId: ROW_1,
+      op: 'update',
+      data: { fxRateDate: '2027-01-04' },
+    });
+    await settle(a, b);
+    const conflict = await a.db.conflicts.get(`entry:${ROW_1}`);
+    const versions = await versionsFor(a);
+    const latest = versions.at(-1) as (typeof versions)[number];
+    const data = keptValues(conflict as never, latest, versions);
+    expect(Object.keys(data)).toEqual(['fxRateDate']);
+    await keepVersion(a.db, 'entry', ROW_1, data);
+    await write(b, { entity: 'entry', rowId: ROW_1, op: 'update', data: { amountMinor: 4242 } });
+    await settle(a, b);
+    await both(async (d) => {
+      expect(await d.db.conflicts.count()).toBe(0);
+      expect(await d.db.entry.get(ROW_1)).toMatchObject({ amountMinor: 4242, conflict: false });
     });
   });
 

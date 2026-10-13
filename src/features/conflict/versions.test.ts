@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ConflictRow } from '../../data/db';
 import { formatHlc } from '../../data/events/hlc';
-import { differingFields, versionsOf } from './versions';
+import { differingFields, shouldAutoResolve, versionsOf } from './versions';
 
 const D = '00000000-0000-4000-8000-0000000000d1';
 const hlc = (ms: number) => formatHlc({ ms, counter: 0 }, D);
@@ -104,5 +104,13 @@ describe('versionsOf', () => {
       currency: 'EUR',
     });
     expect(differingFields(c, v)).toEqual(['amountMinor', 'currency', 'fxRateMicro']);
+  });
+});
+
+describe('shouldAutoResolve', () => {
+  it('wartet auf die geladenen Ereignisse und auf „nichts Sichtbares strittig“', () => {
+    expect(shouldAutoResolve(undefined, [])).toBe(false);
+    expect(shouldAutoResolve([], ['amountMinor'])).toBe(false);
+    expect(shouldAutoResolve([], [])).toBe(true);
   });
 });

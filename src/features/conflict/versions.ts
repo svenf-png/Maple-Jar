@@ -8,7 +8,7 @@ export interface Version {
   author: string;
   /** Wanduhrzeit der HLC (ms). */
   at: number;
-  /** Wert je Feld der Version (strittige Felder und der zugehörige Geldsatz), jeweils aus ihrer eigenen Vorgeschichte. */
+  /** Wert je Feld der Version (strittige Felder und der zugehörige Geldsatz), jeweils aus der Vorgeschichte des jüngsten Kopfes dieser Seite. */
   values: Record<string, unknown>;
 }
 
@@ -49,6 +49,37 @@ function lineageValue(
   return best?.data ? { found: true, value: best.data[field] } : { found: false };
 }
 
+/** Alle Vorgänger-IDs eines Ereignisses (einschließlich ihm selbst). */
+function ancestry(byId: ReadonlyMap<string, EventRow>, id: string): Set<string> {
+  const seen = new Set<string>();
+  const stack = [id];
+  while (stack.length > 0) {
+    const cur = stack.pop() as string;
+    if (seen.has(cur)) continue;
+    seen.add(cur);
+    stack.push(...(byId.get(cur)?.base ?? []));
+  }
+  return seen;
+}
+
+/**
+ * Jüngster Kopf (Ereignis, das in keiner `base` einer anderen vorkommt) der Zeile, dessen Vorgeschichte das Kandidaten-
+ * Ereignis enthält; das Kandidaten-Ereignis ist der letzte Schreiber des strittigen Feldes, nicht der Kopf der Seite.
+ */
+function headOf(
+  events: readonly EventRow[],
+  byId: ReadonlyMap<string, EventRow>,
+  id: string,
+): string {
+  const referenced = new Set(events.flatMap((e) => e.base));
+  let best: EventRow | undefined;
+  for (const e of events) {
+    if (referenced.has(e.id) || !ancestry(byId, e.id).has(id)) continue;
+    if (!best || compareHlc(e.hlc, best.hlc) > 0) best = e;
+  }
+  return best?.id ?? id;
+}
+
 /**
  * Versionen eines Feld-Konflikts, älteste zuerst. Versionen, die sich in keinem sichtbaren Feld unterscheiden,
  * werden zusammengefasst (die jüngste bleibt). `events`: die Ereignisse der Zeile (für die Vorgeschichte je Version).
@@ -77,7 +108,7 @@ export function versionsOf(
     ...v,
     values: Object.fromEntries(
       fields.map((f) => {
-        const own = lineageValue(byId, v.eventId, f);
+        const own = lineageValue(byId, headOf(events, byId, v.eventId), f);
         return [f, own.found ? own.value : f in direct ? direct[f] : row[f]];
       }),
     ),
@@ -95,6 +126,27 @@ export const differingFields = (conflict: ConflictRow, versions: readonly Versio
     (f) =>
       !HIDDEN_FIELDS.has(f) && new Set(versions.map((v) => JSON.stringify(v.values[f]))).size > 1,
   );
+
+/**
+ * Was „diese Version behalten“ schreibt: nur die strittigen Felder des Konflikts; der ganze Geldsatz nur, wenn ein
+ * Mitglied davon sichtbar abweicht (sonst würde ein Auto-Auflösen gleichzeitige Betragsänderungen überschreiben).
+ */
+export function keptValues(
+  conflict: ConflictRow,
+  version: Version,
+  versions: readonly Version[],
+): Record<string, unknown> {
+  const group = MONEY_GROUPS[conflict.entity as keyof typeof MONEY_GROUPS] ?? [];
+  if (differingFields(conflict, versions).some((f) => group.includes(f))) return version.values;
+  const names = new Set(conflict.fields.map((f) => f.field));
+  return Object.fromEntries(Object.entries(version.values).filter(([k]) => names.has(k)));
+}
+
+/** Auto-Auflösen erst, wenn die Ereignisse geladen sind und keine Version sich sichtbar unterscheidet. */
+export const shouldAutoResolve = (
+  events: readonly EventRow[] | undefined,
+  shown: readonly string[],
+): boolean => events !== undefined && shown.length === 0;
 
 export interface Edit {
   field: string;

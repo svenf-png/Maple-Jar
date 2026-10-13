@@ -19,7 +19,14 @@ import { BottomSheet } from '../shared/BottomSheet';
 import { memberName } from '../shared/helpers';
 import styles from './ConflictDialog.module.css';
 import { useConflict } from './use-conflict';
-import { differingFields, editsOf, type Version, versionsOf } from './versions';
+import {
+  differingFields,
+  editsOf,
+  keptValues,
+  shouldAutoResolve,
+  type Version,
+  versionsOf,
+} from './versions';
 
 export type { ConflictEntity };
 
@@ -77,7 +84,7 @@ export function ConflictDialog({ entity, rowId, open, onClose }: Props) {
   const events = useLiveQuery(
     () => db.events.where('[entity+rowId]').equals([entity, rowId]).toArray(),
     [entity, rowId],
-    [],
+    undefined,
   );
   // Den Konflikt festhalten, solange aufgelöst wird: sonst blitzt „bereits gelöst“ auf, bevor der Dialog schließt.
   const latched = useRef<typeof live>(undefined);
@@ -111,7 +118,7 @@ export function ConflictDialog({ entity, rowId, open, onClose }: Props) {
   };
 
   const isDeleted = row?.deleted === true;
-  const versions: Version[] = conflict && row ? versionsOf(conflict, row, events) : [];
+  const versions: Version[] = conflict && row ? versionsOf(conflict, row, events ?? []) : [];
   const shown = conflict ? differingFields(conflict, versions) : [];
   const latest = versions.at(-1);
 
@@ -120,9 +127,9 @@ export function ConflictDialog({ entity, rowId, open, onClose }: Props) {
   useEffect(() => {
     if (!open) auto.current = false;
     if (!open || auto.current || busy || !conflict || conflict.kind !== 'fields') return;
-    if (isDeleted || !latest || shown.length > 0) return;
+    if (isDeleted || !latest || !conflict || !shouldAutoResolve(events, shown)) return;
     auto.current = true;
-    void run(() => keepVersion(db, entity, rowId, latest.values));
+    void run(() => keepVersion(db, entity, rowId, keptValues(conflict, latest, versions)));
   });
 
   const sharedAuthor = new Set(versions.map((v) => v.author)).size < versions.length;
@@ -157,7 +164,7 @@ export function ConflictDialog({ entity, rowId, open, onClose }: Props) {
   };
 
   const chosen = versions.find((v) => v.eventId === picked);
-  const edits = conflict?.kind === 'deleteVsEdit' ? editsOf(conflict, events) : [];
+  const edits = conflict?.kind === 'deleteVsEdit' ? editsOf(conflict, events ?? []) : [];
   const editedCurrency = edits.find((e) => e.field === 'currency')?.after;
 
   return (
@@ -166,7 +173,9 @@ export function ConflictDialog({ entity, rowId, open, onClose }: Props) {
       title={conflict?.kind === 'deleteVsEdit' ? t('conflict.deleteTitle') : t('conflict.heading')}
       onClose={onClose}
     >
-      {!conflict ? (
+      {conflict && events === undefined ? (
+        <p className={styles.intro}>{t('settings.fx.loading')}</p>
+      ) : !conflict ? (
         <>
           <p className={styles.intro}>{t('conflict.gone')}</p>
           <Button variant="secondary" onClick={onClose}>
@@ -255,7 +264,10 @@ export function ConflictDialog({ entity, rowId, open, onClose }: Props) {
               busy={busy}
               disabled={!chosen}
               onClick={() =>
-                chosen && void run(() => keepVersion(db, entity, rowId, chosen.values))
+                chosen &&
+                void run(() =>
+                  keepVersion(db, entity, rowId, keptValues(conflict, chosen, versions)),
+                )
               }
             >
               {isDeleted ? t('conflict.keepRestore') : t('conflict.keep')}
@@ -270,6 +282,7 @@ export function ConflictDialog({ entity, rowId, open, onClose }: Props) {
                       db,
                       rowId,
                       versions.map((v) => ({ eventId: v.eventId, values: v.values })),
+                      Object.keys(keptValues(conflict, versions[0] as Version, versions)),
                     ),
                   )
                 }

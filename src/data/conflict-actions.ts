@@ -124,6 +124,8 @@ export async function keepBoth(
   db: MapleJarDb,
   entryId: string,
   versions: readonly KeptVersion[],
+  /** Felder, die die in der Zeile bleibende Version schreibt (Standard: alle Werte). */
+  keepOnly?: readonly string[],
 ): Promise<string[]> {
   const [keep, ...copies] = [...versions].sort((a, b) => (a.eventId < b.eventId ? -1 : 1));
   if (!keep) return [];
@@ -133,7 +135,14 @@ export async function keepBoth(
     if (!current) return [];
     const creates = copies.map((c) => entryCreateData(current, defined(c.values)));
     if (!creates.every((d) => validateCreateData('entry', d))) throw new InvalidPatchError();
-    await keepVersion(db, 'entry', entryId, keep.values);
+    await keepVersion(
+      db,
+      'entry',
+      entryId,
+      keepOnly
+        ? Object.fromEntries(Object.entries(keep.values).filter(([k]) => keepOnly.includes(k)))
+        : keep.values,
+    );
     const nowMs = await resolutionNow(db, 'entry', entryId);
     for (const [i, data] of creates.entries()) {
       await appendLocalEvent(
