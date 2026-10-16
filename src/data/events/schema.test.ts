@@ -57,7 +57,7 @@ describe('parseEvent', () => {
     expect(ok({ ...mk({ op: 'delete' }), v: 2 })).toBe(false);
     expect(ok({ ...mk({ op: 'delete' }), id: 'nope' })).toBe(false);
     expect(ok({ ...mk({ op: 'delete' }), hlc: 'later' })).toBe(false);
-    expect(ok({ ...mk({ op: 'delete' }), entity: 'scenario' })).toBe(false);
+    expect(ok({ ...mk({ op: 'delete' }), entity: 'receipt' })).toBe(false);
     expect(ok('garbage')).toBe(false);
     expect(ok(null)).toBe(false);
   });
@@ -143,5 +143,55 @@ describe('parseEvent: M3-Entitäten', () => {
   it('lehnt data bei delete/restore und leere Updates ab', () => {
     expect(ok(mk({ entity: 'goal', op: 'delete', data: { name: 'x' } }))).toBe(false);
     expect(ok(mk({ entity: 'income', op: 'update', data: {} }))).toBe(false);
+  });
+});
+
+describe('scenario', () => {
+  const CAT = '00000000-0000-4000-8000-0000000000c1';
+  const X = '00000000-0000-4000-8000-0000000000e1';
+  const goalExtra = {
+    id: X,
+    kind: 'goal',
+    name: 'Ziel A',
+    amountMinor: 50_000,
+    currency: 'CAD',
+    on: '2027-03-01',
+    targetDate: '2027-09-01',
+  };
+  const sc = (op: 'create' | 'update', data: Record<string, unknown>) =>
+    ok(mk({ entity: 'scenario', op, data }));
+
+  it('akzeptiert ein gültiges Szenario', () => {
+    expect(sc('create', { categoryPct: { [CAT]: -20 }, extras: [goalExtra] })).toBe(true);
+    expect(sc('create', { categoryPct: {}, extras: [] })).toBe(true);
+    expect(sc('update', { categoryPct: { [CAT]: 50 } })).toBe(true);
+  });
+  it('lehnt Reglerwerte außerhalb −50..50 oder nicht in 5er-Schritten ab', () => {
+    expect(sc('update', { categoryPct: { [CAT]: 7 } })).toBe(false);
+    expect(sc('update', { categoryPct: { [CAT]: 55 } })).toBe(false);
+    expect(sc('update', { categoryPct: { [CAT]: -55 } })).toBe(false);
+    expect(sc('update', { categoryPct: { 'keine-uuid': 5 } })).toBe(false);
+  });
+  it('prüft Extras: goal braucht targetDate > on, expense hat keins', () => {
+    expect(sc('update', { extras: [{ ...goalExtra, targetDate: '2027-03-01' }] })).toBe(false);
+    const { targetDate: _t, ...noTarget } = goalExtra;
+    expect(sc('update', { extras: [noTarget] })).toBe(false);
+    expect(sc('update', { extras: [{ ...noTarget, kind: 'expense' }] })).toBe(true);
+    expect(sc('update', { extras: [{ ...goalExtra, kind: 'expense' }] })).toBe(false);
+    expect(sc('update', { extras: [{ ...goalExtra, amountMinor: 0 }] })).toBe(false);
+  });
+  it('begrenzt Extras auf 50 und Regler auf 200 Kategorien', () => {
+    const many = Array.from({ length: 51 }, (_, i) => ({
+      ...goalExtra,
+      id: `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+    }));
+    expect(sc('update', { extras: many })).toBe(false);
+    const pct = Object.fromEntries(
+      Array.from({ length: 201 }, (_, i) => [
+        `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+        5,
+      ]),
+    );
+    expect(sc('update', { categoryPct: pct })).toBe(false);
   });
 });

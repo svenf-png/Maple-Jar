@@ -105,6 +105,31 @@ export interface GoalContribution {
   hlc: string;
 }
 
+/** Feste ID der Szenario-Zeile (Einzelzeile, Last-Write-Wins). */
+export const SCENARIO_ID = '00000000-0000-4000-8000-00000000005c';
+
+export type ScenarioExtraKind = 'expense' | 'goal';
+
+/** Zusätzlicher Posten: einmalige Ausgabe (`on`) oder Sparziel mit Zieldatum (`targetDate`). */
+export interface ScenarioExtra {
+  id: string;
+  kind: ScenarioExtraKind;
+  name: string;
+  amountMinor: number;
+  currency: Currency;
+  on: string;
+  targetDate?: string;
+}
+
+export interface Scenario {
+  id: string;
+  /** Regler je Kategorie-ID in Prozent (−50 bis 50, 5er-Schritte). */
+  categoryPct: Record<string, number>;
+  extras: ScenarioExtra[];
+  deleted: boolean;
+  hlc: string;
+}
+
 type Row = Record<string, unknown>;
 
 export const toEntry = (r: Row): Entry => r as unknown as Entry;
@@ -114,6 +139,7 @@ export const toIncome = (r: Row): Income => r as unknown as Income;
 export const toFixedCost = (r: Row): FixedCost => r as unknown as FixedCost;
 export const toGoal = (r: Row): Goal => r as unknown as Goal;
 export const toGoalContribution = (r: Row): GoalContribution => r as unknown as GoalContribution;
+export const toScenario = (r: Row): Scenario => r as unknown as Scenario;
 
 /** Betrag in der Basiswährung (CAD-Minor). */
 export const entryCad = (e: Pick<Entry, 'amountMinor' | 'fxRateMicro'>): bigint =>

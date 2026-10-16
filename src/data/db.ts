@@ -70,6 +70,7 @@ export class MapleJarDb extends Dexie {
   fixedCost!: EntityTable<MaterialRow, 'id'>;
   goal!: EntityTable<MaterialRow, 'id'>;
   goalContribution!: EntityTable<MaterialRow, 'id'>;
+  scenario!: EntityTable<MaterialRow, 'id'>;
 
   constructor(name = 'maple-jar') {
     super(name);
@@ -106,6 +107,24 @@ export class MapleJarDb extends Dexie {
       fixedCost: 'id, categoryId, startsOn',
       goal: 'id, targetDate',
       goalContribution: 'id, goalId, contributedOn',
+    });
+    // M4: Szenario (Einzelzeile, feste ID). Nur neue Tabelle, keine Upgrade-Funktion nötig.
+    this.version(4).stores({
+      meta: 'key',
+      events: 'id, [entity+rowId], hlc',
+      outbox: 'id',
+      conflicts: 'id, entity',
+      parked: 'key',
+      settings: 'id',
+      member: 'id',
+      category: 'id, sort',
+      entry: 'id, bookedOn, categoryId, deleted',
+      budget: 'id, categoryId, validFrom',
+      income: 'id, startsOn',
+      fixedCost: 'id, categoryId, startsOn',
+      goal: 'id, targetDate',
+      goalContribution: 'id, goalId, contributedOn',
+      scenario: 'id',
     });
   }
 }

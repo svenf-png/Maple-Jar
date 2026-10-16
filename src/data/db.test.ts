@@ -35,6 +35,7 @@ describe('Dexie-Migration auf Version 2', () => {
       'fixedCost',
       'goal',
       'goalContribution',
+      'scenario',
     ]) {
       expect(db.tables.map((t) => t.name)).toContain(table);
     }
@@ -74,6 +75,43 @@ describe('Dexie-Migration von Version 2 auf 3', () => {
     for (const t of [db.income, db.fixedCost, db.goal, db.goalContribution]) {
       expect(await t.count()).toBe(0);
     }
+    db.close();
+  });
+});
+
+describe('Dexie-Migration auf Version 4', () => {
+  it('erhält Daten aus Version 3 und legt die Tabelle scenario an', async () => {
+    const name = 'migration-test-v4';
+    const old = new Dexie(name);
+    old.version(3).stores({
+      meta: 'key',
+      events: 'id, [entity+rowId], hlc',
+      outbox: 'id',
+      conflicts: 'id, entity',
+      parked: 'key',
+      settings: 'id',
+      member: 'id',
+      category: 'id, sort',
+      entry: 'id, bookedOn, categoryId, deleted',
+      budget: 'id, categoryId, validFrom',
+      income: 'id, startsOn',
+      fixedCost: 'id, categoryId, startsOn',
+      goal: 'id, targetDate',
+      goalContribution: 'id, goalId, contributedOn',
+    });
+    await old.open();
+    await old.table('meta').put({ key: 'deviceId', value: 'dev-1' });
+    await old.table('entry').put({ id: 'x', deleted: false });
+    await old.table('goal').put({ id: 'x', deleted: false });
+    old.close();
+
+    const db = new MapleJarDb(name);
+    await db.open();
+    expect((await db.meta.get('deviceId'))?.value).toBe('dev-1');
+    expect((await db.entry.get('x'))?.deleted).toBe(false);
+    expect((await db.goal.get('x'))?.deleted).toBe(false);
+    expect(db.tables.map((t) => t.name)).toContain('scenario');
+    expect(db.verno).toBe(4);
     db.close();
   });
 });
