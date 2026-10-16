@@ -1,33 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { occurrenceKey } from './fixed-cost';
-import { type ProjectionInput, projection, variableAverages } from './projection';
-import { budget, CAT_A, category, contribution, entry, fixedCost, income } from './test-data';
-
-// Gemeinsamer Testfall: Zeitraum Jan–Apr 2027, heute 14.03. Manuelle Ausgaben Jan/Feb/Mar.
-const base = (over: Partial<ProjectionInput> = {}): ProjectionInput => ({
-  periodStart: '2027-01-01',
-  periodEnd: '2027-04-30',
-  today: '2027-03-14',
-  incomes: [income()],
-  fixedCosts: [fixedCost({ id: 'f-rent' })],
-  entries: [
-    entry({ bookedOn: '2027-01-10', amountMinor: 10_000 }),
-    entry({ bookedOn: '2027-02-10', amountMinor: 20_000 }),
-    entry({ bookedOn: '2027-03-05', amountMinor: 5_000 }),
-  ],
-  contributions: [],
-  goals: [],
-  budgets: [],
-  categories: [category()],
-  rate: null,
-  fixedEntryIds: new Map(),
-  coveredUntil: new Map(),
-  ...over,
-});
+import { projection, variableAverages } from './projection';
+import { projectionFixture } from './projection.fixture';
+import { budget, CAT_A, contribution, entry, fixedCost, income } from './test-data';
 
 describe('variableAverages', () => {
   it('mittelt die drei Vormonate ab dem ersten manuellen Eintrag', () => {
-    const avg = variableAverages(base());
+    const avg = variableAverages(projectionFixture());
     expect(avg.basis).toBe('average');
     expect(avg.byCategory.get(CAT_A)).toBe(15_000n);
   });
@@ -35,7 +14,7 @@ describe('variableAverages', () => {
 
 describe('projection', () => {
   it('rechnet Ist und Prognose pro Monat und kumuliert', () => {
-    const p = projection(base());
+    const p = projection(projectionFixture());
     expect(p.variableBasis).toBe('average');
     expect(p.variableByCategory.get(CAT_A)).toBe(15_000n);
     expect(p.months.map((m) => m.month)).toEqual([
@@ -82,8 +61,8 @@ describe('projection', () => {
       bookedOn: '2027-04-01',
     });
     const p = projection(
-      base({
-        entries: [...base().entries, jan, apr],
+      projectionFixture({
+        entries: [...projectionFixture().entries, jan, apr],
         fixedEntryIds: new Map([
           [occurrenceKey('f-rent', '2027-01-01'), 'e-jan'],
           [occurrenceKey('f-rent', '2027-04-01'), 'e-apr'],
@@ -104,8 +83,8 @@ describe('projection', () => {
       deleted: true,
     });
     const p = projection(
-      base({
-        entries: [...base().entries, jan],
+      projectionFixture({
+        entries: [...projectionFixture().entries, jan],
         fixedEntryIds: new Map([[occurrenceKey('f-rent', '2027-01-01'), 'e-jan']]),
       }),
     );
@@ -114,7 +93,7 @@ describe('projection', () => {
 
   it('Fixkosten mit isSaving und positive Beiträge zählen als Sparen, Entnahmen nicht', () => {
     const p = projection(
-      base({
+      projectionFixture({
         fixedCosts: [
           fixedCost({ id: 'f-rent' }),
           fixedCost({ id: 'f-save', isSaving: true, amountMinor: 20_000 }),
@@ -131,11 +110,11 @@ describe('projection', () => {
   });
 
   it('fällt ohne vollständigen Vormonat auf Budgets zurück, ohne Budgets auf none', () => {
-    const withBudget = projection(base({ today: '2027-01-14', budgets: [budget()] }));
+    const withBudget = projection(projectionFixture({ today: '2027-01-14', budgets: [budget()] }));
     expect(withBudget.variableBasis).toBe('budget');
     expect(withBudget.variableByCategory.get(CAT_A)).toBe(100_000n);
 
-    const without = projection(base({ today: '2027-01-14' }));
+    const without = projection(projectionFixture({ today: '2027-01-14' }));
     expect(without.variableBasis).toBe('none');
     expect(without.variableByCategory.size).toBe(0);
     // Prognose ohne Mittelwert: nur Ist
@@ -145,7 +124,7 @@ describe('projection', () => {
   it('rechnet EUR mit bekanntem Kurs und markiert approximate; ohne Kurs zählt 0', () => {
     const eur = income({ currency: 'EUR', amountMinor: 100_000 });
     const withRate = projection(
-      base({
+      projectionFixture({
         incomes: [eur],
         rate: { rateMicro: 1_500_000n, date: '2027-03-14', stale: false },
       }),
@@ -153,13 +132,13 @@ describe('projection', () => {
     for (const m of withRate.months) expect(m.incomeCadMinor).toBe(150_000n);
     expect(withRate.approximate).toBe(true);
 
-    const noRate = projection(base({ incomes: [eur], rate: null }));
+    const noRate = projection(projectionFixture({ incomes: [eur], rate: null }));
     for (const m of noRate.months) expect(m.incomeCadMinor).toBe(0n);
     expect(noRate.approximate).toBe(true);
   });
 
   it('Reglerwerte und Extras wirken nur auf die Prognose', () => {
-    const p = projection(base(), {
+    const p = projection(projectionFixture(), {
       categoryPct: { [CAT_A]: -20 },
       extraVariable: new Map([['2027-04-01', 50_000n]]),
       extraSaving: new Map([['2027-04-01', 7_000n]]),
@@ -174,31 +153,39 @@ describe('projection', () => {
   });
 
   it('Zeitraum endet mitten im Monat: anteilige Prognose', () => {
-    const p = projection(base({ periodEnd: '2027-04-15' }));
+    const p = projection(projectionFixture({ periodEnd: '2027-04-15' }));
     expect(p.months[3]?.variableCadMinor).toBe(7_500n);
     expect(p.months[3]?.incomeCadMinor).toBe(300_000n);
     expect(p.months[3]?.fixedCadMinor).toBe(120_000n);
   });
 
   it('heute vor dem Zeitraum: alles Prognose', () => {
-    const p = projection(base({ today: '2026-12-20' }));
+    const p = projection(projectionFixture({ today: '2026-12-20' }));
     expect(p.months.map((m) => m.kind)).toEqual(['forecast', 'forecast', 'forecast', 'forecast']);
   });
 
   it('heute nach dem Zeitraum: keine Prognose', () => {
-    const p = projection(base({ today: '2027-06-10' }));
+    const p = projection(projectionFixture({ today: '2027-06-10' }));
     expect(p.months.map((m) => m.kind)).toEqual(['actual', 'actual', 'actual', 'actual']);
     expect(p.months.map((m) => m.variableCadMinor)).toEqual([10_000n, 20_000n, 5_000n, 0n]);
+  });
+
+  it('Fälligkeiten bis coveredUntil zählen nicht (verwaister Eintrag)', () => {
+    const p = projection(projectionFixture({ coveredUntil: new Map([['f-rent', '2027-02-01']]) }));
+    expect(p.months[0]?.fixedCadMinor).toBe(0n);
+    expect(p.months[1]?.fixedCadMinor).toBe(0n);
+    expect(p.months[2]?.fixedCadMinor).toBe(120_000n);
+    expect(p.months[3]?.fixedCadMinor).toBe(120_000n);
   });
 
   it('ignoriert gelöschte Zeilen und Einträge außerhalb des Zeitraums', () => {
     // heute nach dem Zeitraum, damit nur das Ist zählt
     const p = projection(
-      base({
+      projectionFixture({
         today: '2027-06-10',
         incomes: [income({ deleted: true })],
         entries: [
-          ...base().entries,
+          ...projectionFixture().entries,
           entry({ bookedOn: '2026-12-31', amountMinor: 77_000 }),
           entry({ bookedOn: '2027-05-01', amountMinor: 88_000 }),
           entry({ bookedOn: '2027-02-12', amountMinor: 99_000, deleted: true }),
