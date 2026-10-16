@@ -9,6 +9,8 @@ import {
   type Goal,
   type GoalContribution,
   type Income,
+  SCENARIO_ID,
+  type Scenario,
   toBudget,
   toCategory,
   toEntry,
@@ -16,6 +18,7 @@ import {
   toGoal,
   toGoalContribution,
   toIncome,
+  toScenario,
 } from '../domain/model';
 import { db } from './db';
 import { useLiveQuery } from './use-live-query';
@@ -46,6 +49,17 @@ export const useGoals = (): Goal[] =>
 
 export const useContributions = (): GoalContribution[] =>
   useLiveQuery(async () => (await db.goalContribution.toArray()).map(toGoalContribution), [], []);
+
+/** Arbeitsszenario; `null`, solange keines angelegt oder gelöscht ist. */
+export const useScenario = (): Scenario | null =>
+  useLiveQuery(
+    async () => {
+      const row = await db.scenario.get(SCENARIO_ID);
+      return row && !row.deleted ? toScenario(row) : null;
+    },
+    [],
+    null,
+  );
 
 export const useConflictCount = (): number => useLiveQuery(() => db.conflicts.count(), [], 0);
 

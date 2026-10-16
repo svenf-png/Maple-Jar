@@ -7,8 +7,17 @@ import {
   fixedCostEntryId,
 } from '../domain/fixed-cost';
 import { chooseRate, type KnownRate } from '../domain/fx';
-import { monthOf, type RepeatUnit, toEntry, toFixedCost } from '../domain/model';
+import {
+  monthOf,
+  type RepeatUnit,
+  SCENARIO_ID,
+  type ScenarioExtra,
+  toEntry,
+  toFixedCost,
+  toScenario,
+} from '../domain/model';
 import type { Currency } from '../domain/money';
+import type { BudgetProposal } from '../domain/scenario';
 import type { MapleJarDb } from './db';
 import { validateCreateData } from './events/schema';
 import { todayIso } from './today';
@@ -453,4 +462,69 @@ export async function runAutobook(
     }
   }
   return booked;
+}
+
+// --- M4: Szenario ---------------------------------------------------------------------------------
+
+export interface ScenarioPatch {
+  categoryPct?: Record<string, number>;
+  extras?: ScenarioExtra[];
+}
+
+/** Vergleich der Reglerwerte unabhängig von der Schlüsselreihenfolge. */
+const pctSignature = (pct: Record<string, number>): string =>
+  JSON.stringify(Object.entries(pct).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+
+/**
+ * Legt das Arbeitsszenario an oder schreibt nur geänderte Felder. Einträge mit 0 % werden entfernt.
+ * Gibt false zurück, wenn nichts zu tun ist. Ein Schemafehler wirft (nichts wird geschrieben).
+ */
+export async function saveScenario(db: MapleJarDb, patch: ScenarioPatch): Promise<boolean> {
+  const categoryPct = Object.fromEntries(
+    Object.entries(patch.categoryPct ?? {}).filter(([, v]) => v !== 0),
+  );
+  const extras = patch.extras ?? [];
+  const current = await db.scenario.get(SCENARIO_ID);
+  if (!current) {
+    await appendLocalEvent(db, {
+      entity: 'scenario',
+      rowId: SCENARIO_ID,
+      op: 'create',
+      data: { categoryPct, extras },
+    });
+    return true;
+  }
+  const row = toScenario(current);
+  const data: Record<string, unknown> = {};
+  if (
+    patch.categoryPct !== undefined &&
+    pctSignature(categoryPct) !== pctSignature(row.categoryPct)
+  ) {
+    data.categoryPct = categoryPct;
+  }
+  if (patch.extras !== undefined && JSON.stringify(extras) !== JSON.stringify(row.extras)) {
+    data.extras = extras;
+  }
+  if (Object.keys(data).length === 0) return false;
+  await appendLocalEvent(db, { entity: 'scenario', rowId: SCENARIO_ID, op: 'update', data });
+  return true;
+}
+
+/**
+ * Setzt die vorgeschlagenen Limits ab `month` und entfernt die übernommenen Kategorien aus `categoryPct`
+ * (nur, wenn ein Szenario existiert).
+ */
+export async function adoptScenarioBudgets(
+  db: MapleJarDb,
+  proposals: readonly BudgetProposal[],
+  month: string,
+): Promise<void> {
+  for (const p of proposals) await setBudget(db, p.categoryId, month, Number(p.toMinor));
+  const current = await db.scenario.get(SCENARIO_ID);
+  if (!current) return;
+  const adopted = new Set(proposals.map((p) => p.categoryId));
+  const rest = Object.fromEntries(
+    Object.entries(toScenario(current).categoryPct).filter(([id]) => !adopted.has(id)),
+  );
+  await saveScenario(db, { categoryPct: rest });
 }

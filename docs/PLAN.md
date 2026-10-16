@@ -122,7 +122,7 @@ type Event = {
 | `fixedCost` | `name`, `amountMinor`, `currency`, `unit`, `every`, `startsOn`, `endsOn?`, `categoryId`, `icon?`, `isSaving`, `autobook` |
 | `goal` | `name`, `icon`, `color`, `targetMinor`, `currency`, `startsOn`, `targetDate`, `archivedAt?` |
 | `goalContribution` | `goalId`, `amountMinor` (in Zielwährung, ≠ 0), `contributedOn`, `memberId?`, `note` (nur anlegen und löschen) |
-| `scenario` | `name`, `categoryPct` (`{categoryId: -20}`), `extras` (Einmalausgaben, neue Ziele) |
+| `scenario` (1×, feste ID) | `categoryPct` (`{categoryId: -20}`, −50..50 in 5er-Schritten), `extras` (Einmalausgaben `expense` mit `on`, neue Ziele `goal` mit `on` und `targetDate`) |
 
 Abgeleitet, nicht gespeichert: `amountCadMinor = (amountMinor * fxRateMicro + 500000n) / 1000000n` (BigInt), Stand eines Sparziels (Summe der Beiträge), „Ziel erreicht“, Kategorie-Vorschlag pro Händler (häufigste Kategorie, „Vorschlag aus N früheren Einkäufen“), Änderungshistorie und Aktivitäts-Feed (direkt aus den Ereignissen).
 
