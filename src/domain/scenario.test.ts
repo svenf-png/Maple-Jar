@@ -122,6 +122,28 @@ describe('scenarioBudgets', () => {
     ]);
   });
 
+  it('rundet nur einmal auf ganze Einheiten', () => {
+    const props = scenarioBudgets({
+      categories: [category()],
+      budgets: [budget({ monthlyLimitCadMinor: 29_899 })],
+      averages: new Map(),
+      categoryPct: { [CAT_A]: -50 },
+      month: '2027-04-01',
+    });
+    expect(props).toEqual([{ categoryId: CAT_A, fromMinor: 29_899n, toMinor: 14_900n }]);
+  });
+
+  it('überspringt Vorschläge, die auf 0 fallen (Limit 0 heißt „kein Budget“)', () => {
+    const props = scenarioBudgets({
+      categories: [category()],
+      budgets: [],
+      averages: new Map([[CAT_A, 90n]]),
+      categoryPct: { [CAT_A]: -50 },
+      month: '2027-04-01',
+    });
+    expect(props).toEqual([]);
+  });
+
   it('überspringt Kategorien mit 0 % oder ohne Basis', () => {
     const props = scenarioBudgets({
       categories: [category(), category({ id: CAT_B, sort: 1 })],

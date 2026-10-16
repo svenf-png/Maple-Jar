@@ -475,39 +475,51 @@ export interface ScenarioPatch {
 const pctSignature = (pct: Record<string, number>): string =>
   JSON.stringify(Object.entries(pct).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
 
+/** Extras unabhängig von der Schlüsselreihenfolge vergleichen (Postgres jsonb ordnet Schlüssel um). */
+const extrasSignature = (extras: readonly ScenarioExtra[]): string =>
+  JSON.stringify(
+    extras.map((extra) =>
+      Object.entries(extra)
+        .filter(([, v]) => v !== undefined)
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+    ),
+  );
+
 /**
  * Legt das Arbeitsszenario an oder schreibt nur geänderte Felder. Einträge mit 0 % werden entfernt.
  * Gibt false zurück, wenn nichts zu tun ist. Ein Schemafehler wirft (nichts wird geschrieben).
  */
 export async function saveScenario(db: MapleJarDb, patch: ScenarioPatch): Promise<boolean> {
-  const categoryPct = Object.fromEntries(
-    Object.entries(patch.categoryPct ?? {}).filter(([, v]) => v !== 0),
-  );
-  const extras = patch.extras ?? [];
-  const current = await db.scenario.get(SCENARIO_ID);
-  if (!current) {
-    await appendLocalEvent(db, {
-      entity: 'scenario',
-      rowId: SCENARIO_ID,
-      op: 'create',
-      data: { categoryPct, extras },
-    });
+  return db.transaction('rw', db.tables, async () => {
+    const categoryPct = Object.fromEntries(
+      Object.entries(patch.categoryPct ?? {}).filter(([, v]) => v !== 0),
+    );
+    const extras = patch.extras ?? [];
+    const current = await db.scenario.get(SCENARIO_ID);
+    if (!current) {
+      await appendLocalEvent(db, {
+        entity: 'scenario',
+        rowId: SCENARIO_ID,
+        op: 'create',
+        data: { categoryPct, extras },
+      });
+      return true;
+    }
+    const row = toScenario(current);
+    const data: Record<string, unknown> = {};
+    if (
+      patch.categoryPct !== undefined &&
+      pctSignature(categoryPct) !== pctSignature(row.categoryPct)
+    ) {
+      data.categoryPct = categoryPct;
+    }
+    if (patch.extras !== undefined && extrasSignature(extras) !== extrasSignature(row.extras)) {
+      data.extras = extras;
+    }
+    if (Object.keys(data).length === 0) return false;
+    await appendLocalEvent(db, { entity: 'scenario', rowId: SCENARIO_ID, op: 'update', data });
     return true;
-  }
-  const row = toScenario(current);
-  const data: Record<string, unknown> = {};
-  if (
-    patch.categoryPct !== undefined &&
-    pctSignature(categoryPct) !== pctSignature(row.categoryPct)
-  ) {
-    data.categoryPct = categoryPct;
-  }
-  if (patch.extras !== undefined && JSON.stringify(extras) !== JSON.stringify(row.extras)) {
-    data.extras = extras;
-  }
-  if (Object.keys(data).length === 0) return false;
-  await appendLocalEvent(db, { entity: 'scenario', rowId: SCENARIO_ID, op: 'update', data });
-  return true;
+  });
 }
 
 /**
@@ -519,12 +531,15 @@ export async function adoptScenarioBudgets(
   proposals: readonly BudgetProposal[],
   month: string,
 ): Promise<void> {
-  for (const p of proposals) await setBudget(db, p.categoryId, month, Number(p.toMinor));
-  const current = await db.scenario.get(SCENARIO_ID);
-  if (!current) return;
-  const adopted = new Set(proposals.map((p) => p.categoryId));
-  const rest = Object.fromEntries(
-    Object.entries(toScenario(current).categoryPct).filter(([id]) => !adopted.has(id)),
-  );
-  await saveScenario(db, { categoryPct: rest });
+  // Budgets und Reglerrest gemeinsam: scheitert ein Schritt, bleibt alles unverändert.
+  await db.transaction('rw', db.tables, async () => {
+    for (const p of proposals) await setBudget(db, p.categoryId, month, Number(p.toMinor));
+    const current = await db.scenario.get(SCENARIO_ID);
+    if (!current) return;
+    const adopted = new Set(proposals.map((p) => p.categoryId));
+    const rest = Object.fromEntries(
+      Object.entries(toScenario(current).categoryPct).filter(([id]) => !adopted.has(id)),
+    );
+    await saveScenario(db, { categoryPct: rest });
+  });
 }

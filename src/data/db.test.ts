@@ -115,3 +115,74 @@ describe('Dexie-Migration auf Version 4', () => {
     db.close();
   });
 });
+
+describe('Dexie-Migration auf Version 4', () => {
+  const V3_STORES = {
+    meta: 'key',
+    events: 'id, [entity+rowId], hlc',
+    outbox: 'id',
+    conflicts: 'id, entity',
+    parked: 'key',
+    settings: 'id',
+    member: 'id',
+    category: 'id, sort',
+    entry: 'id, bookedOn, categoryId, deleted',
+    budget: 'id, categoryId, validFrom',
+    income: 'id, startsOn',
+    fixedCost: 'id, categoryId, startsOn',
+    goal: 'id, targetDate',
+    goalContribution: 'id, goalId, contributedOn',
+  };
+
+  it('Version 4 setzt den Cursor vor geparkte Ereignisse zurück', async () => {
+    const name = 'migration-test-v4-rewind';
+    const old = new Dexie(name);
+    old.version(3).stores(V3_STORES);
+    await old.open();
+    await old.table('meta').put({ key: 'cursor', value: 500 });
+    await old.table('parked').bulkPut([
+      {
+        key: 'seq:120',
+        seq: 120,
+        reason: 'envelope: entity invalid_value',
+        eventId: null,
+        at: '2027-01-01T00:00:00.000Z',
+      },
+      {
+        key: 'seq:130',
+        seq: 130,
+        reason: 'envelope: entity invalid_value',
+        eventId: null,
+        at: '2027-01-01T00:00:00.000Z',
+      },
+      {
+        key: 'local:1',
+        seq: null,
+        reason: 'envelope: entity invalid_value',
+        eventId: null,
+        at: '2027-01-01T00:00:00.000Z',
+      },
+    ]);
+    old.close();
+
+    const db = new MapleJarDb(name);
+    await db.open();
+    expect((await db.meta.get('cursor'))?.value).toBe(119);
+    expect((await db.parked.toArray()).map((r) => r.key)).toEqual(['local:1']);
+    db.close();
+  });
+
+  it('ohne geparkte Ereignisse bleibt der Cursor unverändert', async () => {
+    const name = 'migration-test-v4-keep';
+    const old = new Dexie(name);
+    old.version(3).stores(V3_STORES);
+    await old.open();
+    await old.table('meta').put({ key: 'cursor', value: 500 });
+    old.close();
+
+    const db = new MapleJarDb(name);
+    await db.open();
+    expect((await db.meta.get('cursor'))?.value).toBe(500);
+    db.close();
+  });
+});

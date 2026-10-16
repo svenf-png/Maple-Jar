@@ -115,7 +115,9 @@ export function scenarioBudgets(input: {
     const limit = limitFor(budgets, category.id, month)?.monthlyLimitCadMinor ?? 0;
     const base = limit > 0 ? BigInt(limit) : (averages.get(category.id) ?? 0n);
     if (base <= 0n) continue;
-    const toMinor = roundDiv(roundDiv(base * BigInt(100 + pct), 100n), 100n) * 100n;
+    // Prozent (/100) und Minor Units (/100) in einem Schritt; gerundet wird genau einmal, auf ganze Einheiten.
+    const toMinor = roundDiv(base * BigInt(100 + pct), 10_000n) * 100n;
+    if (toMinor <= 0n) continue;
     out.push({ categoryId: category.id, fromMinor: base, toMinor });
   }
   return out;
