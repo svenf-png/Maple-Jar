@@ -42,6 +42,19 @@ export function formatMonth(month: string, locale: Locale): string {
   });
 }
 
+/** Ganze CAD ohne Nachkommastellen (Achsenbeschriftung). Minus als U+2212. */
+export function formatCompact(minor: bigint, locale: Locale): string {
+  const whole = minor / 100n;
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 })
+    .format(`${whole}` as `${number}`)
+    .replace('-', '\u2212');
+}
+
+/** Kurzer Monatsname, z. B. „März“ / „Mar“. */
+export function formatMonthShort(month: string, locale: Locale): string {
+  return formatDate(`${month.slice(0, 7)}-01T00:00:00Z`, locale, { month: 'short' });
+}
+
 /** Kurs aus Mikro-Einheiten (1,61 = 1610000n) als CAD-Betrag, ohne Float-Umweg. */
 export function formatRate(micro: bigint, locale: Locale): string {
   const whole = micro / 1_000_000n;
