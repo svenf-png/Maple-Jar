@@ -4,9 +4,18 @@
   gap: 22px;
   padding-top: var(--s-4);
 }
+.grid {
+  display: contents;
+}
 @media (min-width: 1024px) {
   .stack {
-    max-width: 720px;
+    max-width: 1200px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    align-items: start;
   }
 }
 .card {

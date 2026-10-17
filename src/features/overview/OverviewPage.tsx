@@ -145,69 +145,71 @@ export function OverviewPage() {
           </Card>
         ) : null}
 
-        <section className={styles.section} aria-labelledby="budgets-title">
-          <div className={styles.sectionHead}>
-            <h2 id="budgets-title" className="type-title2">
-              {t('overview.budgets')}
-            </h2>
-            <Link to="/budgets" className={styles.link}>
-              {summary.rows.length > 0
-                ? t('overview.allBudgets', { count: summary.rows.length })
-                : t('overview.setBudgets')}
-            </Link>
-          </div>
-          {summary.rows.length > 0 ? (
-            <Card className={styles.list}>
-              {summary.rows.slice(0, 5).map((row) => (
-                <BudgetRowView key={row.category.id} row={row} />
-              ))}
-            </Card>
-          ) : (
-            <p className={styles.muted}>{t('overview.noBudgets')}</p>
-          )}
-        </section>
+        <div className={styles.grid}>
+          <section className={styles.section} aria-labelledby="budgets-title">
+            <div className={styles.sectionHead}>
+              <h2 id="budgets-title" className="type-title2">
+                {t('overview.budgets')}
+              </h2>
+              <Link to="/budgets" className={styles.link}>
+                {summary.rows.length > 0
+                  ? t('overview.allBudgets', { count: summary.rows.length })
+                  : t('overview.setBudgets')}
+              </Link>
+            </div>
+            {summary.rows.length > 0 ? (
+              <Card className={styles.list}>
+                {summary.rows.slice(0, 5).map((row) => (
+                  <BudgetRowView key={row.category.id} row={row} />
+                ))}
+              </Card>
+            ) : (
+              <p className={styles.muted}>{t('overview.noBudgets')}</p>
+            )}
+          </section>
 
-        <GoalCards today={today} />
+          <GoalCards today={today} />
 
-        <DueNext
-          fixedCosts={fixedCosts}
-          entries={entries}
-          categories={categories}
-          members={household.members}
-          displayRate={todayRate}
-          provider={provider}
-          today={today}
-        />
+          <DueNext
+            fixedCosts={fixedCosts}
+            entries={entries}
+            categories={categories}
+            members={household.members}
+            displayRate={todayRate}
+            provider={provider}
+            today={today}
+          />
 
-        <section className={styles.section} aria-labelledby="recent-title">
-          <div className={styles.sectionHead}>
-            <h2 id="recent-title" className="type-title2">
-              {t('overview.recent')}
-            </h2>
-            <Link to="/verlauf" className={styles.link}>
-              {t('overview.history')}
-            </Link>
-          </div>
-          {recent.length > 0 ? (
-            <Card className={styles.list}>
-              {recent.map((e) => (
-                <EntryRow
-                  key={e.id}
-                  entry={e}
-                  category={byId.get(e.categoryId)}
-                  members={household.members}
-                />
-              ))}
-            </Card>
-          ) : (
-            <Card className={styles.list}>
-              <div className={styles.emptyRow}>
-                <strong>{t('onboarding.noEntries')}</strong>
-                <span className={styles.muted}>{t('onboarding.noEntriesHint')}</span>
-              </div>
-            </Card>
-          )}
-        </section>
+          <section className={styles.section} aria-labelledby="recent-title">
+            <div className={styles.sectionHead}>
+              <h2 id="recent-title" className="type-title2">
+                {t('overview.recent')}
+              </h2>
+              <Link to="/verlauf" className={styles.link}>
+                {t('overview.history')}
+              </Link>
+            </div>
+            {recent.length > 0 ? (
+              <Card className={styles.list}>
+                {recent.map((e) => (
+                  <EntryRow
+                    key={e.id}
+                    entry={e}
+                    category={byId.get(e.categoryId)}
+                    members={household.members}
+                  />
+                ))}
+              </Card>
+            ) : (
+              <Card className={styles.list}>
+                <div className={styles.emptyRow}>
+                  <strong>{t('onboarding.noEntries')}</strong>
+                  <span className={styles.muted}>{t('onboarding.noEntriesHint')}</span>
+                </div>
+              </Card>
+            )}
+          </section>
+        </div>
       </div>
     </>
   );
