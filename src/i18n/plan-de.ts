@@ -307,6 +307,12 @@ export const planDe = {
   'csv.source': 'Quelle',
   'csv.source.manual': 'Manuell',
   'csv.source.fixed': 'Fixkosten',
+  // states (M5)
+  'conflict.banner.label': 'Konflikte',
+  'conflict.banner.one': 'Ein Konflikt wartet auf dich',
+  'conflict.banner.many': '{count} Konflikte warten auf dich',
+  'conflict.banner.hint':
+    'Ihr habt dasselbe auf zwei Geräten geändert. Entscheide, welche Version bleibt.',
 } as const;
 
 export type PlanKey = keyof typeof planDe;

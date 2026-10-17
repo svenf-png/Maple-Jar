@@ -212,6 +212,31 @@ test('Löschen gegen Bearbeiten: A stellt wieder her', async ({ browser }) => {
   await b.context.close();
 });
 
+test('Konflikt: Einstieg aus der Übersicht', async ({ browser }) => {
+  test.setTimeout(180_000);
+  const d = await twoDevices(browser);
+  const { a, b } = d;
+  await editAmount(a.page, '90');
+  await editAmount(b.page, '95');
+  await syncBoth(d);
+
+  await resync(a.page, '#/');
+  const banner = a.page.getByRole('region', { name: 'Konflikte' });
+  await expect(banner).toBeVisible({ timeout: 20_000 });
+  await expect(banner.getByText('Ein Konflikt wartet auf dich')).toBeVisible();
+  await banner.getByRole('button', { name: 'Konflikt lösen' }).click();
+  const dialog = a.page.getByRole('dialog');
+  await expect(dialog.getByRole('heading', { name: 'Zwei Versionen gefunden' })).toBeVisible();
+  await dialog.getByRole('radio', { name: /Version von Person B/ }).check();
+  const before = d.server.events.length;
+  await dialog.getByRole('button', { name: 'Diese Version behalten' }).click();
+  await expect(a.page.getByText('Konflikt gelöst')).toBeVisible();
+  await pushed(d, before, 1);
+  await expect(a.page.getByRole('region', { name: 'Konflikte' })).toHaveCount(0);
+  await a.context.close();
+  await b.context.close();
+});
+
 // axe misst Kontraste sonst mitten in der Einblend-Animation des Sheets (vor allem in WebKit).
 async function animationsDone(page: Page): Promise<void> {
   await page.waitForFunction(() =>
@@ -261,6 +286,27 @@ for (const scheme of ['light', 'dark'] as const) {
     await expect(dialog.getByText('Geänderte Werte')).toBeVisible();
     await expect(dialog.getByText(/95,00/)).toBeVisible();
     await animationsDone(d.a.page);
+    await waitForAnimations(d.a.page);
+    const results = await new AxeBuilder({ page: d.a.page }).analyze();
+    expect(
+      results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
+    ).toEqual([]);
+    await d.a.context.close();
+    await d.b.context.close();
+  });
+}
+
+for (const scheme of ['light', 'dark'] as const) {
+  test(`axe Übersicht mit Konflikt-Banner (${scheme})`, async ({ browser }) => {
+    test.setTimeout(180_000);
+    const d = await twoDevices(browser, scheme);
+    await editAmount(d.a.page, '90');
+    await editAmount(d.b.page, '95');
+    await syncBoth(d);
+    await resync(d.a.page, '#/');
+    await expect(d.a.page.getByRole('region', { name: 'Konflikte' })).toBeVisible({
+      timeout: 20_000,
+    });
     await waitForAnimations(d.a.page);
     const results = await new AxeBuilder({ page: d.a.page }).analyze();
     expect(

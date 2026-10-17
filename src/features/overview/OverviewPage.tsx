@@ -14,6 +14,8 @@ import { Card, ProgressBar } from '../../ui';
 import { BudgetRowView } from '../shared/BudgetRowView';
 import { EntryRow } from '../shared/EntryRow';
 import { todayIso } from '../shared/helpers';
+import { CoachMark } from './CoachMark';
+import { ConflictBanner } from './ConflictBanner';
 import { DueNext } from './DueNext';
 import { hasSplitData } from './donut-model';
 import { GoalCards } from './GoalCards';
@@ -61,6 +63,7 @@ export function OverviewPage() {
     <>
       <PageHeader title={formatMonth(month, locale)} showMeta={!desktop} />
       <div className={styles.stack}>
+        <ConflictBanner />
         {onboarding ? (
           <Card className={styles.card}>
             <section className={styles.welcome} aria-labelledby="welcome-title">
@@ -214,6 +217,7 @@ export function OverviewPage() {
           </section>
         </div>
       </div>
+      {onboarding && !desktop ? <CoachMark /> : null}
     </>
   );
 }

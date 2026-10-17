@@ -306,4 +306,10 @@ export const planEn: Record<PlanKey, string> = {
   'csv.source': 'Source',
   'csv.source.manual': 'Manual',
   'csv.source.fixed': 'Fixed costs',
+  // states (M5)
+  'conflict.banner.label': 'Conflicts',
+  'conflict.banner.one': 'One conflict needs your decision',
+  'conflict.banner.many': '{count} conflicts need your decision',
+  'conflict.banner.hint':
+    'You both changed the same thing on two devices. Decide which version stays.',
 };

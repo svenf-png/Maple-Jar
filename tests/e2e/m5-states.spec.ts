@@ -1,9 +1,19 @@
 import AxeBuilder from '@axe-core/playwright';
-import { type Browser, type BrowserContext, expect, type Route, test } from '@playwright/test';
+import {
+  type Browser,
+  type BrowserContext,
+  expect,
+  type Page,
+  type Route,
+  test,
+} from '@playwright/test';
+import { todayIso } from '../../src/data/today';
+import { addDays } from '../../src/domain/schedule';
 import { createSharedServer } from './fake-supabase-route';
 import { PERSON_A, PROJECT_URL } from './fixtures/household';
 import {
   captureEntry,
+  connectE2e,
   fillConnect,
   go,
   overviewHeading,
@@ -184,3 +194,116 @@ for (const scheme of ['light', 'dark'] as const) {
     });
   });
 }
+
+const axeViolations = async (page: Page) => {
+  const results = await new AxeBuilder({ page }).analyze();
+  return results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`);
+};
+
+/** Frischer Haushalt ohne Einträge, Kategorien aus der Vorlage angelegt, auf der Übersicht. */
+async function readyEmpty(page: Page) {
+  await connectE2e(page, 'empty');
+  await setupHousehold(page);
+  await go(page, '#/kategorien');
+  await expect(page.getByText('Lebensmittel', { exact: true })).toBeVisible();
+  await go(page, '#/');
+  await expect(overviewHeading(page)).toBeVisible();
+}
+
+/** Legt ein Sparziel über die App-Aktion an (Testmodus). */
+async function seedGoal(page: Page) {
+  await page.evaluate(
+    async ({ startsOn, targetDate }) => {
+      const w = window as unknown as {
+        __e2e: {
+          db: unknown;
+          actions: { createGoal(db: unknown, input: Record<string, unknown>): Promise<string> };
+        };
+      };
+      const { db, actions } = w.__e2e;
+      await actions.createGoal(db, {
+        name: 'Sparziel A',
+        icon: 'sonstiges',
+        color: '#2C6CB0',
+        targetMinor: 10000,
+        currency: 'CAD',
+        startsOn,
+        targetDate,
+      });
+    },
+    { startsOn: addDays(todayIso(), -90), targetDate: addDays(todayIso(), 90) },
+  );
+}
+
+for (const scheme of ['light', 'dark'] as const) {
+  test.describe(`Übersicht-Zustände (${scheme})`, () => {
+    test.use({ colorScheme: scheme });
+
+    test('Leere Übersicht: Willkommen, Coach-Mark, axe ohne Verstöße', async ({ page }) => {
+      await readyEmpty(page);
+      await expect(page.getByRole('heading', { level: 2, name: 'Willkommen!' })).toBeVisible();
+      await expect(
+        page.getByRole('note').filter({ hasText: 'Hier tippen, um eine Ausgabe zu erfassen' }),
+      ).toBeVisible();
+      await expect(page.getByText('Noch keine Einträge', { exact: true })).toBeVisible();
+      await waitForAnimations(page);
+      expect(await axeViolations(page)).toEqual([]);
+    });
+
+    test('Budget ab 80 % und überschritten: Zustände und axe', async ({ page }) => {
+      await readyEmpty(page);
+      await go(page, '#/budgets');
+      await page.getByRole('button', { name: 'Limit festlegen: Lebensmittel' }).click();
+      await page.getByLabel('Monatslimit in CAD').fill('100');
+      await page.getByRole('button', { name: 'Speichern' }).click();
+      await captureEntry(page, { amount: '85', category: 'Lebensmittel' });
+      await go(page, '#/');
+      const near = page.getByText('Fast aufgebraucht', { exact: true });
+      await expect(near).toBeVisible();
+      expect(await near.evaluate((el) => el.querySelector('svg') !== null)).toBe(true);
+      await expect(page.getByText('85 % erreicht')).toBeVisible();
+      await waitForAnimations(page);
+      expect(await axeViolations(page)).toEqual([]);
+
+      await captureEntry(page, { amount: '20', category: 'Lebensmittel' });
+      await go(page, '#/');
+      await expect(page.getByText('Über Budget', { exact: true })).toBeVisible();
+      await expect(page.getByText(/Budget um .* überschritten/)).toBeVisible();
+      await waitForAnimations(page);
+      expect(await axeViolations(page)).toEqual([]);
+    });
+
+    test('Sparziel erreicht: Dialog, axe, einmal pro Ziel', async ({ page }) => {
+      await readyEmpty(page);
+      await seedGoal(page);
+      await go(page, '#/');
+      await page.getByRole('link', { name: /Sparziel A/ }).click();
+      await expect(page).toHaveURL(/#\/ziel\/[0-9a-f-]+$/);
+      await page.getByRole('button', { name: 'Anderer Betrag' }).click();
+      await page.getByLabel('Betrag in CAD').fill('100');
+      await page.getByRole('dialog').getByRole('button', { name: 'Speichern' }).click();
+
+      const dialog = page.getByRole('dialog', { name: 'Sparziel A ist geschafft!' });
+      await expect(dialog).toBeVisible();
+      await expect(dialog.getByText('Sparziel erreicht', { exact: true })).toBeVisible();
+      await waitForAnimations(page);
+      expect(await axeViolations(page)).toEqual([]);
+
+      await dialog.getByRole('button', { name: 'Abschließen' }).click();
+      await expect(dialog).toBeHidden();
+      await page.reload();
+      await expect(page.getByRole('heading', { level: 1, name: 'Sparziel A' })).toBeVisible();
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+    });
+  });
+}
+
+test.describe('Leere Übersicht am Desktop', () => {
+  test.use({ viewport: { width: 1280, height: 900 } });
+
+  test('zeigt keinen Coach-Mark', async ({ page }) => {
+    await readyEmpty(page);
+    await expect(page.getByRole('heading', { level: 2, name: 'Willkommen!' })).toBeVisible();
+    await expect(page.getByRole('note')).toHaveCount(0);
+  });
+});
