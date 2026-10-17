@@ -4,6 +4,7 @@
 export const planDe = {
   // shared (Foundation)
   'plan.title': 'Planung',
+  'row.pending': 'Wartet auf Sync',
   'plan.stub': 'In Arbeit',
   'plan.perMonth': '≈ {amount} / Monat',
   'plan.repeat.once': 'Einmalig',

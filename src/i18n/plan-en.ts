@@ -4,6 +4,7 @@ import type { PlanKey } from './plan-de';
 export const planEn: Record<PlanKey, string> = {
   // shared (Foundation)
   'plan.title': 'Planning',
+  'row.pending': 'Waiting to sync',
   'plan.stub': 'Work in progress',
   'plan.perMonth': '≈ {amount} / month',
   'plan.repeat.once': 'One-time',

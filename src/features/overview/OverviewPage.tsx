@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { PageHeader } from '../../app/PageHeader';
+import { usePendingRows } from '../../data/pending';
 import { useBudgets, useCategories, useEntries, useFixedCosts } from '../../data/repos';
 import { useReadySession } from '../../data/use-session';
 import { monthSummary } from '../../domain/budget';
@@ -24,6 +25,7 @@ export function OverviewPage() {
   const locale = getLocale();
   const desktop = useMedia('(min-width: 1024px)');
   const { household } = useReadySession();
+  const pendingRows = usePendingRows();
   const categories = useCategories();
   const budgets = useBudgets();
   const entries = useEntries();
@@ -197,6 +199,7 @@ export function OverviewPage() {
                     entry={e}
                     category={byId.get(e.categoryId)}
                     members={household.members}
+                    pending={pendingRows.has(`entry:${e.id}`)}
                   />
                 ))}
               </Card>
