@@ -201,6 +201,8 @@ test.describe('M4 Teil B Desktop', () => {
         await openProjection(page);
         await lebensmittel(page).fill('-20');
         await expect(page.getByText('−20 %', { exact: true })).toBeVisible();
+        // Erst nach dem Speichern wird der Button aktiv und blendet ein; vorher gemessen wäre der Kontrast zu gering.
+        await expect(page.getByRole('button', { name: 'Als Budgets übernehmen' })).toBeEnabled();
         await waitForAnimations(page);
         const results = await new AxeBuilder({ page }).analyze();
         expect(
