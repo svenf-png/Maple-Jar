@@ -1,0 +1,151 @@
+.card {
+  overflow-x: auto;
+  padding: 0;
+}
+.table {
+  width: 100%;
+  min-width: 820px;
+  border-collapse: collapse;
+  font-size: 15px;
+  color: var(--label);
+}
+.table th {
+  padding: 0 var(--s-3);
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--label2);
+  border-bottom: 1px solid var(--sep);
+  white-space: nowrap;
+}
+.table td {
+  padding: var(--s-2) var(--s-3);
+  vertical-align: middle;
+  border-bottom: 1px solid var(--sep);
+}
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.right {
+  text-align: right;
+  white-space: nowrap;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.sortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.sortButton:focus-visible,
+.iconButton:focus-visible,
+.field:focus-visible,
+.select:focus-visible,
+.row:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
+}
+.row {
+  background: var(--card);
+}
+.row:hover {
+  background: var(--rowHover);
+}
+.row:focus-visible {
+  outline-offset: -2px;
+}
+.editing,
+.editing:hover {
+  background: var(--infoTint);
+}
+.title {
+  display: block;
+  font-weight: 500;
+}
+.sub {
+  display: block;
+  font-size: 13px;
+  color: var(--label2);
+}
+.person {
+  color: var(--label2);
+}
+.original {
+  color: var(--label2);
+}
+.catCell {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s-1);
+  white-space: nowrap;
+}
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-1);
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 var(--s-2);
+  border: 0;
+  border-radius: var(--r-button);
+  background: var(--fill);
+  color: var(--label);
+  font: inherit;
+  cursor: pointer;
+}
+.save {
+  background: var(--acc);
+  color: var(--onAcc);
+}
+.field,
+.select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--s-2);
+  border: 1.5px solid var(--info);
+  border-radius: var(--r-field);
+  background: var(--card);
+  color: var(--label);
+  font: inherit;
+  font-size: 16px;
+}
+.amountField {
+  text-align: right;
+  min-width: 110px;
+}
+.warn {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  margin-top: var(--s-1);
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--r-field);
+  background: var(--warnTint);
+  color: var(--warn);
+  font-size: 13px;
+}
+.hint {
+  margin: var(--s-2) var(--s-4) 0;
+  font-size: 13px;
+  color: var(--label2);
+}

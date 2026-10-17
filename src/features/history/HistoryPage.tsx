@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { PageHeader } from '../../app/PageHeader';
 import { deleteEntry, restoreEntry } from '../../data/actions';
 import { db } from '../../data/db';
@@ -14,6 +14,11 @@ import { EntryRow } from '../shared/EntryRow';
 import { dayLabel, todayIso } from '../shared/helpers';
 import { ActivityFeed } from './ActivityFeed';
 import styles from './HistoryPage.module.css';
+
+// Tabelle nur für Desktop: nicht im initialen Bundle.
+const HistoryTable = lazy(async () => ({
+  default: (await import('./HistoryTable')).HistoryTable,
+}));
 
 type Tab = 'entries' | 'activity';
 
@@ -121,6 +126,15 @@ export function HistoryPage() {
             </div>
             {groups.length === 0 ? (
               <p className={styles.empty}>{t('history.empty')}</p>
+            ) : desktop ? (
+              <Suspense fallback={null}>
+                <HistoryTable
+                  entries={filtered}
+                  categories={categories}
+                  members={household.members}
+                  onDelete={remove}
+                />
+              </Suspense>
             ) : (
               groups.map((g) => (
                 <section
