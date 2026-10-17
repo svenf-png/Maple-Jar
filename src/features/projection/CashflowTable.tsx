@@ -56,12 +56,14 @@ export function CashflowTable({
   const rows: RowKey[] = ['income', 'fixed', 'saving', 'variable', 'net'];
 
   return (
-    <div className={styles.wrap}>
+    <div className={styles.wrap} role="region" aria-label={caption} tabIndex={0}>
       <table className={styles.table}>
         <caption className={styles.caption}>{caption}</caption>
         <thead>
           <tr>
-            <th scope="col" className={styles.corner} />
+            <th scope="col" className={styles.corner}>
+              <span className={styles.srOnly}>{t('proj.table.corner')}</span>
+            </th>
             {months.map((m) => (
               <th
                 key={m.month}

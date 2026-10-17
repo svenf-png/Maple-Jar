@@ -234,6 +234,7 @@ export const planEn: Record<PlanKey, string> = {
     'No spending and no budgets yet: variable spending is missing from the forecast.',
   'proj.approx':
     '≈ Includes EUR amounts converted at the last known rate (counted as 0 without a rate).',
+  'proj.table.corner': 'Item',
   'proj.table.title': 'Cash flow per month',
   'proj.table.titleScenario': 'Cash flow per month (scenario)',
   'proj.row.income': 'Income',

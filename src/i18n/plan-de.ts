@@ -236,6 +236,7 @@ export const planDe = {
   'proj.approx':
     '≈ Enthält EUR-Beträge, umgerechnet mit dem zuletzt bekannten Kurs (ohne Kurs mit 0).',
   'proj.table.title': 'Cashflow pro Monat',
+  'proj.table.corner': 'Posten',
   'proj.table.titleScenario': 'Cashflow pro Monat (Szenario)',
   'proj.row.income': 'Einnahmen',
   'proj.row.fixed': 'Fixkosten',
