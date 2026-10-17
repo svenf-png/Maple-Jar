@@ -283,6 +283,13 @@ export const planDe = {
   'scen.error.on': 'Bitte ein Datum wählen.',
   'scen.error.targetDate': 'Das Zieldatum muss nach dem Start liegen.',
   'scen.saveError': 'Szenario konnte nicht gespeichert werden.',
+  'scen.adopt': 'Als Budgets übernehmen',
+  'scen.adopt.none': 'Bewege einen Regler, um neue Budgets vorzuschlagen.',
+  'scen.adopt.title': 'Budgets ab {month} übernehmen?',
+  'scen.adopt.row': '{from} → {to}',
+  'scen.adopt.text': 'Die Regler dieser Kategorien stehen danach wieder auf 0 %.',
+  'scen.adopt.confirm': 'Übernehmen',
+  'scen.adopt.done': 'Budgets ab {month} übernommen',
 } as const;
 
 export type PlanKey = keyof typeof planDe;

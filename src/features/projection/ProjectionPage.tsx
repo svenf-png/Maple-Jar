@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { PageHeader } from '../../app/PageHeader';
 import { useProjectionInput } from '../../data/projection-input';
-import { useScenario } from '../../data/repos';
+import { useBudgets, useCategories, useScenario } from '../../data/repos';
 import { useReadySession } from '../../data/use-session';
 import { monthOf } from '../../domain/model';
 import { compareScenario } from '../../domain/scenario';
@@ -14,6 +14,7 @@ import { useMedia } from '../../platform/use-media';
 import { Card } from '../../ui';
 import { PlanTabs } from '../planning/PlanTabs';
 import { todayIso } from '../shared/helpers';
+import { AdoptBudgets } from './AdoptBudgets';
 import { CashflowTable } from './CashflowTable';
 import { ProjectionChart } from './ProjectionChart';
 import styles from './ProjectionPage.module.css';
@@ -32,6 +33,8 @@ export function ProjectionPage() {
   const rate = useEntryRate('EUR', today, household.settings.fxProvider).rate;
   const input = useProjectionInput(rate);
   const scenario = useScenario();
+  const categories = useCategories();
+  const budgets = useBudgets();
   const scenarioActive = isScenarioActive(scenario);
   const cmp = useMemo(
     () => (input ? compareScenario(input, scenario ?? { categoryPct: {}, extras: [] }) : null),
@@ -110,6 +113,15 @@ export function ProjectionPage() {
                   periodEnd: household.settings.periodEnd,
                 }}
                 today={today}
+                adoptSlot={
+                  <AdoptBudgets
+                    categories={categories}
+                    budgets={budgets}
+                    averages={cmp.base.variableByCategory}
+                    categoryPct={scenario?.categoryPct ?? {}}
+                    today={today}
+                  />
+                }
               />
             </div>
           </div>

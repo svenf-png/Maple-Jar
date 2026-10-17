@@ -282,4 +282,11 @@ export const planEn: Record<PlanKey, string> = {
   'scen.error.on': 'Please choose a date.',
   'scen.error.targetDate': 'The target date must be after the start.',
   'scen.saveError': 'Could not save the scenario.',
+  'scen.adopt': 'Adopt as budgets',
+  'scen.adopt.none': 'Move a slider to propose new budgets.',
+  'scen.adopt.title': 'Adopt budgets from {month}?',
+  'scen.adopt.row': '{from} → {to}',
+  'scen.adopt.text': 'The sliders of these categories return to 0 % afterwards.',
+  'scen.adopt.confirm': 'Adopt',
+  'scen.adopt.done': 'Budgets adopted from {month}',
 };
