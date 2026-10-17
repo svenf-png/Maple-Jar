@@ -244,4 +244,13 @@ export const planEn: Record<PlanKey, string> = {
   'proj.kind.actual': 'Actual',
   'proj.kind.current': 'current',
   'proj.kind.forecast': 'Forecast',
+  'proj.chart.label': 'Cumulative surplus from {from} to {to}, ending at {amount}',
+  'proj.chart.labelScenario':
+    'Cumulative surplus from {from} to {to}: base {base}, scenario {scenario}',
+  'proj.legend.actual': 'Actual',
+  'proj.legend.forecast': 'Forecast',
+  'proj.legend.base': 'Base',
+  'proj.legend.scenario': 'Scenario',
+  'proj.legend.today': 'Today',
+  'proj.diff': 'Scenario vs. base, end of {month}',
 };

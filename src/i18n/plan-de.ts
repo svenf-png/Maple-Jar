@@ -245,6 +245,15 @@ export const planDe = {
   'proj.kind.actual': 'Ist',
   'proj.kind.current': 'laufend',
   'proj.kind.forecast': 'Prognose',
+  'proj.chart.label': 'Kumulierter Überschuss von {from} bis {to}, endet bei {amount}',
+  'proj.chart.labelScenario':
+    'Kumulierter Überschuss von {from} bis {to}: Basis {base}, Szenario {scenario}',
+  'proj.legend.actual': 'Ist',
+  'proj.legend.forecast': 'Prognose',
+  'proj.legend.base': 'Basis',
+  'proj.legend.scenario': 'Szenario',
+  'proj.legend.today': 'Heute',
+  'proj.diff': 'Szenario gegenüber Basis, Ende {month}',
 } as const;
 
 export type PlanKey = keyof typeof planDe;

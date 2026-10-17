@@ -15,7 +15,9 @@ import { Card } from '../../ui';
 import { PlanTabs } from '../planning/PlanTabs';
 import { todayIso } from '../shared/helpers';
 import { CashflowTable } from './CashflowTable';
+import { ProjectionChart } from './ProjectionChart';
 import styles from './ProjectionPage.module.css';
+import { signedMoney } from './projection-format';
 
 type NoteKey = 'proj.basis.budget' | 'proj.basis.none' | 'proj.approx';
 
@@ -62,6 +64,21 @@ export function ProjectionPage() {
                 </span>
                 <span className={`${styles.heroAmount} num`}>{endText}</span>
                 <span className={styles.heroNote}>{t('proj.endNote')}</span>
+                {scenarioActive ? (
+                  <div
+                    className={`${styles.diff} ${cmp.diffEndCadMinor >= 0n ? styles.diffUp : styles.diffDown}`}
+                  >
+                    <span>
+                      {t('proj.diff', {
+                        month: formatMonth(monthOf(household.settings.periodEnd), locale),
+                      })}
+                    </span>
+                    <span className={`${styles.diffValue} num`}>
+                      {signedMoney(cmp.diffEndCadMinor, locale)}
+                    </span>
+                  </div>
+                ) : null}
+                <ProjectionChart base={cmp.base} scenario={scenarioActive ? cmp.scenario : null} />
               </Card>
               {notes.length > 0 ? (
                 <ul className={styles.notes}>
