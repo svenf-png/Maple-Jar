@@ -52,6 +52,12 @@ p {
   outline-offset: 2px;
 }
 
+/* nur Programmfokus nach Seitenwechsel, kein Bedienelement */
+h1[tabindex="-1"]:focus,
+main[tabindex="-1"]:focus {
+  outline: none;
+}
+
 .type-large-title {
   font-size: 34px;
   line-height: 41px;

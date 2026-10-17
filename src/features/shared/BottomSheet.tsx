@@ -1,4 +1,5 @@
 import { type MouseEvent, type ReactNode, useEffect, useId, useRef } from 'react';
+import { useRestoreFocus } from '../../ui/use-restore-focus';
 import styles from './BottomSheet.module.css';
 
 interface Props {
@@ -15,6 +16,7 @@ interface Props {
 export function BottomSheet({ open, title, onClose, children }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  useRestoreFocus(open, ref);
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
