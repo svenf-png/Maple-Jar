@@ -24,6 +24,7 @@ import { memberName, todayIso } from '../shared/helpers';
 import { amountWithOriginal, dueLabel, perMonthLabel, repeatLabel } from '../shared/plan-format';
 import { GoalStats } from './GoalParts';
 import styles from './PlanningPage.module.css';
+import { PlanTabs } from './PlanTabs';
 import { monthlyCadTotal, nextOccurrence } from './plan-helpers';
 
 export function PlanningPage() {
@@ -92,6 +93,7 @@ export function PlanningPage() {
           <PlusIcon size={24} />
         </button>
       </div>
+      <PlanTabs current="list" />
       <div className={styles.stack}>
         <section aria-labelledby="pl-goals">
           <div className={styles.sectionHead}>

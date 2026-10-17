@@ -99,7 +99,7 @@ describe('formatCompact / formatMonthShort', () => {
     expect(formatCompact(-50000n, 'de-DE')).toBe('−500');
   });
   it('formatMonthShort', () => {
-    expect(formatMonthShort('2027-03-01', 'de-DE')).toBe('Mär'); // ICU der Laufzeit
+    expect(formatMonthShort('2027-03-01', 'de-DE')).toMatch(/^Mär/); // ICU der Laufzeit ("Mär" oder "März")
     expect(formatMonthShort('2027-03-01', 'en-CA')).toBe('Mar');
   });
 });

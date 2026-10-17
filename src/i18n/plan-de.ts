@@ -224,6 +224,27 @@ export const planDe = {
   'conflict.field.isSaving': 'Sparen',
   'conflict.field.autobook': 'Automatisch buchen',
   'conflict.field.other': 'Feld',
+  // projection (M4B)
+  'plan.tabs': 'Planungsansicht',
+  'plan.tab.list': 'Ziele und Fixkosten',
+  'plan.tab.projection': 'Projektion',
+  'proj.end': 'Freier Überschuss Ende {month}',
+  'proj.endNote': 'nach Fixkosten, Sparen und variablen Ausgaben',
+  'proj.basis.budget': 'Noch keine vollständigen Vormonate: Die Prognose nutzt deine Budgets.',
+  'proj.basis.none':
+    'Noch keine Ausgaben und keine Budgets: Variable Ausgaben fehlen in der Prognose.',
+  'proj.approx':
+    '≈ Enthält EUR-Beträge, umgerechnet mit dem zuletzt bekannten Kurs (ohne Kurs mit 0).',
+  'proj.table.title': 'Cashflow pro Monat',
+  'proj.table.titleScenario': 'Cashflow pro Monat (Szenario)',
+  'proj.row.income': 'Einnahmen',
+  'proj.row.fixed': 'Fixkosten',
+  'proj.row.saving': 'Sparen',
+  'proj.row.variable': 'Variable Ausgaben',
+  'proj.row.net': 'Überschuss',
+  'proj.kind.actual': 'Ist',
+  'proj.kind.current': 'laufend',
+  'proj.kind.forecast': 'Prognose',
 } as const;
 
 export type PlanKey = keyof typeof planDe;

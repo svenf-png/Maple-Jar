@@ -1,0 +1,25 @@
+/* Optik wie der Segmented-Control: Füllung außen, aktiver Tab als Karte mit Schatten. Gesamthöhe 44 px. */
+.tabs {
+  display: flex;
+  background: var(--fill);
+  padding: 2px;
+  border-radius: 9px;
+}
+.tab {
+  flex: 1;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--label);
+  text-decoration: none;
+  text-align: center;
+}
+.tab[aria-current="page"] {
+  background: var(--card);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+}

@@ -1,0 +1,62 @@
+.wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  font-size: 14px;
+}
+.caption {
+  caption-side: top;
+  text-align: left;
+  font-size: 17px;
+  font-weight: 700;
+  padding-bottom: var(--s-3);
+}
+.corner,
+.monthHead {
+  padding: 8px 10px;
+  font-weight: 600;
+  color: var(--label2);
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 0.5px solid var(--sep);
+}
+.forecast {
+  font-style: italic;
+}
+.rowHead {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--card);
+  padding: 10px 10px 10px 0;
+  text-align: left;
+  font-weight: 500;
+  white-space: nowrap;
+  border-bottom: 0.5px solid var(--sep);
+}
+.table td {
+  padding: 10px;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 0.5px solid var(--sep);
+}
+.net .rowHead,
+.net td {
+  font-weight: 700;
+  border-bottom: 0;
+}
+.ok {
+  color: var(--ok);
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

@@ -157,6 +157,14 @@ const router = createHashRouter([
         }),
       },
       {
+        path: 'planung/projektion',
+        lazy: async () => ({
+          Component: await withPlan(
+            async () => (await import('../features/projection/ProjectionPage')).ProjectionPage,
+          ),
+        }),
+      },
+      {
         path: 'einstellungen',
         lazy: async () => ({
           Component: (await import('../features/settings/SettingsPage')).SettingsPage,

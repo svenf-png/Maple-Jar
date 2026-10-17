@@ -223,4 +223,25 @@ export const planEn: Record<PlanKey, string> = {
   'conflict.field.isSaving': 'Saving',
   'conflict.field.autobook': 'Book automatically',
   'conflict.field.other': 'Field',
+  // projection (M4B)
+  'plan.tabs': 'Planning view',
+  'plan.tab.list': 'Goals and fixed costs',
+  'plan.tab.projection': 'Projection',
+  'proj.end': 'Free surplus end of {month}',
+  'proj.endNote': 'after fixed costs, savings and variable spending',
+  'proj.basis.budget': 'No complete past months yet: the forecast uses your budgets.',
+  'proj.basis.none':
+    'No spending and no budgets yet: variable spending is missing from the forecast.',
+  'proj.approx':
+    '≈ Includes EUR amounts converted at the last known rate (counted as 0 without a rate).',
+  'proj.table.title': 'Cash flow per month',
+  'proj.table.titleScenario': 'Cash flow per month (scenario)',
+  'proj.row.income': 'Income',
+  'proj.row.fixed': 'Fixed costs',
+  'proj.row.saving': 'Savings',
+  'proj.row.variable': 'Variable spending',
+  'proj.row.net': 'Surplus',
+  'proj.kind.actual': 'Actual',
+  'proj.kind.current': 'current',
+  'proj.kind.forecast': 'Forecast',
 };
