@@ -5,7 +5,7 @@
   padding-top: var(--s-4);
   padding-bottom: var(--s-5);
 }
-/* Mobil einspaltig; ab 1024 px Hauptspalte und Seitenpanel (Task 4). */
+/* Mobil einspaltig (Panel unter der Tabelle); ab 1024 px Hauptspalte und Seitenpanel. */
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -18,8 +18,8 @@
   gap: 18px;
   min-width: 0;
 }
-.side:empty {
-  display: none;
+.side {
+  min-width: 0;
 }
 @media (min-width: 1024px) {
   .layout {

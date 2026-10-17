@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { formatMoney } from '../../i18n/format';
-import { signedMoney } from './projection-format';
+import { signedMoney, signedPercent } from './projection-format';
 
 describe('signedMoney', () => {
   it('setzt bei positiven Beträgen ein Plus davor', () => {
@@ -13,5 +13,19 @@ describe('signedMoney', () => {
 
   it('zeigt Null ohne Vorzeichen', () => {
     expect(signedMoney(0n, 'de-DE')).toBe(formatMoney(0n, 'CAD', 'de-DE'));
+  });
+});
+
+describe('signedPercent', () => {
+  it('setzt bei positiven Werten ein Plus davor', () => {
+    expect(signedPercent(20)).toBe('+20 %');
+  });
+
+  it('setzt bei negativen Werten ein Minus (U+2212) davor', () => {
+    expect(signedPercent(-20)).toBe('−20 %');
+  });
+
+  it('zeigt Null ohne Vorzeichen', () => {
+    expect(signedPercent(0)).toBe('0 %');
   });
 });

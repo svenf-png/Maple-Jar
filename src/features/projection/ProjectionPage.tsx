@@ -18,10 +18,11 @@ import { CashflowTable } from './CashflowTable';
 import { ProjectionChart } from './ProjectionChart';
 import styles from './ProjectionPage.module.css';
 import { signedMoney } from './projection-format';
+import { ScenarioPanel } from './ScenarioPanel';
 
 type NoteKey = 'proj.basis.budget' | 'proj.basis.none' | 'proj.approx';
 
-/** Projektion des Haushaltszeitraums. Diagramm (Task 3) und Szenario-Panel (Task 4) folgen. */
+/** Projektion des Haushaltszeitraums mit Diagramm, Cashflow-Tabelle und Szenario-Panel. */
 export function ProjectionPage() {
   useLang();
   const locale = getLocale();
@@ -100,7 +101,17 @@ export function ProjectionPage() {
                 />
               </Card>
             </div>
-            <div className={styles.side} />
+            <div className={styles.side}>
+              <ScenarioPanel
+                scenario={scenario}
+                base={cmp.base}
+                period={{
+                  periodStart: household.settings.periodStart,
+                  periodEnd: household.settings.periodEnd,
+                }}
+                today={today}
+              />
+            </div>
           </div>
         ) : null}
       </div>
