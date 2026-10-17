@@ -8,7 +8,7 @@ import { type Category, type Entry, entryCad } from '../../domain/model';
 import { parseDecimalToMinor } from '../../domain/money';
 import { formatDay, formatMoney } from '../../i18n/format';
 import { getLocale, t, useLang } from '../../i18n/t';
-import { CheckIcon, EditIcon, TrashIcon, WarnIcon } from '../../icons/ui-icons';
+import { CalendarIcon, CheckIcon, EditIcon, TrashIcon, WarnIcon } from '../../icons/ui-icons';
 import { Card, CategoryTile, useToast } from '../../ui';
 import { ConflictBadge } from '../conflict/ConflictBadge';
 import { memberName, minorToInput } from '../shared/helpers';
@@ -303,6 +303,16 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                       <span className={styles.title}>{e.merchant || e.note}</span>
                     </Link>
                     {e.merchant && e.note ? <span className={styles.sub}>{e.note}</span> : null}
+                    {/* Gleiche Marken wie in der Mobil-Liste (EntryRow); die Texte können beim Start noch fehlen. */}
+                    {e.source === 'fixed' && t('fixed.badge') !== 'fixed.badge' ? (
+                      <span className={styles.fixedBadge}>
+                        <CalendarIcon size={14} />
+                        {t('fixed.badge')}
+                      </span>
+                    ) : null}
+                    {e.fxProvisional ? (
+                      <span className={styles.sub}>{` · ${t('history.provisional')}`}</span>
+                    ) : null}
                     {e.conflict ? <ConflictBadge entity="entry" rowId={e.id} /> : null}
                   </td>
                   <td>

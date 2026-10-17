@@ -94,6 +94,18 @@
   font-size: 13px;
   color: var(--label2);
 }
+.fixedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  color: var(--label2);
+  font-weight: 600;
+  font-size: 12px;
+}
 .person {
   color: var(--label2);
 }
