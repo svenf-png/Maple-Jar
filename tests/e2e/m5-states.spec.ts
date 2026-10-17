@@ -293,6 +293,21 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(dialog).toBeHidden();
       await page.reload();
       await expect(page.getByRole('heading', { level: 1, name: 'Sparziel A' })).toBeVisible();
+      // Beitrag geladen: das Ziel gilt wieder als erreicht, der Effekt liest jetzt den Merker.
+      await expect(page.getByText('100 % geschafft')).toBeVisible();
+      // Dexie führt Lesezugriffe auf `meta` der Reihe nach aus: Sobald diese Abfrage antwortet und
+      // zwei Frames gezeichnet sind, ist die Merker-Abfrage der Seite beantwortet und verarbeitet.
+      const seen = await page.evaluate(async () => {
+        const w = window as unknown as {
+          __e2e: { db: { meta: { toArray(): Promise<{ key: string; value: unknown }[]> } } };
+        };
+        const rows = await w.__e2e.db.meta.toArray();
+        await new Promise<void>((r) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => r())),
+        );
+        return rows.filter((m) => m.key.startsWith('goalReachedSeen:')).map((m) => m.value);
+      });
+      expect(seen).toEqual([true]);
       await expect(page.getByRole('dialog')).toHaveCount(0);
     });
   });
