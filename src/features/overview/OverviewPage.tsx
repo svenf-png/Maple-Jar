@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { PageHeader } from '../../app/PageHeader';
+import { usePendingRows } from '../../data/pending';
 import { useBudgets, useCategories, useEntries, useFixedCosts } from '../../data/repos';
 import { useReadySession } from '../../data/use-session';
 import { monthSummary } from '../../domain/budget';
@@ -13,10 +14,13 @@ import { Card, ProgressBar } from '../../ui';
 import { BudgetRowView } from '../shared/BudgetRowView';
 import { EntryRow } from '../shared/EntryRow';
 import { todayIso } from '../shared/helpers';
+import { CoachMark } from './CoachMark';
+import { ConflictBanner } from './ConflictBanner';
 import { DueNext } from './DueNext';
 import { hasSplitData } from './donut-model';
 import { GoalCards } from './GoalCards';
 import { IncomeDonutChart, IncomeLegend, useIncomeSplit } from './IncomeDonut';
+import { InstallHint } from './InstallHint';
 import styles from './OverviewPage.module.css';
 
 export function OverviewPage() {
@@ -24,6 +28,7 @@ export function OverviewPage() {
   const locale = getLocale();
   const desktop = useMedia('(min-width: 1024px)');
   const { household } = useReadySession();
+  const pendingRows = usePendingRows();
   const categories = useCategories();
   const budgets = useBudgets();
   const entries = useEntries();
@@ -59,6 +64,8 @@ export function OverviewPage() {
     <>
       <PageHeader title={formatMonth(month, locale)} showMeta={!desktop} />
       <div className={styles.stack}>
+        <ConflictBanner />
+        <InstallHint />
         {onboarding ? (
           <Card className={styles.card}>
             <section className={styles.welcome} aria-labelledby="welcome-title">
@@ -145,70 +152,74 @@ export function OverviewPage() {
           </Card>
         ) : null}
 
-        <section className={styles.section} aria-labelledby="budgets-title">
-          <div className={styles.sectionHead}>
-            <h2 id="budgets-title" className="type-title2">
-              {t('overview.budgets')}
-            </h2>
-            <Link to="/budgets" className={styles.link}>
-              {summary.rows.length > 0
-                ? t('overview.allBudgets', { count: summary.rows.length })
-                : t('overview.setBudgets')}
-            </Link>
-          </div>
-          {summary.rows.length > 0 ? (
-            <Card className={styles.list}>
-              {summary.rows.slice(0, 5).map((row) => (
-                <BudgetRowView key={row.category.id} row={row} />
-              ))}
-            </Card>
-          ) : (
-            <p className={styles.muted}>{t('overview.noBudgets')}</p>
-          )}
-        </section>
+        <div className={styles.grid}>
+          <section className={styles.section} aria-labelledby="budgets-title">
+            <div className={styles.sectionHead}>
+              <h2 id="budgets-title" className="type-title2">
+                {t('overview.budgets')}
+              </h2>
+              <Link to="/budgets" className={styles.link}>
+                {summary.rows.length > 0
+                  ? t('overview.allBudgets', { count: summary.rows.length })
+                  : t('overview.setBudgets')}
+              </Link>
+            </div>
+            {summary.rows.length > 0 ? (
+              <Card className={styles.list}>
+                {summary.rows.slice(0, 5).map((row) => (
+                  <BudgetRowView key={row.category.id} row={row} />
+                ))}
+              </Card>
+            ) : (
+              <p className={styles.muted}>{t('overview.noBudgets')}</p>
+            )}
+          </section>
 
-        <GoalCards today={today} />
+          <GoalCards today={today} />
 
-        <DueNext
-          fixedCosts={fixedCosts}
-          entries={entries}
-          categories={categories}
-          members={household.members}
-          displayRate={todayRate}
-          provider={provider}
-          today={today}
-        />
+          <DueNext
+            fixedCosts={fixedCosts}
+            entries={entries}
+            categories={categories}
+            members={household.members}
+            displayRate={todayRate}
+            provider={provider}
+            today={today}
+          />
 
-        <section className={styles.section} aria-labelledby="recent-title">
-          <div className={styles.sectionHead}>
-            <h2 id="recent-title" className="type-title2">
-              {t('overview.recent')}
-            </h2>
-            <Link to="/verlauf" className={styles.link}>
-              {t('overview.history')}
-            </Link>
-          </div>
-          {recent.length > 0 ? (
-            <Card className={styles.list}>
-              {recent.map((e) => (
-                <EntryRow
-                  key={e.id}
-                  entry={e}
-                  category={byId.get(e.categoryId)}
-                  members={household.members}
-                />
-              ))}
-            </Card>
-          ) : (
-            <Card className={styles.list}>
-              <div className={styles.emptyRow}>
-                <strong>{t('onboarding.noEntries')}</strong>
-                <span className={styles.muted}>{t('onboarding.noEntriesHint')}</span>
-              </div>
-            </Card>
-          )}
-        </section>
+          <section className={styles.section} aria-labelledby="recent-title">
+            <div className={styles.sectionHead}>
+              <h2 id="recent-title" className="type-title2">
+                {t('overview.recent')}
+              </h2>
+              <Link to="/verlauf" className={styles.link}>
+                {t('overview.history')}
+              </Link>
+            </div>
+            {recent.length > 0 ? (
+              <Card className={styles.list}>
+                {recent.map((e) => (
+                  <EntryRow
+                    key={e.id}
+                    entry={e}
+                    category={byId.get(e.categoryId)}
+                    members={household.members}
+                    pending={pendingRows.has(`entry:${e.id}`)}
+                  />
+                ))}
+              </Card>
+            ) : (
+              <Card className={styles.list}>
+                <div className={styles.emptyRow}>
+                  <strong>{t('onboarding.noEntries')}</strong>
+                  <span className={styles.muted}>{t('onboarding.noEntriesHint')}</span>
+                </div>
+              </Card>
+            )}
+          </section>
+        </div>
       </div>
+      {onboarding && !desktop ? <CoachMark /> : null}
     </>
   );
 }

@@ -11,6 +11,7 @@ import { formatDay, formatMoney } from '../../i18n/format';
 import { getLocale, t, useLang } from '../../i18n/t';
 import { TrashIcon } from '../../icons/ui-icons';
 import { Button, Card, CategoryTile, Segmented, TextField, useToast } from '../../ui';
+import { HapticTarget } from '../../ui/HapticTarget';
 import { ConflictBadge } from '../conflict/ConflictBadge';
 import { BottomSheet } from '../shared/BottomSheet';
 import { memberName, todayIso } from '../shared/helpers';
@@ -50,12 +51,12 @@ export function GoalDetailPage() {
 
   if (!goal) {
     return (
-      <main className={styles.detail}>
+      <div className={styles.detail}>
         <Link to="/planung" className={styles.link}>
           {t('goal.detail.back')}
         </Link>
         {loaded ? <p className={styles.muted}>{t('goal.detail.notFound')}</p> : null}
-      </main>
+      </div>
     );
   }
 
@@ -126,7 +127,7 @@ export function GoalDetailPage() {
   }
 
   return (
-    <main className={styles.detail}>
+    <div className={styles.detail}>
       <div className={styles.bar}>
         <Link to="/planung" className={styles.link}>
           {t('goal.detail.back')}
@@ -163,10 +164,10 @@ export function GoalDetailPage() {
       ) : (
         <section className={styles.actions} aria-label={t('goal.detail.contribute')}>
           {suggestion > 0n ? (
-            <Button
+            <HapticTarget
               variant="secondary"
               busy={busy}
-              onClick={() =>
+              onTap={() =>
                 void add({
                   amountMinor: Number(suggestion),
                   contributedOn: today,
@@ -176,7 +177,7 @@ export function GoalDetailPage() {
               }
             >
               {t('goal.detail.suggested', { amount: money(suggestion) })}
-            </Button>
+            </HapticTarget>
           ) : null}
           <Button
             disabled={busy}
@@ -286,9 +287,9 @@ export function GoalDetailPage() {
             />
           </div>
           <FormError message={error} />
-          <Button busy={busy} onClick={() => void submit()}>
+          <HapticTarget busy={busy} onTap={() => void submit()}>
             {t('common.save')}
-          </Button>
+          </HapticTarget>
           <Button variant="secondary" onClick={() => setSheet(false)}>
             {t('common.cancel')}
           </Button>
@@ -302,6 +303,6 @@ export function GoalDetailPage() {
         open={reached.open}
         onClose={reached.close}
       />
-    </main>
+    </div>
   );
 }

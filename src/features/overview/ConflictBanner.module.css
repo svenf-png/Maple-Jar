@@ -1,0 +1,32 @@
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3) var(--s-4);
+  padding: var(--s-4);
+  border-radius: var(--r-list);
+  background: var(--infoTint);
+  color: var(--label);
+}
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--label);
+}
+.title svg {
+  flex: none;
+  color: var(--info);
+}
+.hint {
+  margin: 0;
+  color: var(--label2);
+  font-size: 15px;
+}

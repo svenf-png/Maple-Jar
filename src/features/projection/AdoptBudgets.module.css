@@ -1,0 +1,47 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.full {
+  width: 100%;
+}
+.none {
+  font-size: 13px;
+  color: var(--label2);
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-top: var(--s-4);
+  max-height: min(50vh, 320px);
+  overflow-y: auto;
+}
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding-bottom: var(--s-2);
+  border-bottom: 1px solid var(--sep);
+  font-size: 15px;
+}
+.name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.amount {
+  flex: none;
+  white-space: nowrap;
+}
+.text {
+  margin-top: var(--s-3);
+  color: var(--label2);
+  font-size: 15px;
+}
+.actions {
+  display: grid;
+  gap: var(--s-2);
+  margin-top: var(--s-5);
+}

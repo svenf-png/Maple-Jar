@@ -5,6 +5,8 @@ import { ConnectPage } from '../features/connect/ConnectPage';
 import { loadPlanMessages } from '../i18n/plan-messages';
 import { AppShell } from './AppShell';
 import { RedirectIfConnected, RequireConnection, RequireHousehold } from './Guards';
+import { RootLayout } from './RootLayout';
+import { SubShell } from './SubShell';
 
 /** Lädt Seite und Planungs-Texte (M3) parallel; gerendert wird erst, wenn beides da ist. */
 const withPlan = async (load: () => Promise<ComponentType>): Promise<ComponentType> =>
@@ -19,7 +21,9 @@ function subPages(): RouteObject[] {
       return {
         element: (
           <RequireHousehold>
-            <Component />
+            <SubShell>
+              <Component />
+            </SubShell>
           </RequireHousehold>
         ),
       };
@@ -74,100 +78,116 @@ function planPages(page: PageFactory): RouteObject[] {
 
 const router = createHashRouter([
   {
-    path: '/verbinden',
-    element: (
-      <RedirectIfConnected>
-        <ConnectPage />
-      </RedirectIfConnected>
-    ),
-  },
-  {
-    path: '/hilfe',
-    lazy: async () => ({ Component: (await import('../features/connect/HelpPage')).HelpPage }),
-  },
-  {
-    path: '/einrichten',
-    lazy: async () => {
-      const { SetupPage } = await import('../features/setup/SetupPage');
-      return {
-        element: (
-          <RequireConnection stage="setup">
-            <SetupPage />
-          </RequireConnection>
-        ),
-      };
-    },
-  },
-  {
-    path: '/beitreten',
-    lazy: async () => {
-      const { JoinPage } = await import('../features/setup/JoinPage');
-      return {
-        element: (
-          <RequireConnection stage="join">
-            <JoinPage />
-          </RequireConnection>
-        ),
-      };
-    },
-  },
-  {
-    path: '/anmelden',
-    lazy: async () => {
-      const { RenewPage } = await import('../features/connect/RenewPage');
-      return {
-        element: (
-          <RequireHousehold>
-            <RenewPage />
-          </RequireHousehold>
-        ),
-      };
-    },
-  },
-  {
-    path: '/',
-    element: (
-      <RequireHousehold>
-        <AppShell />
-      </RequireHousehold>
-    ),
+    // Pfadlose Wurzel: Fokusführung nach jedem Seitenwechsel gilt für alle Routen.
+    element: <RootLayout />,
     children: [
       {
-        index: true,
-        lazy: async () => ({
-          Component: await withPlan(
-            async () => (await import('../features/overview/OverviewPage')).OverviewPage,
-          ),
-        }),
+        path: '/verbinden',
+        element: (
+          <RedirectIfConnected>
+            <ConnectPage />
+          </RedirectIfConnected>
+        ),
       },
       {
-        path: 'verlauf',
-        lazy: async () => ({
-          Component: await withPlan(
-            async () => (await import('../features/history/HistoryPage')).HistoryPage,
-          ),
-        }),
+        path: '/hilfe',
+        lazy: async () => ({ Component: (await import('../features/connect/HelpPage')).HelpPage }),
       },
       {
-        path: 'planung',
-        lazy: async () => ({
-          Component: await withPlan(
-            async () => (await import('../features/planning/PlanningPage')).PlanningPage,
-          ),
-        }),
+        path: '/einrichten',
+        lazy: async () => {
+          const { SetupPage } = await import('../features/setup/SetupPage');
+          return {
+            element: (
+              <RequireConnection stage="setup">
+                <SetupPage />
+              </RequireConnection>
+            ),
+          };
+        },
       },
       {
-        path: 'einstellungen',
-        lazy: async () => ({
-          Component: (await import('../features/settings/SettingsPage')).SettingsPage,
-        }),
+        path: '/beitreten',
+        lazy: async () => {
+          const { JoinPage } = await import('../features/setup/JoinPage');
+          return {
+            element: (
+              <RequireConnection stage="join">
+                <JoinPage />
+              </RequireConnection>
+            ),
+          };
+        },
+      },
+      {
+        path: '/anmelden',
+        lazy: async () => {
+          const { RenewPage } = await import('../features/connect/RenewPage');
+          return {
+            element: (
+              <RequireHousehold>
+                <RenewPage />
+              </RequireHousehold>
+            ),
+          };
+        },
+      },
+      {
+        path: '/',
+        element: (
+          <RequireHousehold>
+            <AppShell />
+          </RequireHousehold>
+        ),
+        children: [
+          {
+            index: true,
+            lazy: async () => ({
+              Component: await withPlan(
+                async () => (await import('../features/overview/OverviewPage')).OverviewPage,
+              ),
+            }),
+          },
+          {
+            path: 'verlauf',
+            lazy: async () => ({
+              Component: await withPlan(
+                async () => (await import('../features/history/HistoryPage')).HistoryPage,
+              ),
+            }),
+          },
+          {
+            path: 'planung',
+            lazy: async () => ({
+              Component: await withPlan(
+                async () => (await import('../features/planning/PlanningPage')).PlanningPage,
+              ),
+            }),
+          },
+          {
+            path: 'planung/projektion',
+            lazy: async () => ({
+              Component: await withPlan(
+                async () => (await import('../features/projection/ProjectionPage')).ProjectionPage,
+              ),
+            }),
+          },
+          {
+            path: 'einstellungen',
+            lazy: async () => ({
+              Component: await withPlan(
+                async () => (await import('../features/settings/SettingsPage')).SettingsPage,
+              ),
+            }),
+          },
+        ],
+      },
+      ...subPages(),
+      {
+        path: '*',
+        element: <Navigate to="/" replace />,
       },
     ],
-  },
-  ...subPages(),
-  {
-    path: '*',
-    element: <Navigate to="/" replace />,
   },
 ]);
 

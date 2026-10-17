@@ -4,9 +4,18 @@
   gap: 22px;
   padding-top: var(--s-4);
 }
+.grid {
+  display: contents;
+}
 @media (min-width: 1024px) {
   .stack {
-    max-width: 720px;
+    max-width: 1200px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    align-items: start;
   }
 }
 .card {
@@ -102,9 +111,14 @@
   color: var(--acc);
   text-decoration: none;
   font-size: 15px;
+  /* Trefferfläche mindestens 44 px; der negative Rand hält den Text an seiner Stelle. */
+  min-width: 44px;
   min-height: 44px;
+  padding: 0 9px;
+  margin: 0 -9px;
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 .emptyRow {
   padding: var(--s-4);

@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
-import { connectE2e, go, setupHousehold } from './helpers';
+import { connectE2e, go, setupHousehold, waitForAnimations } from './helpers';
 
 const iso = (offsetDays: number) => {
   const d = new Date();
@@ -162,6 +162,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(page.getByRole('heading', { level: 1, name: 'Planung' })).toBeVisible();
       await newGoal(page, 'Sparziel A', '100', iso(-60), iso(60));
       const axe = async () => {
+        await waitForAnimations(page);
         const r = await new AxeBuilder({ page }).analyze();
         expect(
           r.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),

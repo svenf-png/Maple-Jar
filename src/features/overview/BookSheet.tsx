@@ -12,6 +12,7 @@ import { getLocale, t } from '../../i18n/t';
 import { WarnIcon } from '../../icons/ui-icons';
 import { useEntryRate } from '../../platform/use-fx';
 import { Button, CategoryTile, Segmented, useToast } from '../../ui';
+import { HapticTarget } from '../../ui/HapticTarget';
 import { BottomSheet } from '../shared/BottomSheet';
 import styles from './BookSheet.module.css';
 
@@ -122,9 +123,9 @@ export function BookSheet({ item, category, members, provider, today, onClose, o
             </p>
           ) : null}
           <div className={styles.actions}>
-            <Button onClick={() => void confirm()} busy={busy} disabled={loading}>
+            <HapticTarget onTap={() => void confirm()} busy={busy} disabled={loading}>
               {loading ? t('overview.due.rateLoading') : t('overview.due.book')}
-            </Button>
+            </HapticTarget>
             <Button variant="text" onClick={close}>
               {t('overview.due.cancel')}
             </Button>

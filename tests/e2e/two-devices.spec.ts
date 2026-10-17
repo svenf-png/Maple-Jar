@@ -1,7 +1,14 @@
 import { expect, type Page, test } from '@playwright/test';
 import { createSharedServer } from './fake-supabase-route';
 import { PERSON_A, PERSON_B } from './fixtures/household';
-import { captureEntry, fillConnect, go, overviewHeading, setupHousehold } from './helpers';
+import {
+  captureEntry,
+  fillConnect,
+  go,
+  historyItem,
+  overviewHeading,
+  setupHousehold,
+} from './helpers';
 
 // Zwei Geräte = zwei Browser-Kontexte mit eigenem Speicher, beide gegen denselben Server.
 test.use({ serviceWorkers: 'block' });
@@ -99,15 +106,15 @@ test('zwei Geräte: Einrichten, Beitritt, Sync und Konflikt', async ({ browser }
   await resync(a.page, '#/verlauf');
   await resync(b.page, '#/verlauf');
   await resync(a.page, '#/verlauf');
-  await expect(a.page.getByRole('link', { name: /Supermarkt A/ })).toContainText('Konflikt', {
+  await expect(historyItem(a.page, /Supermarkt A/)).toContainText('Konflikt', {
     timeout: 20_000,
   });
-  await expect(b.page.getByRole('link', { name: /Supermarkt A/ })).toContainText('Konflikt', {
+  await expect(historyItem(b.page, /Supermarkt A/)).toContainText('Konflikt', {
     timeout: 20_000,
   });
   // Beide Geräte zeigen denselben vorläufigen Wert
-  const textA = await a.page.getByRole('link', { name: /Supermarkt A/ }).innerText();
-  const textB = await b.page.getByRole('link', { name: /Supermarkt A/ }).innerText();
+  const textA = await historyItem(a.page, /Supermarkt A/).innerText();
+  const textB = await historyItem(b.page, /Supermarkt A/).innerText();
   expect(textA.match(/\d+,\d{2}/)?.[0]).toBe(textB.match(/\d+,\d{2}/)?.[0]);
 
   await a.context.close();

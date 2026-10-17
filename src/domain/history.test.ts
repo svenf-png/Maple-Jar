@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { filterEntries, groupByDay, type HistoryFilter, previousMonth } from './history';
+import {
+  filterEntries,
+  groupByDay,
+  type HistoryFilter,
+  previousMonth,
+  sortEntries,
+} from './history';
 import { CAT_A, CAT_B, category, entry, ME, OTHER } from './test-data';
 
 const cats = [category({ id: CAT_A, name: 'Lebensmittel' }), category({ id: CAT_B, name: 'Café' })];
@@ -79,5 +85,61 @@ describe('groupByDay', () => {
     expect(groups.map((g) => g.day)).toEqual(['2027-02-18', '2027-02-17']);
     expect(groups[0]?.total).toBe(4500n);
     expect(groups[0]?.entries.map((e) => e.hlc)).toEqual(['d', 'c', 'b']);
+  });
+});
+
+describe('sortEntries', () => {
+  const a = entry({ id: 'a', bookedOn: '2027-02-10', merchant: 'Supermarkt A', amountMinor: 8417 });
+  const b = entry({
+    id: 'b',
+    hlc: '2',
+    bookedOn: '2027-02-12',
+    merchant: 'café B',
+    amountMinor: 945,
+  });
+  const c = entry({
+    id: 'c',
+    hlc: '1',
+    bookedOn: '2027-02-12',
+    merchant: '',
+    note: 'Bäckerei C',
+    amountMinor: 2360,
+  });
+  it('Datum absteigend, gleiches Datum nach hlc absteigend (nicht nach id)', () =>
+    expect(sortEntries([a, b, c], 'date', 'desc', 'de-DE').map((e) => e.id)).toEqual([
+      'b',
+      'c',
+      'a',
+    ]));
+  it('Händler, sonst Notiz, sonst Kategoriename als Sortierschlüssel', () => {
+    const noName = entry({
+      id: 'x',
+      bookedOn: '2027-02-11',
+      merchant: '',
+      note: '',
+      categoryId: CAT_A,
+      amountMinor: 100,
+    });
+    const categoryName = (id: string) => (id === CAT_A ? 'Lebensmittel' : '');
+    expect(
+      sortEntries([a, b, c, noName], 'merchant', 'asc', 'de-DE', categoryName).map((e) => e.id),
+    ).toEqual(['c', 'b', 'x', 'a']);
+  });
+  it('Händler (sonst Notiz) aufsteigend, ohne Groß/Klein', () =>
+    expect(sortEntries([a, b, c], 'merchant', 'asc', 'de-DE').map((e) => e.id)).toEqual([
+      'c',
+      'b',
+      'a',
+    ]));
+  it('Betrag in CAD aufsteigend', () =>
+    expect(sortEntries([a, b, c], 'amount', 'asc', 'de-DE').map((e) => e.id)).toEqual([
+      'b',
+      'c',
+      'a',
+    ]));
+  it('ändert die Eingabe nicht', () => {
+    const list = [a, b, c];
+    sortEntries(list, 'amount', 'asc', 'de-DE');
+    expect(list.map((e) => e.id)).toEqual(['a', 'b', 'c']);
   });
 });

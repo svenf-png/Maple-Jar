@@ -205,6 +205,20 @@
   font-size: 16px;
   font-weight: 600;
 }
+.flashWithHint {
+  width: 260px;
+  height: auto;
+  min-height: 140px;
+  padding: 16px;
+}
+.flashHint {
+  margin: 0;
+  max-width: 260px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--label2);
+}
 .flashIcon {
   width: 52px;
   height: 52px;

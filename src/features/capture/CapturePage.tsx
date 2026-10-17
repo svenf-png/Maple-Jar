@@ -10,8 +10,10 @@ import { formatMoney } from '../../i18n/format';
 import { getLocale, t, useLang } from '../../i18n/t';
 import { type CategoryIconKey, categoryIcons } from '../../icons/category-icons';
 import { CalendarIcon, CheckIcon, PersonIcon, WarnIcon } from '../../icons/ui-icons';
+import { useOnline } from '../../platform/online';
 import { useEntryRate } from '../../platform/use-fx';
-import { Button, Chip, Numpad, pressKey, Segmented } from '../../ui';
+import { Chip, Numpad, pressKey, Segmented } from '../../ui';
+import { HapticTarget } from '../../ui/HapticTarget';
 import { decimalSeparator, minorToInput, todayIso } from '../shared/helpers';
 import styles from './CapturePage.module.css';
 
@@ -36,6 +38,7 @@ export function CapturePage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState(false);
+  const online = useOnline();
   const [saved, setSaved] = useState(0);
   const loadedFor = useRef<string | null>(null);
 
@@ -146,7 +149,7 @@ export function CapturePage() {
       : null;
 
   return (
-    <main className={styles.page}>
+    <div className={styles.page}>
       <section
         className={styles.sheet}
         aria-label={t(editing ? 'capture.titleEdit' : 'capture.title')}
@@ -288,19 +291,23 @@ export function CapturePage() {
             <span>{error}</span>
           </p>
         ) : null}
-        <Button busy={busy} onClick={() => void save()}>
+        <HapticTarget busy={busy} onTap={() => void save()}>
           {t(editing ? 'capture.saveChanges' : 'capture.save')}
-        </Button>
+        </HapticTarget>
       </section>
 
       {flash ? (
-        <div className={styles.flash} role="status">
+        <div
+          className={online ? styles.flash : `${styles.flash} ${styles.flashWithHint}`}
+          role="status"
+        >
           <span className={styles.flashIcon}>
             <CheckIcon size={30} />
           </span>
           <span>{t('capture.saved')}</span>
+          {online ? null : <p className={styles.flashHint}>{t('capture.savedOffline')}</p>}
         </div>
       ) : null}
-    </main>
+    </div>
   );
 }
