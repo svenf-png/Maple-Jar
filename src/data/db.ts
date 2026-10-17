@@ -70,6 +70,7 @@ export class MapleJarDb extends Dexie {
   fixedCost!: EntityTable<MaterialRow, 'id'>;
   goal!: EntityTable<MaterialRow, 'id'>;
   goalContribution!: EntityTable<MaterialRow, 'id'>;
+  scenario!: EntityTable<MaterialRow, 'id'>;
 
   constructor(name = 'maple-jar') {
     super(name);
@@ -107,6 +108,39 @@ export class MapleJarDb extends Dexie {
       goal: 'id, targetDate',
       goalContribution: 'id, goalId, contributedOn',
     });
+    // M4: Szenario (Einzelzeile, feste ID). Ältere Clients parken `scenario`-Ereignisse und setzen den
+    // Cursor darüber hinaus. Deshalb den Cursor bis vor das kleinste geparkte `seq` zurücksetzen.
+    this.version(4)
+      .stores({
+        meta: 'key',
+        events: 'id, [entity+rowId], hlc',
+        outbox: 'id',
+        conflicts: 'id, entity',
+        parked: 'key',
+        settings: 'id',
+        member: 'id',
+        category: 'id, sort',
+        entry: 'id, bookedOn, categoryId, deleted',
+        budget: 'id, categoryId, validFrom',
+        income: 'id, startsOn',
+        fixedCost: 'id, categoryId, startsOn',
+        goal: 'id, targetDate',
+        goalContribution: 'id, goalId, contributedOn',
+        scenario: 'id',
+      })
+      .upgrade(async (tx) => {
+        const parked = (await tx.table<ParkedRow>('parked').toArray()).filter(
+          (r) => typeof r.seq === 'number',
+        );
+        if (parked.length === 0) return;
+        const cursor = (await tx.table<MetaRow>('meta').get('cursor'))?.value;
+        const rewind = Math.max(0, Math.min(...parked.map((r) => r.seq as number)) - 1);
+        if (typeof cursor === 'number' && rewind < cursor) {
+          await tx.table<MetaRow>('meta').put({ key: 'cursor', value: rewind });
+        }
+        // Nur die Zeilen mit `seq` löschen; bleiben sie ungültig, werden sie beim Neu-Lesen erneut geparkt.
+        await tx.table('parked').bulkDelete(parked.map((r) => r.key));
+      });
   }
 }
 

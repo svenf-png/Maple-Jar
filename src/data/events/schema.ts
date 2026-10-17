@@ -3,7 +3,7 @@ import { HLC_PATTERN } from './hlc';
 
 export const SCHEMA_VERSION = 1;
 
-/** Materialisierte Entitäten. `scenario` (M4) kommt später. */
+/** Materialisierte Entitäten. `scenario` (M4) ist eine Einzelzeile mit fester ID und Last-Write-Wins. */
 export const ENTITIES = [
   'settings',
   'member',
@@ -14,6 +14,7 @@ export const ENTITIES = [
   'fixedCost',
   'goal',
   'goalContribution',
+  'scenario',
 ] as const;
 export type Entity = (typeof ENTITIES)[number];
 export const OPS = ['create', 'update', 'delete', 'restore'] as const;
@@ -31,6 +32,24 @@ const nonZeroMinor = z.int().check(
   z.refine((n) => n !== 0),
 );
 const hexColor = z.string().check(z.regex(/^#[0-9A-Fa-f]{6}$/));
+/** Zusätzlicher Posten eines Szenarios: einmalige Ausgabe oder Sparziel mit Zieldatum. */
+const scenarioExtra = z
+  .strictObject({
+    id: z.uuid(),
+    kind: z.enum(['expense', 'goal']),
+    name: text(80),
+    amountMinor: positiveMinor,
+    currency,
+    on: isoDate,
+    targetDate: z.optional(isoDate),
+  })
+  .check(
+    z.refine((x) =>
+      x.kind === 'goal'
+        ? x.targetDate !== undefined && x.targetDate > x.on
+        : x.targetDate === undefined,
+    ),
+  );
 const repeat = {
   unit: z.enum(['once', 'week', 'month', 'year']),
   every: z.int().check(z.gte(1), z.lte(52)),
@@ -115,6 +134,13 @@ const fieldSchemas = {
     memberId: z.optional(z.uuid()),
     note: z.string().check(z.maxLength(500)),
   },
+  scenario: {
+    /** Regler je Kategorie in Prozent, −50 bis 50 in 5er-Schritten. */
+    categoryPct: z
+      .record(z.uuid(), z.int().check(z.gte(-50), z.lte(50), z.multipleOf(5)))
+      .check(z.refine((r) => Object.keys(r).length <= 200)),
+    extras: z.array(scenarioExtra).check(z.maxLength(50)),
+  },
 } as const;
 
 type RepeatFields = { unit: string; every: number; startsOn: string; endsOn?: string | undefined };
@@ -137,6 +163,7 @@ const createSchemas = {
   fixedCost: z.strictObject(fieldSchemas.fixedCost).check(z.refine(repeatValid)),
   goal: z.strictObject(fieldSchemas.goal).check(z.refine((d) => d.targetDate > d.startsOn)),
   goalContribution: z.strictObject(fieldSchemas.goalContribution),
+  scenario: z.strictObject(fieldSchemas.scenario),
 } as const;
 
 // Optionale Felder (endsOn, memberId, icon, archivedAt) lassen sich per `update` setzen und mit `null` löschen
@@ -166,6 +193,7 @@ const updateSchemas = {
   income: z.partial(z.strictObject(incomeUpdate)).check(atLeastOne),
   fixedCost: z.partial(z.strictObject(fixedCostUpdate)).check(atLeastOne),
   goal: z.partial(z.strictObject(goalUpdate)).check(atLeastOne),
+  scenario: z.partial(z.strictObject(fieldSchemas.scenario)).check(atLeastOne),
 } as const;
 
 /**

@@ -5,6 +5,7 @@ import {
   CAT_1,
   categoryData,
   contributionData,
+  DEV_A,
   DEV_B,
   entryData,
   fixedCostData,
@@ -26,6 +27,8 @@ const idOf = (n: string) => `00000000-0000-4000-8000-${n.padStart(12, '0')}`;
 
 const E0 = idOf('e0');
 const fold = (events: AppEvent[]) => foldRow('entry', events, ctx);
+
+const SCENARIO_ROW = '00000000-0000-4000-8000-00000000005c';
 
 describe('foldRow: Feld-Merge und Konflikte', () => {
   const c = mk({ id: E0, op: 'create', data: entryData(), at: 0 });
@@ -463,5 +466,47 @@ describe('foldRow: M3-Entitäten', () => {
       }
       expect(JSON.stringify(foldAll(shuffled, members))).toBe(reference);
     }
+  });
+});
+
+describe('foldRow: scenario', () => {
+  it('zwei gleichzeitige create mit fester ID ergeben eine Zeile ohne Konflikt (Last-Write-Wins)', () => {
+    const a = mk({
+      entity: 'scenario',
+      rowId: SCENARIO_ROW,
+      op: 'create',
+      data: { categoryPct: {}, extras: [] },
+      at: 0,
+      device: DEV_A,
+    });
+    const b = mk({
+      entity: 'scenario',
+      rowId: SCENARIO_ROW,
+      op: 'create',
+      data: { categoryPct: { [CAT_1]: 10 }, extras: [] },
+      at: 5,
+      device: DEV_B,
+    });
+    const u1 = mk({
+      entity: 'scenario',
+      rowId: SCENARIO_ROW,
+      op: 'update',
+      data: { categoryPct: { [CAT_1]: -10 } },
+      base: [a.id, b.id],
+      at: 10,
+      device: DEV_A,
+    });
+    const u2 = mk({
+      entity: 'scenario',
+      rowId: SCENARIO_ROW,
+      op: 'update',
+      data: { categoryPct: { [CAT_1]: 20 } },
+      base: [a.id, b.id],
+      at: 20,
+      device: DEV_B,
+    });
+    const r = foldRow('scenario', [u2, b, u1, a], ctx);
+    expect(r.row?.fields.categoryPct).toEqual({ [CAT_1]: 20 });
+    expect(r.row?.conflict).toBeNull();
   });
 });

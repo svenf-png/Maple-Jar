@@ -50,6 +50,7 @@ export const FOLD_ORDER: readonly Entity[] = [
   'category',
   'member',
   'settings',
+  'scenario',
   'goal',
   'entry',
   'budget',

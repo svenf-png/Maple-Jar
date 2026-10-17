@@ -1,4 +1,14 @@
-import type { Budget, Category, Entry, FixedCost, Goal, GoalContribution, Income } from './model';
+import {
+  type Budget,
+  type Category,
+  type Entry,
+  type FixedCost,
+  type Goal,
+  type GoalContribution,
+  type Income,
+  SCENARIO_ID,
+  type Scenario,
+} from './model';
 
 export const CAT_A = '00000000-0000-4000-8000-0000000000c1';
 export const CAT_B = '00000000-0000-4000-8000-0000000000c2';
@@ -101,5 +111,14 @@ export const contribution = (over: Partial<GoalContribution> = {}): GoalContribu
   note: '',
   deleted: false,
   hlc: `2027-02-10T12:00:00.000Z-${String(n).padStart(4, '0')}-d`,
+  ...over,
+});
+
+export const scenario = (over: Partial<Scenario> = {}): Scenario => ({
+  id: SCENARIO_ID,
+  categoryPct: {},
+  extras: [],
+  deleted: false,
+  hlc: '2027-01-01T00:00:00.000Z-0000-d',
   ...over,
 });

@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { categoryTemplate } from '../domain/category-template';
 import { fixedCostEntryId } from '../domain/fixed-cost';
+import { SCENARIO_ID } from '../domain/model';
 import {
   addContribution,
+  adoptScenarioBudgets,
   applyCategoryTemplate,
   archiveGoal,
   bookFixedCost,
@@ -20,6 +22,7 @@ import {
   NoRateError,
   restoreEntry,
   runAutobook,
+  saveScenario,
   setBudget,
   updateCategory,
   updateEntry,
@@ -526,5 +529,151 @@ describe('Fixkosten buchen', () => {
     await createFixedCost(db, fcInput({ name: 'CAD A' }));
     expect(await runAutobook(db, null, '2027-02-20')).toBe(1);
     expect((await fixedEntries())[0]?.currency).toBe('CAD');
+  });
+});
+
+describe('Szenario', () => {
+  it('legt das Szenario beim ersten Speichern an und schreibt danach nur Änderungen', async () => {
+    expect(await saveScenario(db, { categoryPct: { [cat]: -10 } })).toBe(true);
+    const row = await db.scenario.get(SCENARIO_ID);
+    expect(row?.categoryPct).toEqual({ [cat]: -10 });
+    expect(row?.extras).toEqual([]);
+    const before = await db.events.count();
+    expect(await saveScenario(db, { categoryPct: { [cat]: -10 } })).toBe(false);
+    expect(await db.events.count()).toBe(before);
+    expect(await saveScenario(db, { categoryPct: { [cat]: 0 } })).toBe(true);
+    expect((await db.scenario.get(SCENARIO_ID))?.categoryPct).toEqual({});
+  });
+
+  it('ändert nur die übergebenen Felder (fehlendes categoryPct bleibt erhalten)', async () => {
+    await saveScenario(db, { categoryPct: { [cat]: -10 } });
+    const extra = {
+      id: '00000000-0000-4000-8000-0000000000e1',
+      kind: 'expense' as const,
+      name: 'Reise A',
+      amountMinor: 50_000,
+      currency: 'CAD' as const,
+      on: '2027-06-01',
+    };
+    expect(await saveScenario(db, { extras: [extra] })).toBe(true);
+    const row = await db.scenario.get(SCENARIO_ID);
+    expect(row?.categoryPct).toEqual({ [cat]: -10 });
+    expect(row?.extras).toEqual([extra]);
+  });
+
+  it('vergleicht Extras unabhängig von der Schlüsselreihenfolge (kein Schreibvorgang)', async () => {
+    const id = '00000000-0000-4000-8000-0000000000e2';
+    await saveScenario(db, {
+      extras: [
+        {
+          id,
+          kind: 'expense',
+          name: 'Reise A',
+          amountMinor: 50_000,
+          currency: 'CAD',
+          on: '2027-06-01',
+        },
+      ],
+    });
+    const before = await db.events.count();
+    expect(
+      await saveScenario(db, {
+        extras: [
+          {
+            on: '2027-06-01',
+            currency: 'CAD',
+            amountMinor: 50_000,
+            name: 'Reise A',
+            kind: 'expense',
+            id,
+          },
+        ],
+      }),
+    ).toBe(false);
+    expect(await db.events.count()).toBe(before);
+  });
+
+  it('lehnt ungültige Reglerwerte ab und schreibt nichts', async () => {
+    const outboxBefore = await db.outbox.count();
+    await expect(saveScenario(db, { categoryPct: { [cat]: 7 } })).rejects.toThrow();
+    await expect(saveScenario(db, { categoryPct: { [cat]: 60 } })).rejects.toThrow();
+    expect(await db.scenario.count()).toBe(0);
+    expect(await db.outbox.count()).toBe(outboxBefore);
+  });
+
+  it('übernimmt Budgets ab dem Monat und entfernt die übernommenen Regler', async () => {
+    await saveScenario(db, { categoryPct: { [cat]: -20 } });
+    await adoptScenarioBudgets(
+      db,
+      [{ categoryId: cat, fromMinor: 100_000n, toMinor: 80_000n }],
+      '2027-04-01',
+    );
+    const b = (await db.budget.toArray()).find(
+      (r) => r.categoryId === cat && r.validFrom === '2027-04-01',
+    );
+    expect(b?.monthlyLimitCadMinor).toBe(80_000);
+    expect((await db.scenario.get(SCENARIO_ID))?.categoryPct).toEqual({});
+  });
+
+  it('übernimmt nur die vorgeschlagene Kategorie und lässt die übrigen Regler stehen', async () => {
+    const catB = await createCategory(db, {
+      name: 'Café B',
+      icon: 'cafe',
+      color: '#2F7D4F',
+      sort: 1,
+      hidden: false,
+    });
+    await saveScenario(db, { categoryPct: { [cat]: -20, [catB]: 10 } });
+    await adoptScenarioBudgets(
+      db,
+      [{ categoryId: cat, fromMinor: 100_000n, toMinor: 80_000n }],
+      '2027-04-01',
+    );
+    const b = (await db.budget.toArray()).find(
+      (r) => r.categoryId === cat && r.validFrom === '2027-04-01',
+    );
+    expect(b?.monthlyLimitCadMinor).toBe(80_000);
+    expect((await db.scenario.get(SCENARIO_ID))?.categoryPct).toEqual({ [catB]: 10 });
+  });
+
+  it('ohne Szenario schreibt die Übernahme Budgets, legt aber kein Szenario an', async () => {
+    await adoptScenarioBudgets(
+      db,
+      [{ categoryId: cat, fromMinor: 100_000n, toMinor: 80_000n }],
+      '2027-04-01',
+    );
+    const b = (await db.budget.toArray()).find(
+      (r) => r.categoryId === cat && r.validFrom === '2027-04-01',
+    );
+    expect(b?.monthlyLimitCadMinor).toBe(80_000);
+    expect(await db.scenario.count()).toBe(0);
+  });
+
+  it('schlägt die Übernahme fehl, bleiben alle Budgets und Regler unverändert (atomar)', async () => {
+    const catB = await createCategory(db, {
+      name: 'Café B',
+      icon: 'cafe',
+      color: '#2F7D4F',
+      sort: 1,
+      hidden: false,
+    });
+    await saveScenario(db, { categoryPct: { [cat]: -20, [catB]: 10 } });
+    const eventsBefore = await db.events.count();
+    await expect(
+      adoptScenarioBudgets(
+        db,
+        [
+          { categoryId: cat, fromMinor: 100_000n, toMinor: 80_000n },
+          { categoryId: catB, fromMinor: 15_000n, toMinor: -1n },
+        ],
+        '2027-04-01',
+      ),
+    ).rejects.toThrow();
+    expect(await db.budget.count()).toBe(0);
+    expect(await db.events.count()).toBe(eventsBefore);
+    expect((await db.scenario.get(SCENARIO_ID))?.categoryPct).toEqual({
+      [cat]: -20,
+      [catB]: 10,
+    });
   });
 });
