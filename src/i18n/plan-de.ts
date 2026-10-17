@@ -292,6 +292,20 @@ export const planDe = {
   'scen.adopt.text': 'Die Regler dieser Kategorien stehen danach wieder auf 0 %.',
   'scen.adopt.confirm': 'Übernehmen',
   'scen.adopt.done': 'Budgets ab {month} übernommen',
+  // export (M5)
+  'settings.exportCsv': 'Einträge exportieren (CSV)',
+  'settings.exportCsv.action': 'Exportieren',
+  'csv.date': 'Datum',
+  'csv.merchant': 'Händler',
+  'csv.note': 'Notiz',
+  'csv.category': 'Kategorie',
+  'csv.amount': 'Betrag',
+  'csv.currency': 'Währung',
+  'csv.amountCad': 'Betrag CAD',
+  'csv.paidBy': 'Bezahlt von',
+  'csv.source': 'Quelle',
+  'csv.source.manual': 'Manuell',
+  'csv.source.fixed': 'Fixkosten',
 } as const;
 
 export type PlanKey = keyof typeof planDe;

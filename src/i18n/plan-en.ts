@@ -291,4 +291,18 @@ export const planEn: Record<PlanKey, string> = {
   'scen.adopt.text': 'The sliders of these categories return to 0 % afterwards.',
   'scen.adopt.confirm': 'Adopt',
   'scen.adopt.done': 'Budgets adopted from {month}',
+  // export (M5)
+  'settings.exportCsv': 'Export entries (CSV)',
+  'settings.exportCsv.action': 'Export',
+  'csv.date': 'Date',
+  'csv.merchant': 'Merchant',
+  'csv.note': 'Note',
+  'csv.category': 'Category',
+  'csv.amount': 'Amount',
+  'csv.currency': 'Currency',
+  'csv.amountCad': 'Amount CAD',
+  'csv.paidBy': 'Paid by',
+  'csv.source': 'Source',
+  'csv.source.manual': 'Manual',
+  'csv.source.fixed': 'Fixed costs',
 };

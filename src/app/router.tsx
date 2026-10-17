@@ -170,7 +170,9 @@ const router = createHashRouter([
       {
         path: 'einstellungen',
         lazy: async () => ({
-          Component: (await import('../features/settings/SettingsPage')).SettingsPage,
+          Component: await withPlan(
+            async () => (await import('../features/settings/SettingsPage')).SettingsPage,
+          ),
         }),
       },
     ],
