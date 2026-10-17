@@ -312,4 +312,10 @@ export const planEn: Record<PlanKey, string> = {
   'conflict.banner.many': '{count} conflicts need your decision',
   'conflict.banner.hint':
     'You both changed the same thing on two devices. Decide which version stays.',
+  // install (M5)
+  'install.title': 'Use it from your Home Screen',
+  'install.before': 'In Safari, tap',
+  'install.after': 'and choose “Add to Home Screen”.',
+  'install.shareIcon': 'Share icon',
+  'install.close': 'Dismiss hint',
 };

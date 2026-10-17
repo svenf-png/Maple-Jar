@@ -9,7 +9,9 @@ export interface HapticEnv {
 }
 
 /** iPhone und iPad (auch iPad im Desktop-Modus, das sich als Mac meldet, aber Touch hat). */
-export function isIosTouch(env: HapticEnv): boolean {
+export function isIosTouch(
+  env: Pick<HapticEnv, 'userAgent' | 'platform' | 'maxTouchPoints'>,
+): boolean {
   if (/iPhone|iPad|iPod/.test(env.userAgent)) return true;
   return env.platform === 'MacIntel' && env.maxTouchPoints > 1;
 }

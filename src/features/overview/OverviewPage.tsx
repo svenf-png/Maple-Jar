@@ -20,6 +20,7 @@ import { DueNext } from './DueNext';
 import { hasSplitData } from './donut-model';
 import { GoalCards } from './GoalCards';
 import { IncomeDonutChart, IncomeLegend, useIncomeSplit } from './IncomeDonut';
+import { InstallHint } from './InstallHint';
 import styles from './OverviewPage.module.css';
 
 export function OverviewPage() {
@@ -64,6 +65,7 @@ export function OverviewPage() {
       <PageHeader title={formatMonth(month, locale)} showMeta={!desktop} />
       <div className={styles.stack}>
         <ConflictBanner />
+        <InstallHint />
         {onboarding ? (
           <Card className={styles.card}>
             <section className={styles.welcome} aria-labelledby="welcome-title">

@@ -44,6 +44,7 @@ export default defineConfig({
         start_url: './',
         scope: './',
         display: 'standalone',
+        // iOS ignoriert background_color für den Start. apple-touch-startup-image bewusst nicht gesetzt: 458 KB (nur Hochformat) bzw. 902 KB (alle) PNG plus 40 Link-Zeilen für ein kurzes Aufblitzen, Wirkung unter iOS 26 ungeprüft. Siehe docs/superpowers/plans/2026-10-17-m5-polish.md, Entscheidung 8.
         background_color: '#F6F2EC',
         theme_color: '#F6F2EC',
         icons: [

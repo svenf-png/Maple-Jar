@@ -313,6 +313,12 @@ export const planDe = {
   'conflict.banner.many': '{count} Konflikte warten auf dich',
   'conflict.banner.hint':
     'Ihr habt dasselbe auf zwei Geräten geändert. Entscheide, welche Version bleibt.',
+  // install (M5)
+  'install.title': 'Auf dem Home-Bildschirm nutzen',
+  'install.before': 'Tippe in Safari auf',
+  'install.after': 'und wähle „Zum Home-Bildschirm“.',
+  'install.shareIcon': 'Teilen-Symbol',
+  'install.close': 'Hinweis schließen',
 } as const;
 
 export type PlanKey = keyof typeof planDe;
