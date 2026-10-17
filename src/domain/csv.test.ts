@@ -54,6 +54,12 @@ describe('entriesToCsv', () => {
       '2027-02-04;Café B;;Kategorie A;10.00;EUR;15.00;Person B;Manuell\r\n',
     );
   });
+  it('negative Beträge bleiben numerisch, Textzellen werden maskiert', () => {
+    const e = entry({ amountMinor: -1250, merchant: '-Erstattung A', note: '@x' });
+    expect(entriesToCsv({ ...base, entries: [e] })).toContain(
+      ";'-Erstattung A;'@x;Kategorie A;-12.50;CAD;-12.50;",
+    );
+  });
   it('Fixkosten-Quelle', () => {
     expect(entriesToCsv({ ...base, entries: [entry({ source: 'fixed' })] })).toContain(
       ';Fixkosten\r\n',
@@ -90,6 +96,7 @@ describe('csvText', () => {
     ['-1', "'-1"],
     ['@name', "'@name"],
     ['\tTab', "'\tTab"],
+    ['\rCR', `"'\rCR"`],
     ['=A;B', `"'=A;B"`],
     ["'=schon", "'=schon"],
     ['', ''],
