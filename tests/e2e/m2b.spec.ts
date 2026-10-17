@@ -7,6 +7,7 @@ import {
   historyItem,
   overviewHeading,
   setupHousehold,
+  waitForAnimations,
 } from './helpers';
 
 async function ready(page: Page) {
@@ -186,6 +187,7 @@ for (const scheme of ['light', 'dark'] as const) {
         merchant: 'Supermarkt A',
       });
       const check = async (label: string) => {
+        await waitForAnimations(page);
         const results = await new AxeBuilder({ page }).analyze();
         expect(
           results.violations.map(
