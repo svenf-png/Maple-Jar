@@ -214,6 +214,7 @@ export const de = {
   'history.table.cancel': 'Abbrechen',
   'history.table.saved': 'Eintrag geändert',
   'history.table.invalidAmount': 'Bitte einen Betrag größer als 0 eingeben.',
+  'history.table.saveError': 'Änderung konnte nicht gespeichert werden.',
   'history.table.hint':
     'Spaltenkopf sortiert. Pfeiltasten wählen eine Zeile, Enter bearbeitet, Escape bricht ab.',
   'activity.unnamed': 'einen Eintrag',

@@ -63,3 +63,9 @@ export const overviewHeading = (page: Page) =>
     level: 1,
     name: new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' }).format(new Date()),
   });
+
+/** Verlaufseintrag: auf Desktop die Tabellenzeile (trägt Beträge und Original), sonst der Link der Mobil-Liste. */
+export const historyItem = (page: Page, name: RegExp) =>
+  (page.viewportSize()?.width ?? 0) >= 1024
+    ? page.getByRole('row', { name })
+    : page.getByRole('link', { name });

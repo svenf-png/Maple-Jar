@@ -1,6 +1,13 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
-import { captureEntry, connectE2e, go, overviewHeading, setupHousehold } from './helpers';
+import {
+  captureEntry,
+  connectE2e,
+  go,
+  historyItem,
+  overviewHeading,
+  setupHousehold,
+} from './helpers';
 
 async function ready(page: Page) {
   await connectE2e(page, 'empty');
@@ -56,7 +63,7 @@ test('EUR-Betrag wird mit Tageskurs nach CAD umgerechnet', async ({ page }) => {
     currency: 'EUR',
   });
   await go(page, '#/verlauf');
-  const row = page.getByRole('link', { name: /Euro-Laden/ });
+  const row = historyItem(page, /Euro-Laden/);
   await expect(row).toContainText('15,00');
   await expect(row).toContainText('10,00');
   await expect(row).not.toContainText('Vorläufiger Kurs');
@@ -69,6 +76,10 @@ test('Offline erfassen und nach der Rückkehr synchronisieren', async ({ page, c
   await expect(page.getByRole('heading', { name: 'Neue Ausgabe' })).toBeVisible();
   await go(page, '#/verlauf');
   await expect(page.getByRole('button', { name: 'Aktivität' })).toBeVisible();
+  // Verlauf einmal online mit einem Eintrag öffnen, damit die Tabellen-Chunks (Desktop) im Cache liegen.
+  await captureEntry(page, { amount: '3,00', category: 'Lebensmittel', merchant: 'Bäcker A' });
+  await go(page, '#/verlauf');
+  await expect(historyItem(page, /Bäcker A/)).toBeVisible();
   await go(page, '#/');
   await context.setOffline(true);
   await captureEntry(page, { amount: '12,50', category: 'Lebensmittel', merchant: 'Kiosk' });

@@ -213,6 +213,7 @@ export const en: Record<MessageKey, string> = {
   'history.table.cancel': 'Cancel',
   'history.table.saved': 'Entry updated',
   'history.table.invalidAmount': 'Please enter an amount greater than 0.',
+  'history.table.saveError': 'Could not save the change.',
   'history.table.hint':
     'Column headers sort. Arrow keys select a row, Enter edits, Escape cancels.',
   'activity.unnamed': 'an entry',

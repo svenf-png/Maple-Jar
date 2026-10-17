@@ -1,4 +1,5 @@
 import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router';
 import { updateEntry } from '../../data/actions';
 import { db } from '../../data/db';
 import type { HouseholdMember } from '../../data/household';
@@ -48,6 +49,11 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
   );
   const byId = new Map(categories.map((c) => [c.id, c]));
   const choices = categories.filter((c) => !c.deleted);
+  // Gelöschte Kategorie des Eintrags bleibt als Option sichtbar, sonst zeigt das Auswahlfeld einen falschen Wert.
+  const editChoices = (categoryId: string): Category[] => {
+    const current = byId.get(categoryId);
+    return current?.deleted ? [...choices, current] : choices;
+  };
   // Roving tabindex: die aktive Zeile ist die erste, solange nichts anderes gewählt wurde.
   const currentActive = sorted.some((e) => e.id === activeId) ? activeId : (sorted[0]?.id ?? null);
 
@@ -106,13 +112,16 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
     }
     busy.current = true;
     try {
-      await updateEntry(db, id, {
+      const changed = await updateEntry(db, id, {
         merchant: draft.merchant,
         amountMinor: amount,
         categoryId: draft.categoryId,
       });
-      toast(t('history.table.saved'));
+      if (changed) toast(t('history.table.saved'));
       exitEdit(id);
+    } catch {
+      // Zeile bleibt offen, damit nichts verloren geht.
+      toast(t('history.table.saveError'));
     } finally {
       busy.current = false;
     }
@@ -179,7 +188,9 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
               <th scope="col" aria-sort={ariaSort('amount')} className={styles.right}>
                 {sortHead('amount', t('history.table.amount'))}
               </th>
-              <th scope="col">{t('history.table.original')}</th>
+              <th scope="col" className={styles.right}>
+                {t('history.table.original')}
+              </th>
               <th scope="col" className={styles.srOnly}>
                 {t('history.table.actions')}
               </th>
@@ -220,7 +231,7 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                         value={draft.categoryId}
                         onChange={(ev) => setDraft({ ...draft, categoryId: ev.target.value })}
                       >
-                        {choices.map((c) => (
+                        {editChoices(e.categoryId).map((c) => (
                           <option key={c.id} value={c.id}>
                             {c.name}
                           </option>
@@ -237,7 +248,10 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                         aria-invalid={invalid}
                         aria-describedby={invalid ? `ht-amount-err-${e.id}` : undefined}
                         value={draft.amount}
-                        onChange={(ev) => setDraft({ ...draft, amount: ev.target.value })}
+                        onChange={(ev) => {
+                          setInvalid(false);
+                          setDraft({ ...draft, amount: ev.target.value });
+                        }}
                       />
                       {invalid ? (
                         <p id={`ht-amount-err-${e.id}`} role="alert" className={styles.warn}>
@@ -285,7 +299,9 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                 >
                   <td>{dayText}</td>
                   <td>
-                    <span className={styles.title}>{e.merchant || e.note}</span>
+                    <Link to={`/eintrag/${e.id}`} className={styles.link}>
+                      <span className={styles.title}>{e.merchant || e.note}</span>
+                    </Link>
                     {e.merchant && e.note ? <span className={styles.sub}>{e.note}</span> : null}
                     {e.conflict ? <ConflictBadge entity="entry" rowId={e.id} /> : null}
                   </td>

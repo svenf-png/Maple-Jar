@@ -71,6 +71,20 @@
 .editing:hover {
   background: var(--infoTint);
 }
+.link {
+  display: block;
+  color: var(--label);
+  text-decoration: none;
+  border-radius: 4px;
+}
+.link:hover,
+.link:focus-visible {
+  text-decoration: underline;
+}
+.link:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
+}
 .title {
   display: block;
   font-weight: 500;
