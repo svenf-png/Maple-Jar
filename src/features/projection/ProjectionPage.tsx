@@ -29,6 +29,7 @@ export function ProjectionPage() {
   const rate = useEntryRate('EUR', today, household.settings.fxProvider).rate;
   const input = useProjectionInput(rate);
   const scenario = useScenario();
+  const scenarioActive = isScenarioActive(scenario);
   const cmp = useMemo(
     () => (input ? compareScenario(input, scenario ?? { categoryPct: {}, extras: [] }) : null),
     [input, scenario],
@@ -77,12 +78,8 @@ export function ProjectionPage() {
               ) : null}
               <Card radius="list" className={styles.tableCard}>
                 <CashflowTable
-                  months={isScenarioActive(scenario) ? cmp.scenario.months : cmp.base.months}
-                  caption={
-                    isScenarioActive(scenario)
-                      ? t('proj.table.titleScenario')
-                      : t('proj.table.title')
-                  }
+                  months={scenarioActive ? cmp.scenario.months : cmp.base.months}
+                  caption={scenarioActive ? t('proj.table.titleScenario') : t('proj.table.title')}
                 />
               </Card>
             </div>

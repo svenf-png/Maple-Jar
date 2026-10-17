@@ -19,6 +19,7 @@ import {
   useFixedCosts,
   useGoals,
   useIncomes,
+  useLoaded,
 } from './repos';
 import { todayIso } from './today';
 import { useReadySession } from './use-session';
@@ -78,20 +79,27 @@ export function useProjectionInput(rate: KnownRate | null): ProjectionInput | nu
   const goals = useGoals();
   const budgets = useBudgets();
   const categories = useCategories();
+  const loaded = useLoaded();
   const [input, setInput] = useState<ProjectionInput | null>(null);
 
   useEffect(() => {
+    // Vor dem ersten Dexie-Ergebnis nichts bauen: sonst entstünde eine falsche Null-Prognose.
+    if (!loaded) return;
     let alive = true;
     buildProjectionInput(
       { incomes, fixedCosts, entries, contributions, goals, budgets, categories },
       { periodStart, periodEnd },
       today,
       rate,
-    ).then((i) => alive && setInput(i));
+    )
+      .then((i) => alive && setInput(i))
+      // Fehler nicht unbehandelt lassen; Eingabe bleibt null (keine Daten ausgeben).
+      .catch(() => {});
     return () => {
       alive = false;
     };
   }, [
+    loaded,
     incomes,
     fixedCosts,
     entries,
@@ -105,5 +113,5 @@ export function useProjectionInput(rate: KnownRate | null): ProjectionInput | nu
     rate,
   ]);
 
-  return input;
+  return loaded ? input : null;
 }
