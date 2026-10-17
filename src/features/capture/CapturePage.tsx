@@ -12,7 +12,8 @@ import { type CategoryIconKey, categoryIcons } from '../../icons/category-icons'
 import { CalendarIcon, CheckIcon, PersonIcon, WarnIcon } from '../../icons/ui-icons';
 import { useOnline } from '../../platform/online';
 import { useEntryRate } from '../../platform/use-fx';
-import { Button, Chip, Numpad, pressKey, Segmented } from '../../ui';
+import { Chip, Numpad, pressKey, Segmented } from '../../ui';
+import { HapticTarget } from '../../ui/HapticTarget';
 import { decimalSeparator, minorToInput, todayIso } from '../shared/helpers';
 import styles from './CapturePage.module.css';
 
@@ -290,9 +291,9 @@ export function CapturePage() {
             <span>{error}</span>
           </p>
         ) : null}
-        <Button busy={busy} onClick={() => void save()}>
+        <HapticTarget busy={busy} onTap={() => void save()}>
           {t(editing ? 'capture.saveChanges' : 'capture.save')}
-        </Button>
+        </HapticTarget>
       </section>
 
       {flash ? (
