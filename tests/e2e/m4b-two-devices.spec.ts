@@ -56,7 +56,7 @@ test('zwei Geräte: Regler-Werte werden synchron, letzter Schreibvorgang gewinnt
   await lebensmittel(a.page).fill('-20');
   await expect.poll(() => server.events.length, { timeout: 20_000 }).toBeGreaterThan(beforeA);
   await resync(b.page, '#/planung/projektion');
-  await expect(lebensmittel(b.page)).toHaveAttribute('aria-valuetext', '−20 %', {
+  await expect(lebensmittel(b.page)).toHaveAttribute('aria-valuetext', '−20\u00a0%', {
     timeout: 20_000,
   });
 
@@ -65,7 +65,7 @@ test('zwei Geräte: Regler-Werte werden synchron, letzter Schreibvorgang gewinnt
   await lebensmittel(b.page).fill('10');
   await expect.poll(() => server.events.length, { timeout: 20_000 }).toBeGreaterThan(beforeB);
   await resync(a.page, '#/planung/projektion');
-  await expect(lebensmittel(a.page)).toHaveAttribute('aria-valuetext', '+10 %', {
+  await expect(lebensmittel(a.page)).toHaveAttribute('aria-valuetext', '+10\u00a0%', {
     timeout: 20_000,
   });
 
