@@ -5,7 +5,9 @@
 }
 
 .wrap > button {
-  transition: transform 0.1s;
+  transition:
+    transform 0.1s,
+    opacity 0.15s;
 }
 
 /* Der native Switch liegt unsichtbar über der Schaltfläche; nur ein direkter Tap erzeugt Haptik. */
