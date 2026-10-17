@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 import { todayIso } from '../../src/data/today';
 import { addDays } from '../../src/domain/schedule';
-import { connectE2e, go, setupHousehold } from './helpers';
+import { connectE2e, go, historyItems, setupHousehold, waitForAnimations } from './helpers';
 
 // Testdaten (Einnahmen, Fixkosten, Sparziele) entstehen über `window.__e2e` (src/data/e2e-seed.ts, nur im E2E-Build),
 // solange die Formulare nicht Teil dieses Zweigs sind. Alles fiktiv.
@@ -84,7 +84,7 @@ test('Fixkosten: fällig, per Tipp buchen, Verlauf mit Kennzeichnung, Budget ste
   await expect(page.getByText(/15,00.*von.*100,00/)).toBeVisible();
 
   await go(page, '#/verlauf');
-  const entry = page.getByRole('link').filter({ hasText: 'Fixkosten' });
+  const entry = historyItems(page).filter({ hasText: 'Fixkosten' });
   await expect(entry).toHaveCount(1);
   await expect(entry).toContainText('15,00');
 });
@@ -98,14 +98,14 @@ test('Fixkosten: Rückgängig nach dem Buchen stellt die Fälligkeit wieder her'
   await page.getByRole('button', { name: 'Rückgängig' }).click();
   await expect(page.getByRole('button', { name: /Streaming-Abo A/ })).toBeVisible();
   await go(page, '#/verlauf');
-  await expect(page.getByRole('link').filter({ hasText: 'Fixkosten' })).toHaveCount(0);
+  await expect(historyItems(page).filter({ hasText: 'Fixkosten' })).toHaveCount(0);
   // Erneut buchen stellt den gelöschten Eintrag wieder her (kein zweiter Eintrag).
   await go(page, '#/');
   await page.getByRole('button', { name: /Streaming-Abo A/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Als bezahlt buchen' }).click();
   await expect(page.getByText('Streaming-Abo A wieder gebucht')).toBeVisible();
   await go(page, '#/verlauf');
-  await expect(page.getByRole('link').filter({ hasText: 'Fixkosten' })).toHaveCount(1);
+  await expect(historyItems(page).filter({ hasText: 'Fixkosten' })).toHaveCount(1);
 });
 
 test('Fixkosten: überfällig ist markiert (Amber, Icon, Text)', async ({ page }) => {
@@ -193,6 +193,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(page.getByRole('button', { name: /Streaming-Abo B/ })).toBeVisible();
       await expect(page.getByRole('link', { name: /Sparziel A/ })).toBeVisible();
       const scan = async () => {
+        await waitForAnimations(page);
         const results = await new AxeBuilder({ page }).analyze();
         expect(
           results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),

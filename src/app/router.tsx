@@ -5,6 +5,7 @@ import { ConnectPage } from '../features/connect/ConnectPage';
 import { loadPlanMessages } from '../i18n/plan-messages';
 import { AppShell } from './AppShell';
 import { RedirectIfConnected, RequireConnection, RequireHousehold } from './Guards';
+import { SubShell } from './SubShell';
 
 /** Lädt Seite und Planungs-Texte (M3) parallel; gerendert wird erst, wenn beides da ist. */
 const withPlan = async (load: () => Promise<ComponentType>): Promise<ComponentType> =>
@@ -19,7 +20,9 @@ function subPages(): RouteObject[] {
       return {
         element: (
           <RequireHousehold>
-            <Component />
+            <SubShell>
+              <Component />
+            </SubShell>
           </RequireHousehold>
         ),
       };
@@ -153,6 +156,14 @@ const router = createHashRouter([
         lazy: async () => ({
           Component: await withPlan(
             async () => (await import('../features/planning/PlanningPage')).PlanningPage,
+          ),
+        }),
+      },
+      {
+        path: 'planung/projektion',
+        lazy: async () => ({
+          Component: await withPlan(
+            async () => (await import('../features/projection/ProjectionPage')).ProjectionPage,
           ),
         }),
       },

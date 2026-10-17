@@ -2,7 +2,14 @@ import AxeBuilder from '@axe-core/playwright';
 import { type Browser, type BrowserContext, expect, type Page, test } from '@playwright/test';
 import { createSharedServer } from './fake-supabase-route';
 import { PERSON_A, PERSON_B } from './fixtures/household';
-import { captureEntry, fillConnect, go, overviewHeading, setupHousehold } from './helpers';
+import {
+  captureEntry,
+  fillConnect,
+  go,
+  overviewHeading,
+  setupHousehold,
+  waitForAnimations,
+} from './helpers';
 
 test.use({ serviceWorkers: 'block' });
 
@@ -224,6 +231,7 @@ for (const scheme of ['light', 'dark'] as const) {
     await expect(dialog.getByRole('heading', { name: 'Zwei Versionen gefunden' })).toBeVisible();
     await dialog.getByRole('radio', { name: /Version von Person B/ }).check();
     await animationsDone(d.a.page);
+    await waitForAnimations(d.a.page);
     const results = await new AxeBuilder({ page: d.a.page }).analyze();
     expect(
       results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
@@ -253,6 +261,7 @@ for (const scheme of ['light', 'dark'] as const) {
     await expect(dialog.getByText('Geänderte Werte')).toBeVisible();
     await expect(dialog.getByText(/95,00/)).toBeVisible();
     await animationsDone(d.a.page);
+    await waitForAnimations(d.a.page);
     const results = await new AxeBuilder({ page: d.a.page }).analyze();
     expect(
       results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),

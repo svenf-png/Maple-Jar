@@ -146,7 +146,7 @@ export function CapturePage() {
       : null;
 
   return (
-    <main className={styles.page}>
+    <div className={styles.page}>
       <section
         className={styles.sheet}
         aria-label={t(editing ? 'capture.titleEdit' : 'capture.title')}
@@ -301,6 +301,6 @@ export function CapturePage() {
           <span>{t('capture.saved')}</span>
         </div>
       ) : null}
-    </main>
+    </div>
   );
 }

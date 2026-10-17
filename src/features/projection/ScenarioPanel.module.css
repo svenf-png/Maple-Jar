@@ -1,0 +1,175 @@
+.panel {
+  background: var(--card);
+  box-shadow: var(--shadow);
+  border-radius: var(--r-kpi);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+}
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+.title {
+  font-size: 18px;
+  font-weight: 700;
+}
+.reset {
+  appearance: none;
+  border: 0;
+  background: none;
+  color: var(--acc);
+  font-size: 15px;
+  min-height: 44px;
+  padding: 0 var(--s-2);
+  cursor: pointer;
+  flex: none;
+}
+.reset:disabled {
+  color: var(--label2);
+  cursor: default;
+}
+.subtitle,
+.note,
+.subhead {
+  font-size: 13px;
+  color: var(--label2);
+}
+.subhead {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--label);
+}
+.slider {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+.sliderLabel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  cursor: pointer;
+}
+.sliderHead {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: 15px;
+}
+.sliderName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sliderValue {
+  font-weight: 600;
+  flex: none;
+}
+.range {
+  width: 100%;
+  height: 44px;
+  margin: 0;
+  accent-color: var(--acc);
+}
+.sliderHint {
+  font-size: 12px;
+  color: var(--label2);
+}
+.divider {
+  height: 0.5px;
+  background: var(--sep);
+}
+.extraList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.extra {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+.extraRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.extraText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.extraName {
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.extraSub {
+  font-size: 13px;
+  color: var(--label2);
+}
+.extraAmount {
+  font-size: 15px;
+  font-weight: 600;
+  flex: none;
+}
+.iconBtn {
+  appearance: none;
+  border: 0;
+  background: none;
+  color: var(--label2);
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  cursor: pointer;
+  border-radius: 12px;
+}
+.outside {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--warn);
+  background: var(--warnTint);
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+.outside svg {
+  flex: none;
+  margin-top: 1px;
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.fields {
+  background: var(--fill2);
+  border-radius: var(--r-field);
+  overflow: hidden;
+}
+.formError {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--warn);
+}
+.formError svg {
+  flex: none;
+  margin-top: 1px;
+}

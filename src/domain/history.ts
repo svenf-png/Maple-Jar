@@ -4,6 +4,9 @@ import { parseDecimalToMinor } from './money';
 
 export type Period = 'month' | 'last' | 'all';
 
+export type SortKey = 'date' | 'merchant' | 'amount';
+export type SortDir = 'asc' | 'desc';
+
 export interface HistoryFilter {
   query: string;
   categoryId: string | null;
@@ -63,4 +66,37 @@ export function groupByDay(entries: readonly Entry[]): DayGroup[] {
   const out = [...groups.values()].sort((a, b) => (a.day < b.day ? 1 : -1));
   for (const g of out) g.entries.sort((a, b) => (a.hlc < b.hlc ? 1 : a.hlc > b.hlc ? -1 : 0));
   return out;
+}
+
+const cmpText = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+
+/**
+ * Sortierte Kopie (Eingabe bleibt unverändert). Schlüssel: Datum, Anzeigename (Händler, sonst Notiz,
+ * sonst Kategoriename) ohne Groß/Klein, Betrag in CAD. Gleichstand: hlc, dann id, in Sortierrichtung.
+ */
+export function sortEntries(
+  entries: readonly Entry[],
+  key: SortKey,
+  dir: SortDir,
+  locale: string,
+  categoryName: (categoryId: string) => string = () => '',
+): Entry[] {
+  const sign = dir === 'asc' ? 1 : -1;
+  const titleOf = (e: Entry): string => e.merchant || e.note || categoryName(e.categoryId);
+  const primary = (a: Entry, b: Entry): number => {
+    switch (key) {
+      case 'date':
+        return cmpText(a.bookedOn, b.bookedOn);
+      case 'merchant':
+        return titleOf(a).localeCompare(titleOf(b), locale, { sensitivity: 'base' });
+      case 'amount': {
+        const x = entryCad(a);
+        const y = entryCad(b);
+        return x < y ? -1 : x > y ? 1 : 0;
+      }
+    }
+  };
+  return [...entries].sort(
+    (a, b) => sign * primary(a, b) || sign * (cmpText(a.hlc, b.hlc) || cmpText(a.id, b.id)),
+  );
 }
