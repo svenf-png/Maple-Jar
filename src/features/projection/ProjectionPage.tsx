@@ -47,7 +47,8 @@ export function ProjectionPage() {
     const { base } = cmp;
     if (base.variableBasis === 'budget') notes.push({ key: 'proj.basis.budget', tone: 'info' });
     if (base.variableBasis === 'none') notes.push({ key: 'proj.basis.none', tone: 'warn' });
-    if (base.approximate) notes.push({ key: 'proj.approx', tone: 'info' });
+    const approx = scenarioActive ? cmp.scenario.approximate : base.approximate;
+    if (approx) notes.push({ key: 'proj.approx', tone: 'info' });
     const money = formatMoney(base.endCadMinor, 'CAD', locale);
     endText = base.approximate ? formatApprox(money) : money;
   }
@@ -78,7 +79,9 @@ export function ProjectionPage() {
                       })}
                     </span>
                     <span className={`${styles.diffValue} num`}>
-                      {signedMoney(cmp.diffEndCadMinor, locale)}
+                      {cmp.scenario.approximate
+                        ? formatApprox(signedMoney(cmp.diffEndCadMinor, locale))
+                        : signedMoney(cmp.diffEndCadMinor, locale)}
                     </span>
                   </div>
                 ) : null}

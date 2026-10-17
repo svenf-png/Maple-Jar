@@ -207,6 +207,7 @@ export const de = {
   'history.table.category': 'Kategorie',
   'history.table.person': 'Bezahlt von',
   'history.table.amount': 'Betrag CAD',
+  'history.table.amountIn': 'Betrag in {currency}',
   'history.table.original': 'Original',
   'history.table.actions': 'Aktionen',
   'history.table.edit': 'Bearbeiten',

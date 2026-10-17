@@ -206,6 +206,7 @@ export const en: Record<MessageKey, string> = {
   'history.table.category': 'Category',
   'history.table.person': 'Paid by',
   'history.table.amount': 'Amount CAD',
+  'history.table.amountIn': 'Amount in {currency}',
   'history.table.original': 'Original',
   'history.table.actions': 'Actions',
   'history.table.edit': 'Edit',

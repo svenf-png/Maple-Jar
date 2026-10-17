@@ -2,6 +2,7 @@ import { type ReactNode, useId, useState } from 'react';
 import { type ScenarioPatch, saveScenario } from '../../data/actions';
 import { db } from '../../data/db';
 import { useBudgets, useCategories } from '../../data/repos';
+import { limitFor } from '../../domain/budget';
 import { monthOf, type Scenario, type ScenarioExtra } from '../../domain/model';
 import type { Projection } from '../../domain/projection';
 import { adjustedMonthly, extraOutsidePeriod, sliderCategories } from '../../domain/scenario-view';
@@ -55,6 +56,22 @@ export function ScenarioPanel({ scenario, base, period, today, adoptSlot }: Prop
   };
   const saveExtra = (e: ScenarioExtra) => write({ extras: [...extras, e] });
 
+  /** Hinweis am Regler: Basis Ø (Durchschnitt) oder Budget. Ohne Grundwert kein Hinweis. */
+  const sliderHint = (
+    basis: Projection['variableBasis'],
+    avg: bigint,
+    limit: bigint,
+    pct: number,
+  ) => {
+    const from = avg > 0n ? avg : limit;
+    if (from <= 0n) return undefined;
+    const money = {
+      from: formatMoney(from, 'CAD', locale),
+      to: formatMoney(adjustedMonthly(from, pct), 'CAD', locale),
+    };
+    return basis === 'budget' ? t('scen.slider.hintBudget', money) : t('scen.slider.hint', money);
+  };
+
   return (
     <aside aria-labelledby={titleId} className={styles.panel}>
       <div className={styles.head}>
@@ -81,6 +98,8 @@ export function ScenarioPanel({ scenario, base, period, today, adoptSlot }: Prop
           {sliders.length === 0 ? <p className={styles.note}>{t('scen.slider.none')}</p> : null}
           {sliders.map((c) => {
             const avg = base.variableByCategory.get(c.id) ?? 0n;
+            const budgetLimit = (id: string): bigint =>
+              BigInt(limitFor(budgets, id, monthOf(today))?.monthlyLimitCadMinor ?? 0);
             const pct = categoryPct[c.id] ?? 0;
             return (
               <PctSlider
@@ -89,10 +108,7 @@ export function ScenarioPanel({ scenario, base, period, today, adoptSlot }: Prop
                 value={pct}
                 tileIcon={c.icon}
                 tileColor={c.color}
-                hint={t('scen.slider.hint', {
-                  from: formatMoney(avg, 'CAD', locale),
-                  to: formatMoney(adjustedMonthly(avg, pct), 'CAD', locale),
-                })}
+                hint={sliderHint(base.variableBasis, avg, budgetLimit(c.id), pct)}
                 onCommit={(v) => fire({ categoryPct: { ...categoryPct, [c.id]: v } })}
               />
             );

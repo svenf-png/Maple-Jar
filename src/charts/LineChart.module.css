@@ -1,4 +1,5 @@
 .figure {
+  --gutter: 44px;
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -9,11 +10,17 @@
   position: relative;
   width: 100%;
   height: 170px;
+  padding-left: var(--gutter);
 }
 @media (min-width: 1024px) {
   .plot {
     height: 300px;
   }
+}
+.canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 .svg {
   display: block;
@@ -39,21 +46,28 @@
 .scen {
   stroke: var(--scen);
 }
+.dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--card);
+  transform: translate(-50%, -50%);
+}
 .dotBase {
-  fill: var(--base);
+  background: var(--base);
 }
 .dotScen {
-  fill: var(--scen);
-}
-.dot {
-  stroke: var(--card);
+  background: var(--scen);
 }
 .tick {
   position: absolute;
   left: 0;
+  width: var(--gutter);
+  box-sizing: border-box;
+  padding-right: 6px;
+  text-align: right;
   transform: translateY(-50%);
-  padding-right: 4px;
-  background: var(--card);
   font-size: 11px;
   line-height: 1;
   color: var(--label2);
@@ -63,21 +77,32 @@
 .todayLabel {
   position: absolute;
   top: 0;
-  transform: translateX(-50%);
   font-size: 11px;
   line-height: 1;
   color: var(--label2);
   white-space: nowrap;
 }
 .months {
-  display: grid;
+  position: relative;
+  height: 16px;
+  margin-left: var(--gutter);
   font-size: 11px;
+  line-height: 16px;
   color: var(--label2);
 }
 .month {
-  min-width: 0;
-  text-align: center;
+  position: absolute;
+  top: 0;
   white-space: nowrap;
+}
+.alignStart {
+  transform: none;
+}
+.alignCenter {
+  transform: translateX(-50%);
+}
+.alignEnd {
+  transform: translateX(-100%);
 }
 @media (prefers-reduced-motion: no-preference) {
   .line {

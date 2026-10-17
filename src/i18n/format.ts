@@ -67,3 +67,13 @@ export function formatRate(micro: bigint, locale: Locale): string {
     maximumFractionDigits: 6,
   }).format(`${whole}.${frac}` as `${number}`);
 }
+
+/** Prozent mit Vorzeichen („+20 %“, „−20 %“, „0 %“); `pct` in Prozentpunkten, Minus als U+2212. */
+export function formatSignedPercent(pct: number, locale: Locale): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'percent',
+    signDisplay: 'exceptZero',
+  })
+    .format(pct / 100)
+    .replace('-', '−');
+}

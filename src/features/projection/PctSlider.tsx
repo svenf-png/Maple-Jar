@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { PCT_MAX, PCT_MIN, PCT_STEP } from '../../domain/scenario';
+import { getLocale } from '../../i18n/t';
 import { CategoryTile } from '../../ui';
 import { signedPercent } from './projection-format';
 import styles from './ScenarioPanel.module.css';
@@ -8,7 +9,7 @@ interface Props {
   label: string;
   value: number;
   onCommit: (v: number) => void;
-  hint: string;
+  hint?: string | undefined;
   tileIcon: string;
   tileColor: string;
 }
@@ -46,7 +47,7 @@ export function PctSlider({ label, value, onCommit, hint, tileIcon, tileColor }:
     return () => el.removeEventListener('change', onNativeChange);
   }, []);
 
-  const text = signedPercent(draft);
+  const text = signedPercent(draft, getLocale());
   const endDrag = () => {
     dragging.current = false;
   };
@@ -68,18 +69,22 @@ export function PctSlider({ label, value, onCommit, hint, tileIcon, tileColor }:
           step={PCT_STEP}
           value={draft}
           aria-valuetext={text}
-          aria-describedby={hintId}
+          aria-describedby={hint ? hintId : undefined}
           onChange={(e) => setDraft(Number(e.target.value))}
           onPointerDown={() => {
             dragging.current = true;
           }}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
+          onLostPointerCapture={endDrag}
+          onBlur={endDrag}
         />
       </label>
-      <p id={hintId} className={styles.sliderHint}>
-        {hint}
-      </p>
+      {hint ? (
+        <p id={hintId} className={styles.sliderHint}>
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 }

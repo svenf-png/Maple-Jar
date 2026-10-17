@@ -90,20 +90,41 @@ describe('groupByDay', () => {
 
 describe('sortEntries', () => {
   const a = entry({ id: 'a', bookedOn: '2027-02-10', merchant: 'Supermarkt A', amountMinor: 8417 });
-  const b = entry({ id: 'b', bookedOn: '2027-02-12', merchant: 'café B', amountMinor: 945 });
+  const b = entry({
+    id: 'b',
+    hlc: '2',
+    bookedOn: '2027-02-12',
+    merchant: 'café B',
+    amountMinor: 945,
+  });
   const c = entry({
     id: 'c',
+    hlc: '1',
     bookedOn: '2027-02-12',
     merchant: '',
     note: 'Bäckerei C',
     amountMinor: 2360,
   });
-  it('Datum absteigend, gleiches Datum nach id absteigend', () =>
+  it('Datum absteigend, gleiches Datum nach hlc absteigend (nicht nach id)', () =>
     expect(sortEntries([a, b, c], 'date', 'desc', 'de-DE').map((e) => e.id)).toEqual([
-      'c',
       'b',
+      'c',
       'a',
     ]));
+  it('Händler, sonst Notiz, sonst Kategoriename als Sortierschlüssel', () => {
+    const noName = entry({
+      id: 'x',
+      bookedOn: '2027-02-11',
+      merchant: '',
+      note: '',
+      categoryId: CAT_A,
+      amountMinor: 100,
+    });
+    const categoryName = (id: string) => (id === CAT_A ? 'Lebensmittel' : '');
+    expect(
+      sortEntries([a, b, c, noName], 'merchant', 'asc', 'de-DE', categoryName).map((e) => e.id),
+    ).toEqual(['c', 'b', 'x', 'a']);
+  });
   it('Händler (sonst Notiz) aufsteigend, ohne Groß/Klein', () =>
     expect(sortEntries([a, b, c], 'merchant', 'asc', 'de-DE').map((e) => e.id)).toEqual([
       'c',

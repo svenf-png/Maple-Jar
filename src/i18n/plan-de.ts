@@ -260,6 +260,7 @@ export const planDe = {
   'scen.basis.average': 'Variable Ausgaben pro Monat, Basis: Ø der letzten 3 Monate',
   'scen.basis.budget': 'Variable Ausgaben pro Monat, Basis: Budget',
   'scen.slider.hint': 'Ø {from} → {to}',
+  'scen.slider.hintBudget': 'Budget {from} → {to}',
   'scen.slider.none': 'Noch keine Kategorie mit Prognose oder Budget.',
   'scen.extras': 'Einmalausgaben und neue Ziele',
   'scen.extras.empty': 'Noch keine.',

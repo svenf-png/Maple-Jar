@@ -259,6 +259,7 @@ export const planEn: Record<PlanKey, string> = {
   'scen.basis.average': 'Variable spending per month, base: average of the last 3 months',
   'scen.basis.budget': 'Variable spending per month, base: budget',
   'scen.slider.hint': 'Avg {from} → {to}',
+  'scen.slider.hintBudget': 'Budget {from} → {to}',
   'scen.slider.none': 'No category with a forecast or budget yet.',
   'scen.extras': 'One-off expenses and new goals',
   'scen.extras.empty': 'None yet.',

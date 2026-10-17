@@ -43,10 +43,10 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
   const returnFocusId = useRef<string | null>(null);
   const busy = useRef(false);
 
-  const sorted = useMemo(
-    () => sortEntries(entries, sortKey, sortDir, locale),
-    [entries, sortKey, sortDir, locale],
-  );
+  const sorted = useMemo(() => {
+    const names = new Map(categories.map((c) => [c.id, c.name]));
+    return sortEntries(entries, sortKey, sortDir, locale, (id) => names.get(id) ?? '');
+  }, [entries, categories, sortKey, sortDir, locale]);
   const byId = new Map(categories.map((c) => [c.id, c]));
   const choices = categories.filter((c) => !c.deleted);
   // Gelöschte Kategorie des Eintrags bleibt als Option sichtbar, sonst zeigt das Auswahlfeld einen falschen Wert.
@@ -221,8 +221,10 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                         type="text"
                         aria-label={t('history.table.merchant')}
                         value={draft.merchant}
+                        maxLength={120}
                         onChange={(ev) => setDraft({ ...draft, merchant: ev.target.value })}
                       />
+                      {e.conflict ? <ConflictBadge entity="entry" rowId={e.id} /> : null}
                     </td>
                     <td>
                       <select
@@ -240,19 +242,30 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                     </td>
                     <td className={styles.person}>{memberName(members, e.paidBy)}</td>
                     <td className={styles.right}>
-                      <input
-                        className={`${styles.field} ${styles.amountField}`}
-                        type="text"
-                        inputMode="decimal"
-                        aria-label={t('history.table.amount')}
-                        aria-invalid={invalid}
-                        aria-describedby={invalid ? `ht-amount-err-${e.id}` : undefined}
-                        value={draft.amount}
-                        onChange={(ev) => {
-                          setInvalid(false);
-                          setDraft({ ...draft, amount: ev.target.value });
-                        }}
-                      />
+                      <span className={styles.amountWrap}>
+                        <input
+                          className={`${styles.field} ${styles.amountField}`}
+                          type="text"
+                          inputMode="decimal"
+                          aria-label={
+                            e.currency === 'EUR'
+                              ? t('history.table.amountIn', { currency: 'EUR' })
+                              : t('history.table.amount')
+                          }
+                          aria-invalid={invalid}
+                          aria-describedby={invalid ? `ht-amount-err-${e.id}` : undefined}
+                          value={draft.amount}
+                          onChange={(ev) => {
+                            setInvalid(false);
+                            setDraft({ ...draft, amount: ev.target.value });
+                          }}
+                        />
+                        {e.currency === 'EUR' ? (
+                          <span className={styles.currency} aria-hidden="true">
+                            EUR
+                          </span>
+                        ) : null}
+                      </span>
                       {invalid ? (
                         <p id={`ht-amount-err-${e.id}`} role="alert" className={styles.warn}>
                           <WarnIcon size={16} />
@@ -260,7 +273,7 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                         </p>
                       ) : null}
                     </td>
-                    <td className={styles.original}>
+                    <td className={`${styles.original} ${styles.right} num`}>
                       {e.currency === 'EUR' ? formatMoney(e.amountMinor, 'EUR', locale) : ''}
                     </td>
                     <td>
@@ -300,7 +313,9 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                   <td>{dayText}</td>
                   <td>
                     <Link to={`/eintrag/${e.id}`} className={styles.link}>
-                      <span className={styles.title}>{e.merchant || e.note}</span>
+                      <span className={styles.title}>
+                        {e.merchant || e.note || (category?.name ?? '')}
+                      </span>
                     </Link>
                     {e.merchant && e.note ? <span className={styles.sub}>{e.note}</span> : null}
                     {/* Gleiche Marken wie in der Mobil-Liste (EntryRow); die Texte können beim Start noch fehlen. */}

@@ -78,7 +78,7 @@ describe('PctSlider', () => {
 
   it('zeigt Vorzeichen und Minus U+2212 im Wert', () => {
     const { input, unmount } = mount(-20, () => {});
-    expect(input.getAttribute('aria-valuetext')).toBe('−20 %');
+    expect(input.getAttribute('aria-valuetext')).toBe('−20%');
     unmount();
   });
 });

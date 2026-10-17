@@ -40,7 +40,7 @@ export function ProjectionChart({ base, scenario }: Props) {
       id: 'scen',
       tone: 'scen',
       values: scenario.months.map((m) => m.cumulativeCadMinor),
-      dashFrom: 0,
+      dashFrom: Math.max(0, ti),
     });
   }
 

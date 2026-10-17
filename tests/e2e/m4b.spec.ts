@@ -66,7 +66,7 @@ test.describe('M4 Teil B Desktop', () => {
 
     await page.reload();
     await go(page, '#/planung/projektion');
-    await expect(lebensmittel(page)).toHaveAttribute('aria-valuetext', '−20 %');
+    await expect(lebensmittel(page)).toHaveAttribute('aria-valuetext', '−20\u00a0%');
   });
 
   test('Einmalausgabe anlegen und wieder löschen', async ({ page }) => {
@@ -165,6 +165,33 @@ test.describe('M4 Teil B Desktop', () => {
     await expect(page.getByRole('textbox', { name: 'Betrag CAD' })).toHaveCount(0);
   });
 
+  test('Verlauf: EUR-Eintrag ist beim Bearbeiten als EUR gekennzeichnet', async ({ page }) => {
+    await page.route('https://api.frankfurter.dev/**', (route) =>
+      route.fulfill({
+        contentType: 'application/json',
+        headers: { 'access-control-allow-origin': '*' },
+        body: JSON.stringify({ date: '2027-01-02', base: 'EUR', quote: 'CAD', rate: 1.5 }),
+      }),
+    );
+    await connectE2e(page, 'empty');
+    await setupHousehold(page);
+    await captureEntry(page, {
+      amount: '10,00',
+      category: 'Lebensmittel',
+      merchant: 'Supermarkt A',
+      currency: 'EUR',
+    });
+    await go(page, '#/verlauf');
+    await page
+      .locator('tbody tr', { hasText: 'Supermarkt A' })
+      .getByRole('button', { name: 'Bearbeiten' })
+      .click();
+    const editRow = page.locator('tbody tr', {
+      has: page.getByRole('textbox', { name: 'Betrag in EUR' }),
+    });
+    await expect(editRow.getByText('EUR', { exact: true })).toBeVisible();
+  });
+
   for (const scheme of ['light', 'dark'] as const) {
     test.describe(`axe (${scheme})`, () => {
       test.use({ colorScheme: scheme });
@@ -199,4 +226,25 @@ test.describe('M4 Teil B Desktop', () => {
       });
     });
   }
+});
+
+test.describe('M4 Teil B Mobil', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('Projektion auf dem Handy: Szenario-Panel steht unter der Cashflow-Tabelle, ohne Verstöße', async ({
+    page,
+  }) => {
+    await setupSeeded(page);
+    await openProjection(page);
+    await waitForAnimations(page);
+    const tableBox = await page.getByRole('table', { name: 'Cashflow pro Monat' }).boundingBox();
+    const panelBox = await page.getByRole('complementary').boundingBox();
+    expect(tableBox).not.toBeNull();
+    expect(panelBox).not.toBeNull();
+    expect(panelBox?.y ?? 0).toBeGreaterThan(tableBox?.y ?? Number.POSITIVE_INFINITY);
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(
+      results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
+    ).toEqual([]);
+  });
 });

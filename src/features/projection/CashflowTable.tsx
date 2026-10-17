@@ -38,9 +38,9 @@ const cadOf = (m: ProjectionMonth, key: RowKey): bigint => {
 function signed(key: RowKey, value: bigint, locale: Locale): string {
   const abs = value < 0n ? -value : value;
   const money = formatMoney(abs, 'CAD', locale);
-  if (key === 'income') return `+ ${money}`;
-  if (key === 'net') return value < 0n ? `− ${money}` : `+ ${money}`;
-  return value > 0n ? `− ${money}` : money;
+  if (key === 'income') return `+${money}`;
+  if (key === 'net') return value < 0n ? `−${money}` : `+${money}`;
+  return value > 0n ? `−${money}` : money;
 }
 
 /** Cashflow je Monat: Zeilen Einnahmen, Fixkosten, Sparen, variable Ausgaben, Überschuss. */
@@ -56,6 +56,7 @@ export function CashflowTable({
   const rows: RowKey[] = ['income', 'fixed', 'saving', 'variable', 'net'];
 
   return (
+    // biome-ignore lint/a11y/noNoninteractiveTabindex: horizontal scrollbarer Bereich muss per Tastatur erreichbar sein (axe scrollable-region-focusable)
     <div className={styles.wrap} role="region" aria-label={caption} tabIndex={0}>
       <table className={styles.table}>
         <caption className={styles.caption}>{caption}</caption>

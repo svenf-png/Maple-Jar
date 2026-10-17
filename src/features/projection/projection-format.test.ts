@@ -18,14 +18,14 @@ describe('signedMoney', () => {
 
 describe('signedPercent', () => {
   it('setzt bei positiven Werten ein Plus davor', () => {
-    expect(signedPercent(20)).toBe('+20 %');
+    expect(signedPercent(20, 'de-DE')).toBe('+20\u00a0%');
   });
 
   it('setzt bei negativen Werten ein Minus (U+2212) davor', () => {
-    expect(signedPercent(-20)).toBe('−20 %');
+    expect(signedPercent(-20, 'de-DE')).toBe('\u221220\u00a0%');
   });
 
   it('zeigt Null ohne Vorzeichen', () => {
-    expect(signedPercent(0)).toBe('0 %');
+    expect(signedPercent(0, 'de-DE')).toBe('0\u00a0%');
   });
 });

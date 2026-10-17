@@ -71,24 +71,24 @@ export function groupByDay(entries: readonly Entry[]): DayGroup[] {
 const cmpText = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
 /**
- * Sortierte Kopie (Eingabe bleibt unverändert). Schlüssel: Datum, Händler (sonst Notiz) ohne
- * Groß/Klein, Betrag in CAD. Gleichstand: id in Sortierrichtung.
+ * Sortierte Kopie (Eingabe bleibt unverändert). Schlüssel: Datum, Anzeigename (Händler, sonst Notiz,
+ * sonst Kategoriename) ohne Groß/Klein, Betrag in CAD. Gleichstand: hlc, dann id, in Sortierrichtung.
  */
 export function sortEntries(
   entries: readonly Entry[],
   key: SortKey,
   dir: SortDir,
   locale: string,
+  categoryName: (categoryId: string) => string = () => '',
 ): Entry[] {
   const sign = dir === 'asc' ? 1 : -1;
+  const titleOf = (e: Entry): string => e.merchant || e.note || categoryName(e.categoryId);
   const primary = (a: Entry, b: Entry): number => {
     switch (key) {
       case 'date':
         return cmpText(a.bookedOn, b.bookedOn);
       case 'merchant':
-        return (a.merchant || a.note).localeCompare(b.merchant || b.note, locale, {
-          sensitivity: 'base',
-        });
+        return titleOf(a).localeCompare(titleOf(b), locale, { sensitivity: 'base' });
       case 'amount': {
         const x = entryCad(a);
         const y = entryCad(b);
@@ -96,5 +96,7 @@ export function sortEntries(
       }
     }
   };
-  return [...entries].sort((a, b) => sign * primary(a, b) || sign * cmpText(a.id, b.id));
+  return [...entries].sort(
+    (a, b) => sign * primary(a, b) || sign * (cmpText(a.hlc, b.hlc) || cmpText(a.id, b.id)),
+  );
 }

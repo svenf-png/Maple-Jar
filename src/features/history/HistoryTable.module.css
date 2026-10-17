@@ -159,6 +159,17 @@
   text-align: right;
   min-width: 110px;
 }
+.amountWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s-1);
+}
+.currency {
+  color: var(--label2);
+  font-size: 13px;
+  font-weight: 600;
+}
 .warn {
   display: flex;
   align-items: center;
