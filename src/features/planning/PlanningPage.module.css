@@ -1,0 +1,268 @@
+.top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+.top > :first-child {
+  flex: 1;
+}
+.addBtn {
+  appearance: none;
+  border: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--acc);
+  color: var(--onAcc);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex: none;
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-top: var(--s-4);
+  padding-bottom: var(--s-5);
+}
+@media (min-width: 1024px) {
+  .stack {
+    max-width: 720px;
+  }
+}
+.sectionHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s-3);
+  margin-bottom: var(--s-2);
+}
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: var(--s-2);
+}
+.sectionHead .sectionTitle {
+  margin-bottom: 0;
+}
+.sectionSum {
+  font-size: 14px;
+  color: var(--label2);
+}
+.plain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.stackList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.list {
+  border-radius: var(--r-list);
+}
+.muted {
+  color: var(--label2);
+  font-size: 15px;
+}
+.hint {
+  color: var(--label2);
+  font-size: 13px;
+  margin-top: var(--s-2);
+}
+.item {
+  border-bottom: 0.5px solid var(--sep);
+}
+.item:last-child {
+  border-bottom: 0;
+}
+.goalLink,
+.rowLink {
+  display: flex;
+  gap: var(--s-3);
+  color: var(--label);
+  text-decoration: none;
+  padding: var(--s-4);
+}
+.goalLink {
+  flex-direction: column;
+}
+.goalHead {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.goalText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.rowLink {
+  align-items: center;
+  min-height: 64px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.rowText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.rowTitle {
+  font-size: 16px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rowSub {
+  font-size: 13px;
+  color: var(--label2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  align-items: center;
+}
+.amounts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: none;
+}
+.amount {
+  font-size: 16px;
+  font-weight: 600;
+}
+.income {
+  color: var(--ok);
+}
+.orig {
+  font-size: 12px;
+  color: var(--label2);
+}
+.tag {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  color: var(--label);
+}
+.badgeWrap {
+  margin: 0 var(--s-4) var(--s-3);
+}
+.statRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-3);
+  font-size: 14px;
+  color: var(--label2);
+  flex-wrap: wrap;
+}
+.note {
+  font-size: 14px;
+  color: var(--warn);
+}
+.sheetChoices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+/* detail */
+.detail {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top) + 8px) var(--s-4) calc(env(safe-area-inset-bottom) + 100px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+.bar {
+  display: flex;
+  justify-content: space-between;
+}
+.link {
+  color: var(--acc);
+  text-decoration: none;
+  font-size: 17px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.hero {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.heroHead {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.heroTitle {
+  font-size: 24px;
+  font-weight: 700;
+}
+.heroSaved {
+  font-size: 20px;
+  font-weight: 600;
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.contrib {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 60px;
+  padding: 0 var(--s-2) 0 var(--s-4);
+  border-bottom: 0.5px solid var(--sep);
+}
+.contrib:last-child {
+  border-bottom: 0;
+}
+.contribText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.iconBtn {
+  appearance: none;
+  border: 0;
+  background: none;
+  color: var(--label2);
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.sheetForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.memberRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}

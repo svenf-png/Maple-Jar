@@ -1,17 +1,17 @@
-import { NavLink } from 'react-router';
+import { NavLink, useNavigate } from 'react-router';
 import { findMember } from '../data/household';
 import { useReadySession } from '../data/use-session';
 import { t } from '../i18n/t';
 import { Logo } from '../icons/logo';
 import { PlusIcon } from '../icons/ui-icons';
-import { Avatar, useToast } from '../ui';
+import { Avatar } from '../ui';
 import { navItems } from './nav-items';
 import styles from './Sidebar.module.css';
 
 export function Sidebar() {
-  const toast = useToast();
-  const { household, login } = useReadySession();
-  const me = findMember(household, login);
+  const navigate = useNavigate();
+  const { household, userId } = useReadySession();
+  const me = findMember(household, userId);
   return (
     <aside className={styles.side}>
       <div className={styles.brand}>
@@ -36,7 +36,7 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <button type="button" className={styles.capture} onClick={() => toast(t('toast.comingM2'))}>
+      <button type="button" className={styles.capture} onClick={() => void navigate('/erfassen')}>
         <PlusIcon size={18} />
         {t('nav.capture')}
       </button>

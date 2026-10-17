@@ -1,21 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import {
-  findMember,
-  type Household,
-  parseHousehold,
-  periodEndFor,
-  sameLogin,
-  serializeHousehold,
-} from './household';
+import { findMember, normalizeUsername, periodEndFor } from './household';
+import { householdSchema } from './household-schema';
 
-const valid = (): Household => ({
-  format: 1,
+const A = '00000000-0000-4000-8000-0000000000a1';
+const B = '00000000-0000-4000-8000-0000000000b1';
+
+const valid = () => ({
+  formatVersion: 1,
   householdId: '00000000-0000-4000-8000-000000000001',
   createdAt: '2027-01-01T00:00:00.000Z',
-  members: [
-    { githubLogin: 'person-a', displayName: 'Person A', color: '#2C6CB0' },
-    { githubLogin: 'person-b', displayName: 'Person B', color: '#A2456E' },
-  ],
   settings: {
     name: 'Testhaushalt',
     placeLabel: null,
@@ -25,70 +18,74 @@ const valid = (): Household => ({
     secondCurrency: 'EUR',
     fxProvider: 'ECB',
   },
+  members: [
+    {
+      userId: A,
+      username: 'person-a',
+      displayName: 'Person A',
+      color: '#2C6CB0',
+      locale: 'de-DE',
+      theme: 'auto',
+    },
+    {
+      userId: B,
+      username: 'person-b',
+      displayName: 'Person B',
+      color: '#A2456E',
+      locale: 'en-CA',
+      theme: 'dark',
+    },
+  ],
 });
 
-const parse = (h: unknown) => parseHousehold(JSON.stringify(h));
-
-describe('household.json', () => {
-  it('akzeptiert eine gültige Datei (Roundtrip)', () => {
-    expect(parseHousehold(serializeHousehold(valid()))).toEqual(valid());
+describe('householdSchema', () => {
+  it('accepts a valid household', () => {
+    expect(householdSchema.safeParse(valid()).success).toBe(true);
   });
 
-  it('akzeptiert ein einzelnes Mitglied', () => {
+  it('rejects more than two members', () => {
     const h = valid();
-    h.members = [h.members[0] as Household['members'][number]];
-    expect(parse(h)).not.toBeNull();
+    h.members.push({ ...h.members[0], userId: '00000000-0000-4000-8000-0000000000c1' } as never);
+    expect(householdSchema.safeParse(h).success).toBe(false);
   });
 
-  it('lehnt 0 und 3 Mitglieder ab', () => {
-    const none = { ...valid(), members: [] };
-    const three = valid();
-    three.members.push({ githubLogin: 'person-c', displayName: 'Person C', color: '#13857A' });
-    expect(parse(none)).toBeNull();
-    expect(parse(three)).toBeNull();
-  });
-
-  it('lehnt Farben außerhalb der Palette ab', () => {
-    const h = valid();
-    (h.members[0] as { color: string }).color = '#123456';
-    expect(parse(h)).toBeNull();
-  });
-
-  it('verlangt periodEnd > periodStart', () => {
-    const h = valid();
-    h.settings.periodEnd = '2027-01-01';
-    expect(parse(h)).toBeNull();
-  });
-
-  it('verlangt periodStart auf dem Monatsersten', () => {
-    const h = valid();
-    h.settings.periodStart = '2027-01-15';
-    expect(parse(h)).toBeNull();
-  });
-
-  it('lehnt doppelte Logins (ohne Groß/Klein) ab', () => {
-    const h = valid();
-    (h.members[1] as { githubLogin: string }).githubLogin = 'PERSON-A';
-    expect(parse(h)).toBeNull();
-  });
-
-  it('lehnt falsche Format-Version, Währungen und kaputtes JSON ab', () => {
-    expect(parse({ ...valid(), format: 2 })).toBeNull();
+  it('rejects unknown fields and wrong currencies', () => {
+    expect(householdSchema.safeParse({ ...valid(), extra: 1 }).success).toBe(false);
     const h = valid();
     (h.settings as { baseCurrency: string }).baseCurrency = 'USD';
-    expect(parse(h)).toBeNull();
-    expect(parseHousehold('{kaputt')).toBeNull();
+    expect(householdSchema.safeParse(h).success).toBe(false);
   });
 
-  it('vergleicht Logins ohne Groß/Klein', () => {
-    expect(sameLogin('Person-A', 'person-a')).toBe(true);
-    expect(findMember(valid(), 'PERSON-B')?.displayName).toBe('Person B');
-    expect(findMember(valid(), 'person-x')).toBeUndefined();
+  it('rejects a period start that is not the first of a month', () => {
+    const h = valid();
+    h.settings.periodStart = '2027-01-15';
+    expect(householdSchema.safeParse(h).success).toBe(false);
   });
+});
 
-  it('berechnet das Periodenende', () => {
+describe('findMember', () => {
+  it('finds by user id', () => {
+    const h = householdSchema.parse(valid());
+    expect(findMember(h, B)?.displayName).toBe('Person B');
+    expect(findMember(h, 'nope')).toBeUndefined();
+  });
+});
+
+describe('normalizeUsername', () => {
+  it('trims and lowercases', () => {
+    expect(normalizeUsername('  Person-A ')).toBe('person-a');
+  });
+  it('rejects other characters', () => {
+    expect(normalizeUsername('person a')).toBeNull();
+    expect(normalizeUsername('p@x')).toBeNull();
+    expect(normalizeUsername('')).toBeNull();
+  });
+});
+
+describe('periodEndFor', () => {
+  it('returns the last day of the last month', () => {
     expect(periodEndFor('2027-01-01', 12)).toBe('2027-12-31');
     expect(periodEndFor('2027-03-01', 12)).toBe('2028-02-29');
-    expect(periodEndFor('2027-11-01', 1)).toBe('2027-11-30');
+    expect(periodEndFor('2027-03-01', 1)).toBe('2027-03-31');
   });
 });

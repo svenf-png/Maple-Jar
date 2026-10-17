@@ -1,0 +1,72 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding-top: var(--s-3);
+}
+@media (min-width: 1024px) {
+  .stack {
+    max-width: 720px;
+  }
+}
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 11px;
+  background: var(--fill);
+  color: var(--label2);
+}
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font-size: 17px;
+  color: var(--label);
+  min-height: 44px;
+}
+.search input::placeholder {
+  color: var(--label2);
+}
+.filters {
+  display: flex;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+.filters select {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  color: var(--label);
+  font-size: 16px;
+  max-width: 100%;
+}
+.empty {
+  color: var(--label2);
+  text-align: center;
+  padding: var(--s-6) 0;
+}
+.day {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: var(--s-2);
+}
+.dayHead {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 var(--s-4);
+  font-size: 13px;
+  color: var(--label2);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.list {
+  border-radius: 14px;
+}

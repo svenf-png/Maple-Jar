@@ -3,8 +3,7 @@
 Gemeinsames Haushaltsbuch (PWA, offline-first) für einen Zwei-Personen-Haushalt.
 Vite + React + TypeScript, Dexie (IndexedDB), GitHub Pages. Die Daten liegen als Ereignisprotokoll
 in einem eigenen Supabase-Projekt (Postgres mit Row Level Security) und werden über dessen REST-API
-synchronisiert. Es gibt keinen eigenen Server. (Stand M1 nutzt der Code noch ein GitHub-Daten-Repo,
-der Wechsel ist Teil A von M2, siehe `docs/prompts/M2.md`.)
+synchronisiert. Es gibt keinen eigenen Server.
 Der vollständige Umsetzungsplan steht in `docs/PLAN.md`.
 
 ## Datenschutz: harte Regeln (öffentliches Repo)
@@ -30,27 +29,31 @@ Der vollständige Umsetzungsplan steht in `docs/PLAN.md`.
 - `design-reference/`, `.env*` (außer `.env.example`) und `.privacy-denylist` bleiben ungetrackt.
 - Vor jedem Commit: `npm run check:privacy`.
 
-## Befehle (verfügbar ab Meilenstein M1)
+## Befehle
 - `npm run dev`              Dev-Server (http://localhost:5173)
 - `npm run build`            Produktions-Build (VITE_BASE setzt den Pages-Pfad)
 - `npm run preview`          Build lokal mit Service Worker testen
 - `npm run lint` / `format`  Biome
 - `npm run typecheck`        tsc --noEmit (TypeScript 7)
 - `npm test`                 Vitest (Domain, Ereignisse, Sync)
-- `npm run test:e2e`         Playwright (Chromium + WebKit, gegen MemoryStore)
+- `npm run test:e2e`         Playwright (Chromium + WebKit, gegen MemoryTransport bzw. abgefangenen Supabase-Client)
 - `npm run check:privacy`    Denylist-Prüfung
 - `npm run check:size`       Größenbudget für initiales JS
+- `npm run check:e2e-leak`   Kein E2E-Code im Produktions-Build
 
 ## Architektur in Kürze
-- UI liest NUR aus Dexie (`useLiveQuery`). Schreiben = Dexie-Transaktion: Ereignis in `events` + `outbox`,
+- UI liest NUR aus Dexie (`useLiveQuery` aus `src/data/use-live-query.ts`). Schreiben = Dexie-Transaktion: Ereignis in `events` + `outbox`,
   materialisierte Zeile aktualisieren.
 - Jedes Gerät hängt Ereignisse nur an (Tabelle `events`, append-only, per RLS ohne Update/Delete). Pull per
-  Server-Cursor `seq`. (Bis M2 Teil A: eigene Datei `log/<deviceId>/<YYYY-MM>.jsonl` im Daten-Repo.)
+  Server-Cursor `seq`.
 - Zustand = deterministischer Fold aller Ereignisse (`src/data/events/fold.ts`), Reihenfolge per Hybrid Logical Clock.
 - Konflikte: gleichzeitige Updates auf verschiedene Felder werden gemergt, auf dasselbe Feld → Konflikt-Dialog.
-- Sync spricht nur mit `SyncTransport` (Supabase im Betrieb, `MemoryTransport` in Tests). Bis M2 Teil A gilt
-  noch `RemoteStore` mit `GitHubStore`.
+- Sync spricht nur mit `SyncTransport` (Supabase im Betrieb, `MemoryTransport` in Tests).
 - Jedes gelesene Ereignis wird mit Zod validiert. Ungültige Ereignisse werden geparkt und angezeigt, nie still verworfen.
+- Ordner: `src/data/remote/` (Transport), `src/data/events/` (Schema, HLC, Fold, Anwenden), `src/data/sync/`
+  (Engine, Push, Pull, Scheduler), `src/data/write.ts` (lokale Ereignisse), `src/data/actions.ts` (Einträge,
+  Kategorien, Budgets schreiben), `src/data/repos.ts` (Lese-Hooks), `src/features/*` (Seiten), `supabase/` (SQL, RLS-Prüfung).
+- Pull liest ab `Cursor - 100` (Überlappung, Ereignisse sind idempotent), weil `seq` nicht in Commit-Reihenfolge vergeben wird.
 - Geschäftslogik ausschließlich in `src/domain/` (rein, ohne React/IO, vollständig getestet).
 - Beträge immer Integer in Minor Units. Kurse als Mikro-Einheiten (BigInt). Kein `number`-Float für Geld.
 - Router: Hash-Router. Base-Pfad nur über `import.meta.env.BASE_URL`.

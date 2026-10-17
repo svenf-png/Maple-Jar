@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AppRouter } from './app/router';
 import { loadSession } from './data/session';
+import { initSyncRuntime } from './data/sync/control';
 import { initLang } from './i18n/t';
 import { requestPersistence } from './platform/persist';
 import { initTheme } from './platform/theme';
@@ -18,7 +19,8 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     scope: import.meta.env.BASE_URL,
   });
 }
-void loadSession();
+void loadSession().then(initSyncRuntime);
+if (import.meta.env.VITE_E2E === '1') void import('./data/e2e-seed');
 
 const root = document.getElementById('root');
 if (root) {

@@ -1,5 +1,7 @@
 import { type FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { normalizeUsername } from '../../data/household';
+import { parseProjectUrl } from '../../data/remote/project-url';
 import { connect } from '../../data/session';
 import { setLang, t, useLang } from '../../i18n/t';
 import { Logo } from '../../icons/logo';
@@ -7,30 +9,37 @@ import { Button, Card, Segmented, TextField } from '../../ui';
 import styles from './ConnectPage.module.css';
 import { remoteErrorMessage } from './errors';
 
-const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
-
 export function ConnectPage() {
   const lang = useLang();
   const navigate = useNavigate();
-  const [repo, setRepo] = useState('');
-  const [token, setToken] = useState('');
+  const [projectUrl, setProjectUrl] = useState('');
+  const [anonKey, setAnonKey] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    const repoValue = repo.trim();
-    if (!REPO_RE.test(repoValue)) return setError(t('connect.error.format'));
-    if (!token.trim()) return setError(t('connect.error.tokenMissing'));
+    const origin = parseProjectUrl(projectUrl);
+    if (!origin) return setError(t('connect.error.url'));
+    if (!anonKey.trim()) return setError(t('connect.error.keyMissing'));
+    const name = normalizeUsername(username);
+    if (!name) return setError(t('connect.error.username'));
+    if (!password) return setError(t('connect.error.passwordMissing'));
     setError(null);
     setBusy(true);
     try {
-      const result = await connect(repoValue, token.trim());
+      const result = await connect({
+        projectUrl: origin,
+        anonKey: anonKey.trim(),
+        username: name,
+        password,
+      });
       if (result.kind === 'ok') void navigate('/', { replace: true });
       else if (result.kind === 'setup') void navigate('/einrichten', { replace: true });
-      else if (result.kind === 'notMember') setError(t('connect.error.notMember'));
-      else if (result.kind === 'notYetMember') setError(t('connect.error.notYetMember'));
-      else setError(t('connect.error.invalidHousehold'));
+      else if (result.kind === 'join') void navigate('/beitreten', { replace: true });
+      else setError(t('connect.error.notMember'));
     } catch (err) {
       setError(remoteErrorMessage(err));
     } finally {
@@ -72,21 +81,41 @@ export function ConnectPage() {
         <form onSubmit={onSubmit} className={styles.form} noValidate>
           <Card className={styles.card}>
             <TextField
-              label={t('connect.repo')}
-              placeholder={t('connect.repoPlaceholder')}
-              value={repo}
-              onChange={(e) => setRepo(e.target.value)}
+              label={t('connect.projectUrl')}
+              placeholder={t('connect.projectUrlPlaceholder')}
+              type="url"
+              inputMode="url"
+              value={projectUrl}
+              onChange={(e) => setProjectUrl(e.target.value)}
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
               autoComplete="off"
             />
             <TextField
-              label={t('connect.token')}
-              type="password"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
+              label={t('connect.anonKey')}
+              value={anonKey}
+              onChange={(e) => setAnonKey(e.target.value)}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               autoComplete="off"
+            />
+            <TextField
+              label={t('connect.username')}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              autoComplete="username"
+            />
+            <TextField
+              label={t('connect.password')}
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
               error={error ?? undefined}
             />
           </Card>

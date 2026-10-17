@@ -1,28 +1,35 @@
 // Testdaten: ausschließlich neutrale Platzhalter.
-export const PERSON_A = { githubLogin: 'person-a', displayName: 'Person A', color: '#2C6CB0' };
-export const PERSON_B = { githubLogin: 'person-b', displayName: 'Person B', color: '#A2456E' };
+export const PROJECT_URL = 'https://e2e-project.supabase.co';
+export const ANON_KEY = 'e2e-public-key';
 
-export function householdJson(members: Array<typeof PERSON_A>): string {
-  return `${JSON.stringify(
-    {
-      format: 1,
-      householdId: '00000000-0000-4000-8000-000000000001',
-      createdAt: '2027-01-01T00:00:00.000Z',
-      members,
-      settings: {
-        name: 'Testhaushalt',
-        placeLabel: null,
-        periodStart: '2027-01-01',
-        periodEnd: '2027-12-31',
-        baseCurrency: 'CAD',
-        secondCurrency: 'EUR',
-        fxProvider: 'ECB',
-      },
-    },
-    null,
-    2,
-  )}\n`;
-}
+export const PERSON_A = {
+  username: 'person-a',
+  password: 'e2e-pass-one-1',
+  userId: '00000000-0000-4000-8000-0000000000a1',
+  displayName: 'Person A',
+  color: '#2C6CB0',
+} as const;
+export const PERSON_B = {
+  username: 'person-b',
+  password: 'e2e-pass-two-2',
+  userId: '00000000-0000-4000-8000-0000000000b1',
+  displayName: 'Person B',
+  color: '#A2456E',
+} as const;
+export const PERSON_C = {
+  username: 'person-c',
+  password: 'e2e-pass-three-3',
+  userId: '00000000-0000-4000-8000-0000000000c1',
+  displayName: 'Person C',
+  color: '#13857A',
+} as const;
 
-export const VALID_TOKEN = 'test-token';
-export const REPO = 'org-x/repo-y';
+export const SETTINGS = {
+  name: 'Testhaushalt',
+  placeLabel: null,
+  periodStart: '2027-01-01',
+  periodEnd: '2027-12-31',
+  baseCurrency: 'CAD',
+  secondCurrency: 'EUR',
+  fxProvider: 'ECB',
+} as const;

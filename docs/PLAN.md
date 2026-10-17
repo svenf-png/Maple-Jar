@@ -122,7 +122,7 @@ type Event = {
 | `fixedCost` | `name`, `amountMinor`, `currency`, `unit`, `every`, `startsOn`, `endsOn?`, `categoryId`, `icon?`, `isSaving`, `autobook` |
 | `goal` | `name`, `icon`, `color`, `targetMinor`, `currency`, `startsOn`, `targetDate`, `archivedAt?` |
 | `goalContribution` | `goalId`, `amountMinor` (in Zielwährung, ≠ 0), `contributedOn`, `memberId?`, `note` (nur anlegen und löschen) |
-| `scenario` | `name`, `categoryPct` (`{categoryId: -20}`), `extras` (Einmalausgaben, neue Ziele) |
+| `scenario` (1×, feste ID) | `categoryPct` (`{categoryId: -20}`, −50..50 in 5er-Schritten), `extras` (je `id`, `kind` `expense`\|`goal`, `name`, `amountMinor`, `currency`, `on`, bei `goal` zusätzlich `targetDate`) |
 
 Abgeleitet, nicht gespeichert: `amountCadMinor = (amountMinor * fxRateMicro + 500000n) / 1000000n` (BigInt), Stand eines Sparziels (Summe der Beiträge), „Ziel erreicht“, Kategorie-Vorschlag pro Händler (häufigste Kategorie, „Vorschlag aus N früheren Einkäufen“), Änderungshistorie und Aktivitäts-Feed (direkt aus den Ereignissen).
 
@@ -302,7 +302,7 @@ Alle Vorschläge wurden am 08.10.2026 übernommen. Am 12.10.2026 wurde zusätzli
 Konkretisierungen:
 - Frage 7: Kategoriefarben für weiße Schrift abgedunkelt auf *Gesundheit* `#667F1C` (4,55:1), *Sonstiges* `#7F7569` (4,52:1), *Geschenke* `#B4602F` (4,51:1). Das Token `--scen` (`#B5602F`) bleibt unverändert, weil es nur für Diagrammlinien dient.
 - Frage 8: Die generische Kategorie-Vorlage liegt in `src/domain/category-template.ts` und wird in „Haushalt einrichten“ angeboten (angewendet ab M2).
-- Die Tabelle `household` (früher `household.json`) enthält zusätzlich die Startwerte der Einstellungen (Name, Ort, Zeitraum, Kursquelle). Der Fold beginnt mit diesen Startwerten, spätere Änderungen sind Ereignisse.
+- Die Tabelle `household` (früher `household.json`) enthält zusätzlich die Startwerte der Einstellungen (Name, Ort, Zeitraum, Kursquelle). Die erste Person schreibt die Startwerte beim Einrichten zusätzlich als `settings`-`create`-Ereignis; die Oberfläche liest daraus, spätere Änderungen sind weitere Ereignisse.
 
 1. **Fixkosten buchen:** automatisch am Fälligkeitstag oder per Tipp „als bezahlt buchen“? Zählen sie ins Kategorie-Budget? *Vorschlag:* Tipp zum Bestätigen, `autobook` pro Fixkosten einschaltbar. Ja, sie zählen ins Budget, in der Projektion aber nicht doppelt.
 2. **Sparpläne (z. B. ETF):** Ausgabe oder Sparen? *Vorschlag:* Fixkosten mit Merkmal „ist Sparen“, zählen im Kreisdiagramm und in der Sparquote als Sparen.

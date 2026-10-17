@@ -1,20 +1,25 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
-import { REPO, VALID_TOKEN } from './fixtures/household';
+import { ANON_KEY, PERSON_A, PERSON_C, PROJECT_URL } from './fixtures/household';
+import { overviewHeading } from './helpers';
 
-const url = (scenario: string) => `/?store=memory&scenario=${scenario}#/verbinden`;
+const url = (scenario: string) => `/?e2e=${scenario}#/verbinden`;
+
+type Person = { username: string; password: string };
 
 /** Wartet bei vorhandenem Haushalt, bis die Sitzung gespeichert und die Übersicht offen ist. */
 async function connectMember(page: Page) {
   await connect(page, 'member');
   await expect(page).toHaveURL(/#\/$/);
-  await expect(page.getByRole('heading', { name: 'Übersicht' })).toBeVisible();
+  await expect(overviewHeading(page)).toBeVisible();
 }
 
-async function connect(page: Page, scenario: string, token = VALID_TOKEN) {
+async function connect(page: Page, scenario: string, person: Person = PERSON_A, password?: string) {
   await page.goto(url(scenario));
-  await page.getByLabel('Daten-Repo').fill(REPO);
-  await page.getByLabel('Zugangsschlüssel').fill(token);
+  await page.getByLabel('Projekt-URL').fill(PROJECT_URL);
+  await page.getByLabel('Öffentlicher Schlüssel').fill(ANON_KEY);
+  await page.getByLabel('Benutzername').fill(person.username);
+  await page.getByLabel('Passwort').fill(password ?? person.password);
   await page.getByRole('button', { name: 'Verbinden' }).click();
 }
 
@@ -23,40 +28,66 @@ const isDesktop = (page: Page) => (page.viewportSize()?.width ?? 0) >= 1024;
 async function setupHousehold(page: Page) {
   await page.getByLabel('Haushaltsname').fill('Testhaushalt');
   await page.getByLabel('Dein Anzeigename').fill('Person A');
-  await page.getByLabel('GitHub-Login').fill('person-b');
-  await page.getByLabel('Anzeigename', { exact: true }).fill('Person B');
   await page.getByRole('button', { name: 'Haushalt anlegen' }).click();
 }
 
-test('1: falscher Schlüssel zeigt eine Fehlermeldung', async ({ page }) => {
-  await connect(page, 'empty', 'falsch');
-  await expect(page.getByRole('alert')).toContainText('Zugangsschlüssel ungültig oder abgelaufen');
+test('1: falsches Passwort zeigt eine Fehlermeldung', async ({ page }) => {
+  await connect(page, 'empty', PERSON_A, 'falsch');
+  await expect(page.getByRole('alert')).toContainText('Benutzername oder Passwort stimmt nicht');
   await expect(page).toHaveURL(/#\/verbinden/);
 });
 
-test('2: ohne household.json → Einrichten → Übersicht', async ({ page }) => {
+test('1b: ungültige Eingaben werden vor dem Absenden abgefangen', async ({ page }) => {
+  await page.goto(url('empty'));
+  await page.getByLabel('Projekt-URL').fill('https://evil.example.com');
+  await page.getByRole('button', { name: 'Verbinden' }).click();
+  await expect(page.getByRole('alert')).toContainText('Projekt-URL');
+  await page.getByLabel('Projekt-URL').fill(PROJECT_URL);
+  await page.getByLabel('Öffentlicher Schlüssel').fill(ANON_KEY);
+  await page.getByLabel('Benutzername').fill('Person A');
+  await page.getByRole('button', { name: 'Verbinden' }).click();
+  await expect(page.getByRole('alert')).toContainText('Benutzername darf nur');
+});
+
+test('2: noch kein Haushalt → Einrichten → Übersicht', async ({ page }) => {
   await connect(page, 'empty');
   await expect(page).toHaveURL(/#\/einrichten/);
   await setupHousehold(page);
   await expect(page).toHaveURL(/#\/$/);
-  await expect(page.getByRole('heading', { name: 'Übersicht' })).toBeVisible();
+  await expect(overviewHeading(page)).toBeVisible();
+  await page.goto('/#/einstellungen');
+  await expect(page.getByText('Noch keine zweite Person eingetragen')).toBeVisible();
 });
 
-test('3: vorhandener Haushalt (Mitglied) → direkt Übersicht', async ({ page }) => {
+test('3: vorhandener Haushalt (Mitglied) → direkt Übersicht, Status „Verbunden“', async ({
+  page,
+}) => {
   await connect(page, 'member');
   await expect(page).toHaveURL(/#\/$/);
-  await expect(page.getByRole('heading', { name: 'Übersicht' })).toBeVisible();
+  await expect(overviewHeading(page)).toBeVisible();
   if (!isDesktop(page)) {
     await expect(page.getByRole('img', { name: 'Person A' })).toBeVisible();
     await expect(page.getByRole('img', { name: 'Person B' })).toBeVisible();
+    await expect(page.getByText('Verbunden', { exact: true })).toBeVisible();
   }
 });
 
-test('3b: Konto ohne Mitgliedschaft, erst eine Person eingetragen → Hinweis', async ({ page }) => {
-  await connect(page, 'solo');
+test('3b: zweite Person tritt beim ersten Login bei', async ({ page }) => {
+  await connect(page, 'solo', PERSON_A);
+  await expect(page).toHaveURL(/#\/beitreten/);
+  await page.getByLabel('Dein Anzeigename').fill('Person A');
+  await page.getByRole('button', { name: 'Beitreten' }).click();
+  await expect(page).toHaveURL(/#\/$/);
+  await page.goto('/#/einstellungen');
+  await expect(page.getByText('Gemeinsamer Haushalt mit Person B')).toBeVisible();
+});
+
+test('3c: fremdes Konto bei vollem Haushalt wird abgewiesen', async ({ page }) => {
+  await connect(page, 'member', PERSON_C);
   await expect(page.getByRole('alert')).toContainText(
-    'Bitte von der ersten Person eintragen lassen',
+    'Dieses Konto gehört nicht zu diesem Haushalt',
   );
+  await expect(page).toHaveURL(/#\/verbinden/);
 });
 
 test('4: Darstellung Dunkel bleibt nach Neuladen', async ({ page }) => {
@@ -90,7 +121,8 @@ test('6: Tabbar mobil, Seitenleiste auf Desktop', async ({ page }) => {
     const vh = page.viewportSize()?.height ?? 0;
     expect((box?.y ?? 0) + (box?.height ?? 0)).toBeGreaterThan(vh - 2);
     await page.getByRole('button', { name: 'Ausgabe erfassen' }).click();
-    await expect(page.getByRole('status')).toContainText('Kommt in M2');
+    await expect(page.getByRole('heading', { name: 'Neue Ausgabe' })).toBeVisible();
+    await page.goBack();
   }
   await expect(nav.getByRole('link', { name: 'Übersicht' })).toHaveAttribute(
     'aria-current',
@@ -133,6 +165,12 @@ for (const scheme of ['light', 'dark'] as const) {
       await check(page);
     });
 
+    test('Beitreten', async ({ page }) => {
+      await connect(page, 'solo', PERSON_A);
+      await expect(page.getByRole('heading', { name: 'Haushalt beitreten' })).toBeVisible();
+      await check(page);
+    });
+
     test('Einstellungen', async ({ page }) => {
       await connectMember(page);
       await page.goto('/#/einstellungen');
@@ -141,6 +179,18 @@ for (const scheme of ['light', 'dark'] as const) {
     });
   });
 }
+
+test('Export lädt eine JSON-Datei mit den Ereignissen', async ({ page }) => {
+  await connect(page, 'empty');
+  await setupHousehold(page);
+  await expect(page).toHaveURL(/#\/$/);
+  await page.goto('/#/einstellungen');
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Exportieren' }).click(),
+  ]);
+  expect(download.suggestedFilename()).toMatch(/^maple-jar-export-\d{4}-\d{2}-\d{2}\.json$/);
+});
 
 test('Abmelden löscht die Sitzung', async ({ page }) => {
   await connectMember(page);

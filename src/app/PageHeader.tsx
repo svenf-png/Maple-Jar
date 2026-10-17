@@ -1,7 +1,8 @@
 import { useReadySession } from '../data/use-session';
-import { getLocale, t } from '../i18n/t';
-import { Avatar, StatusPill } from '../ui';
+import { getLocale } from '../i18n/t';
+import { Avatar } from '../ui';
 import styles from './PageHeader.module.css';
+import { SyncStatusPill } from './SyncStatusPill';
 
 export function PageHeader({ title, showMeta }: { title: string; showMeta: boolean }) {
   const { household } = useReadySession();
@@ -16,16 +17,10 @@ export function PageHeader({ title, showMeta }: { title: string; showMeta: boole
         <div className={styles.meta}>
           <span className={styles.date}>{date}</span>
           <span className={styles.right}>
-            <StatusPill variant="neutral">{t('status.connected')}</StatusPill>
+            <SyncStatusPill />
             <span className={styles.avatars}>
               {household.members.map((m, i) => (
-                <Avatar
-                  key={m.githubLogin}
-                  name={m.displayName}
-                  color={m.color}
-                  ring
-                  overlap={i > 0}
-                />
+                <Avatar key={m.userId} name={m.displayName} color={m.color} ring overlap={i > 0} />
               ))}
             </span>
           </span>
