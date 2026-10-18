@@ -237,6 +237,44 @@ function isHovered(locator: Locator): Promise<boolean> {
   return locator.evaluate((el) => el.matches(':hover'));
 }
 
+/** Relative Luminanz (0 bis 1, WCAG) aus einem berechneten `rgb(...)`- oder `rgba(...)`-String. */
+function luminance(color: string): number {
+  const m = color.match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/);
+  if (!m) throw new Error(`Keine rgb-Farbe: ${color}`);
+  const [r, g, b] = [m[1], m[2], m[3]].map((v) => {
+    const c = Number(v) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  }) as [number, number, number];
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/**
+ * Beweist, dass das angeforderte Farbschema tatsächlich greift: Media-Query, Seitenhintergrund (--bg)
+ * und Kartenfläche (--card) werden über ihre Luminanz geprüft, ohne Hex-Literale zu hartcodieren.
+ */
+async function expectScheme(page: Page, scheme: 'light' | 'dark') {
+  await expect
+    .poll(() => page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches))
+    .toBe(scheme === 'dark');
+  const resolved = await page.evaluate(() => {
+    const probe = document.createElement('div');
+    probe.style.background = 'var(--card)';
+    document.body.append(probe);
+    const card = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return { body: getComputedStyle(document.body).backgroundColor, card };
+  });
+  expect(resolved.body).not.toBe('rgba(0, 0, 0, 0)');
+  expect(resolved.card).not.toBe('rgba(0, 0, 0, 0)');
+  if (scheme === 'light') {
+    expect(luminance(resolved.body)).toBeGreaterThan(0.5);
+    expect(luminance(resolved.card)).toBeGreaterThan(0.5);
+  } else {
+    expect(luminance(resolved.body)).toBeLessThan(0.2);
+    expect(luminance(resolved.card)).toBeLessThan(0.2);
+  }
+}
+
 // Hover-Zustände gelten nur mit (hover: hover), also nur auf Desktop-Projekten.
 test.describe('Verlauf Desktop-Breite Hover', () => {
   test.use({ viewport: { width: 1280, height: 800 } });
@@ -250,6 +288,7 @@ test.describe('Verlauf Desktop-Breite Hover', () => {
     await expect.poll(() => isHovered(edit)).toBe(true);
     // Übergang 0,12 s: der Wert wird gepollt, bis er sich geändert hat.
     await expect.poll(() => background(edit)).not.toBe(before);
+    expect(await background(edit)).not.toBe('rgba(0, 0, 0, 0)');
   });
 
   test('Filter „Kategorie“ wechselt bei Hover die Hintergrundfarbe ohne Verschiebung', async ({
@@ -261,41 +300,47 @@ test.describe('Verlauf Desktop-Breite Hover', () => {
     await filter.hover();
     await expect.poll(() => isHovered(filter)).toBe(true);
     await expect.poll(() => background(filter)).not.toBe(before);
+    expect(await background(filter)).not.toBe('rgba(0, 0, 0, 0)');
     expect(await filter.evaluate((el) => getComputedStyle(el).transform)).toBe('none');
   });
 });
 
-// axe läuft auf allen Projekten, auch mobil. Beide Farbschemata werden explizit per emulateMedia gesetzt.
-test.describe('Verlauf Desktop-Breite axe', () => {
-  test.use({ viewport: { width: 1280, height: 800 } });
+// axe läuft auf allen Projekten, auch mobil. Das Farbschema kommt per test.use; expectScheme prüft, dass es greift.
+for (const scheme of ['light', 'dark'] as const) {
+  test.describe(`Verlauf Desktop-Breite axe (${scheme})`, () => {
+    test.use({ viewport: { width: 1280, height: 800 }, colorScheme: scheme });
 
-  for (const scheme of ['light', 'dark'] as const) {
-    test.describe(`axe (${scheme})`, () => {
-      test.beforeEach(async ({ page }) => {
-        await page.emulateMedia({ colorScheme: scheme });
-      });
-
-      test('Verlauf normal ohne Verstöße', async ({ page }) => {
-        await setupCafeEntry(page);
-        await waitForAnimations(page);
-        await expectNoViolations(page);
-      });
-
-      test('Verlauf im Bearbeiten-Modus ohne Verstöße', async ({ page }) => {
-        await setupCafeEntry(page);
-        await startEditing(page);
-        await waitForAnimations(page);
-        await expectNoViolations(page);
-      });
-
-      test('Fixkosten-Formular mit Wiederholungs-Auswahl ohne Verstöße', async ({ page }) => {
-        await connectE2e(page, 'empty');
-        await setupHousehold(page);
-        await go(page, '#/fixkosten/neu');
-        await expect(page.getByRole('combobox', { name: 'Wiederholung' })).toBeVisible();
-        await waitForAnimations(page);
-        await expectNoViolations(page);
-      });
+    test('Verlauf normal ohne Verstöße', async ({ page }) => {
+      await setupCafeEntry(page);
+      await expectScheme(page, scheme);
+      await waitForAnimations(page);
+      await expectNoViolations(page);
     });
-  }
-});
+
+    test('Verlauf im Bearbeiten-Modus ohne Verstöße', async ({ page }) => {
+      await setupCafeEntry(page);
+      await startEditing(page);
+      await expectScheme(page, scheme);
+      await waitForAnimations(page);
+      await expectNoViolations(page);
+    });
+
+    test('Fixkosten-Formular mit Wiederholungs-Auswahl ohne Verstöße', async ({ page }) => {
+      await connectE2e(page, 'empty');
+      await setupHousehold(page);
+      await go(page, '#/fixkosten/neu');
+      const repeat = page.getByRole('combobox', { name: 'Wiederholung' });
+      await expect(repeat).toBeVisible();
+      // Die Zeile bleibt einzeilig: Label und Auswahl liegen auf einer Linie, die Seite läuft nicht über.
+      const label = await requireBox(page.getByText('Wiederholung', { exact: true }));
+      const select = await requireBox(repeat);
+      expect(Math.abs(label.y + label.height / 2 - (select.y + select.height / 2))).toBeLessThan(2);
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      ).toBe(true);
+      await expectScheme(page, scheme);
+      await waitForAnimations(page);
+      await expectNoViolations(page);
+    });
+  });
+}
