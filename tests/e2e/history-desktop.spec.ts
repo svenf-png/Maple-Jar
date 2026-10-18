@@ -1,13 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import {
-  captureEntry,
-  connectE2e,
-  go,
-  settleForAxe,
-  setupHousehold,
-  waitForAnimations,
-} from './helpers';
+import { captureEntry, connectE2e, go, settleForAxe, setupHousehold } from './helpers';
 
 const CATEGORY = 'Restaurant und Café';
 const MERCHANT = 'Café B';
@@ -16,6 +9,7 @@ const MERCHANT = 'Café B';
  * Breite Schrift: simuliert eine deutlich breitere Ersatzschrift. Der Stress hängt nicht davon ab,
  * ob Verdana installiert ist (auf Linux-CI meist nicht): der Buchstabenabstand wirkt in jeder Schrift.
  */
+const WIDE_FAMILY_CSS = '* { font-family: Verdana, sans-serif !important; }';
 const WIDE_FONT_CSS =
   '* { font-family: Verdana, sans-serif !important; letter-spacing: 0.1em !important; }';
 
@@ -230,11 +224,17 @@ test.describe('Verlauf Desktop-Breite Schriftstress', () => {
   test.use({ viewport: { width: 1280, height: 800 } });
   test.skip(({ isMobile }) => isMobile, 'nur Desktop');
 
-  test('Breite Schrift macht den Kategorienamen mindestens 5 % breiter', async ({ page }) => {
+  test('Letter-Spacing-Stress macht den Kategorienamen (gleiche Ersatzschrift) mindestens 5 % breiter', async ({
+    page,
+  }) => {
     await setupCafeEntry(page);
     await startEditing(page);
     const select = editCategory(page);
+    // Baseline: gleiche Ersatzschrift, aber ohne zusätzlichen Buchstabenabstand.
+    await applyFont(page, WIDE_FAMILY_CSS);
+    await page.evaluate(() => document.fonts.ready);
     const before = await textWidth(select, CATEGORY);
+    // Stress: derselbe Font plus letter-spacing 0.1em. Der Zuwachs ist schriftunabhängig (je Zeichen gleich viel).
     await applyFont(page, WIDE_FONT_CSS);
     await page.evaluate(() => document.fonts.ready);
     const after = await textWidth(select, CATEGORY);
@@ -328,7 +328,6 @@ for (const scheme of ['light', 'dark'] as const) {
     test('Verlauf normal ohne Verstöße', async ({ page }) => {
       await setupCafeEntry(page);
       await expectScheme(page, scheme);
-      await waitForAnimations(page);
       await expectNoViolations(page);
     });
 
@@ -336,7 +335,6 @@ for (const scheme of ['light', 'dark'] as const) {
       await setupCafeEntry(page);
       await startEditing(page);
       await expectScheme(page, scheme);
-      await waitForAnimations(page);
       await expectNoViolations(page);
     });
 
@@ -354,7 +352,6 @@ for (const scheme of ['light', 'dark'] as const) {
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
       ).toBe(true);
       await expectScheme(page, scheme);
-      await waitForAnimations(page);
       await expectNoViolations(page);
     });
   });
