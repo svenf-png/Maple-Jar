@@ -196,7 +196,8 @@
 }
 .amountField {
   text-align: right;
-  min-width: 96px;
+  /* Schmaler als früher (96 px): Beträge scrollen im Feld, die Zeile bleibt bei breiter Schrift im Container. */
+  min-width: 80px;
 }
 /* Aktionszelle der Bearbeiten-Zeile: width:1% lässt sie auf die Breite der Knöpfe schrumpfen, nowrap hält beide auf einer Zeile. */
 .editActions {
@@ -204,7 +205,8 @@
   white-space: nowrap;
 }
 .editActions .iconButton {
-  padding: 0 var(--s-1);
+  /* Enger Innenabstand: Beschriftung bleibt, Breite der Aktionen-Spalte schrumpft (Zeile passt bei breiter Schrift). */
+  padding: 0 2px;
 }
 /*
  * Kategorie-Spalte der Bearbeiten-Zeile. `width: 28%` trägt das Layout: Ohne sie würde die Spalte auf die
