@@ -227,13 +227,53 @@ test.describe('Verlauf Desktop-Breite Schriftstress', () => {
   });
 });
 
-// axe läuft auf allen Projekten, auch mobil.
+/** Berechnete Hintergrundfarbe eines Elements. */
+function background(locator: Locator): Promise<string> {
+  return locator.evaluate((el) => getComputedStyle(el).backgroundColor);
+}
+
+/** Zeigt die Maus auf das Element (CSS :hover)? */
+function isHovered(locator: Locator): Promise<boolean> {
+  return locator.evaluate((el) => el.matches(':hover'));
+}
+
+// Hover-Zustände gelten nur mit (hover: hover), also nur auf Desktop-Projekten.
+test.describe('Verlauf Desktop-Breite Hover', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+  test.skip(({ isMobile }) => isMobile, 'nur Desktop: Hover-Zustand gilt nur mit (hover: hover)');
+
+  test('Icon-Button „Bearbeiten“ wechselt bei Hover die Hintergrundfarbe', async ({ page }) => {
+    await setupCafeEntry(page);
+    const edit = rowWith(page, MERCHANT).getByRole('button', { name: 'Bearbeiten' });
+    const before = await background(edit);
+    await edit.hover();
+    await expect.poll(() => isHovered(edit)).toBe(true);
+    // Übergang 0,12 s: der Wert wird gepollt, bis er sich geändert hat.
+    await expect.poll(() => background(edit)).not.toBe(before);
+  });
+
+  test('Filter „Kategorie“ wechselt bei Hover die Hintergrundfarbe ohne Verschiebung', async ({
+    page,
+  }) => {
+    await setupCafeEntry(page);
+    const filter = page.getByRole('combobox', { name: 'Kategorie', exact: true });
+    const before = await background(filter);
+    await filter.hover();
+    await expect.poll(() => isHovered(filter)).toBe(true);
+    await expect.poll(() => background(filter)).not.toBe(before);
+    expect(await filter.evaluate((el) => getComputedStyle(el).transform)).toBe('none');
+  });
+});
+
+// axe läuft auf allen Projekten, auch mobil. Beide Farbschemata werden explizit per emulateMedia gesetzt.
 test.describe('Verlauf Desktop-Breite axe', () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 
   for (const scheme of ['light', 'dark'] as const) {
     test.describe(`axe (${scheme})`, () => {
-      test.use({ colorScheme: scheme });
+      test.beforeEach(async ({ page }) => {
+        await page.emulateMedia({ colorScheme: scheme });
+      });
 
       test('Verlauf normal ohne Verstöße', async ({ page }) => {
         await setupCafeEntry(page);
@@ -244,6 +284,15 @@ test.describe('Verlauf Desktop-Breite axe', () => {
       test('Verlauf im Bearbeiten-Modus ohne Verstöße', async ({ page }) => {
         await setupCafeEntry(page);
         await startEditing(page);
+        await waitForAnimations(page);
+        await expectNoViolations(page);
+      });
+
+      test('Fixkosten-Formular mit Wiederholungs-Auswahl ohne Verstöße', async ({ page }) => {
+        await connectE2e(page, 'empty');
+        await setupHousehold(page);
+        await go(page, '#/fixkosten/neu');
+        await expect(page.getByRole('combobox', { name: 'Wiederholung' })).toBeVisible();
         await waitForAnimations(page);
         await expectNoViolations(page);
       });
