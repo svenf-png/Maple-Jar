@@ -10,7 +10,7 @@
   color: var(--label);
 }
 .table th {
-  padding: 0 var(--s-3);
+  padding: 0 var(--s-2);
   text-align: left;
   font-size: 13px;
   font-weight: 500;
@@ -19,9 +19,14 @@
   white-space: nowrap;
 }
 .table td {
-  padding: var(--s-2) var(--s-3);
+  padding: var(--s-2);
   vertical-align: middle;
   border-bottom: 1px solid var(--sep);
+}
+/* Bearbeiten-Zeile: schmalere Zellenabstände, damit die Zeile auch mit breiter Schrift in 1280 px passt. */
+.editing td {
+  padding-left: var(--s-1);
+  padding-right: var(--s-1);
 }
 .table tbody tr:last-child td {
   border-bottom: 0;
@@ -118,7 +123,7 @@
 }
 .actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
   gap: var(--s-1);
@@ -157,10 +162,13 @@
   text-align: right;
   min-width: 96px;
 }
-/* Bearbeiten-Zeile: schmalere Zellenabstände, damit die Zeile auch mit breiterer Schrift in 1280 px passt. */
-.editing td {
-  padding-left: var(--s-2);
-  padding-right: var(--s-2);
+/* Aktionszelle der Bearbeiten-Zeile: nimmt nur die Breite der beiden Knöpfe (max-content), Umbruch ausgeschlossen. */
+.editActions {
+  width: 1%;
+  white-space: nowrap;
+}
+.editActions .iconButton {
+  padding: 0 var(--s-1);
 }
 .editCategory {
   white-space: nowrap;

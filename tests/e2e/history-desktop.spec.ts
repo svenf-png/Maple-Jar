@@ -5,11 +5,21 @@ import { captureEntry, connectE2e, go, setupHousehold, waitForAnimations } from 
 const CATEGORY = 'Restaurant und Café';
 const MERCHANT = 'Café B';
 
-/** Schriften, mit denen die Layout-Tests laufen. Verdana ist deutlich breiter als die Systemschrift. */
+/**
+ * Breite Schrift: simuliert eine deutlich breitere Ersatzschrift. Der Stress hängt nicht davon ab,
+ * ob Verdana installiert ist (auf Linux-CI meist nicht): der Buchstabenabstand wirkt in jeder Schrift.
+ */
+const WIDE_FONT_CSS =
+  '* { font-family: Verdana, sans-serif !important; letter-spacing: 0.06em !important; }';
+
+/** Schriften, mit denen die Layout-Tests laufen. */
 const FONTS = [
   { name: 'Systemschrift', css: null },
-  { name: 'Verdana', css: '* { font-family: Verdana, sans-serif !important; }' },
+  { name: 'Breite Schrift', css: WIDE_FONT_CSS },
 ] as const;
+
+/** Mindestabstand (px) zwischen dem natürlichen Tabellenmaß und der Containerbreite im Bearbeiten-Modus. */
+const MIN_RESERVE_PX = 30;
 
 /** Haushalt mit einem Eintrag „Café B“ in der Kategorie „Restaurant und Café“ anlegen und zum Verlauf wechseln. */
 async function setupCafeEntry(page: Page) {
@@ -48,8 +58,53 @@ function tableContainer(page: Page): Locator {
   return page.getByRole('table').locator('xpath=..');
 }
 
+/**
+ * Reserve der Tabelle: Containerbreite minus natürliche Mindestbreite der Tabelle (Summe der Spalten-min-content).
+ * Die max-content-Summe ist dafür ungeeignet, weil die Eingabefelder ihre Standardbreite einrechnen.
+ */
+async function tableReserve(container: Locator): Promise<number> {
+  return container.evaluate((el) => {
+    const table = el.querySelector('table');
+    if (!table) throw new Error('Tabelle fehlt');
+    const previous = table.style.width;
+    table.style.width = 'min-content';
+    const minWidth = table.getBoundingClientRect().width;
+    table.style.width = previous;
+    return el.clientWidth - minWidth;
+  });
+}
+
+/** Layout-Rechteck eines Elements; wirft, wenn es nicht sichtbar ist. */
+async function requireBox(locator: Locator) {
+  const box = await locator.boundingBox();
+  if (!box) throw new Error('Kein Layout-Rechteck');
+  return box;
+}
+
+/** Textbreite eines Elements mit dessen aktueller Schrift und Buchstabenabstand (DOM-Messung, in allen Browsern gleich). */
+async function textWidth(locator: Locator, text: string): Promise<number> {
+  return locator.evaluate((el, value) => {
+    const style = getComputedStyle(el);
+    const probe = document.createElement('span');
+    probe.textContent = value;
+    probe.style.cssText = [
+      'position:absolute',
+      'visibility:hidden',
+      'white-space:nowrap',
+      `font-family:${style.fontFamily}`,
+      `font-size:${style.fontSize}`,
+      `font-weight:${style.fontWeight}`,
+      `letter-spacing:${style.letterSpacing}`,
+    ].join(';');
+    document.body.append(probe);
+    const width = probe.getBoundingClientRect().width;
+    probe.remove();
+    return width;
+  }, text);
+}
+
 /** Die Tabelle passt in ihren Scrollbereich: overflow-x ist `auto` und es gibt keine seitliche Überbreite. */
-async function expectNoHorizontalOverflow(page: Page, container: Locator) {
+async function expectNoHorizontalOverflow(container: Locator) {
   const info = await container.evaluate((el) => ({
     overflowX: getComputedStyle(el).overflowX,
     scrollWidth: el.scrollWidth,
@@ -82,7 +137,7 @@ test.describe('Verlauf Desktop-Breite', () => {
       await setupCafeEntry(page);
       await applyFont(page, font.css);
       await expect(page.getByRole('table')).toBeVisible();
-      await expectNoHorizontalOverflow(page, tableContainer(page));
+      await expectNoHorizontalOverflow(tableContainer(page));
 
       // Suche und Filter bleiben bei 720 px, die Tabelle nutzt die volle Breite.
       const searchBox = await page
@@ -99,7 +154,21 @@ test.describe('Verlauf Desktop-Breite', () => {
       expect(tableBox?.width ?? 0).toBeGreaterThan(720);
 
       await startEditing(page);
-      await expectNoHorizontalOverflow(page, tableContainer(page));
+      await expectNoHorizontalOverflow(tableContainer(page));
+
+      // Speichern und Abbrechen stehen auf einer Linie und sind bedienbar groß.
+      const saveBox = await requireBox(
+        page.locator('tbody').getByRole('button', { name: 'Speichern', exact: true }),
+      );
+      const cancelBox = await requireBox(
+        page.locator('tbody').getByRole('button', { name: 'Abbrechen', exact: true }),
+      );
+      expect(Math.abs(saveBox.y - cancelBox.y)).toBeLessThan(1);
+      expect(saveBox.height).toBeGreaterThanOrEqual(44);
+      expect(cancelBox.height).toBeGreaterThanOrEqual(44);
+
+      // Im Bearbeiten-Modus bleibt genug Luft, bevor die Tabelle umbrechen oder überlaufen müsste.
+      expect(await tableReserve(tableContainer(page))).toBeGreaterThanOrEqual(MIN_RESERVE_PX);
     });
 
     test(`Kategorie-Auswahl zeigt den Namen ungekürzt (${font.name})`, async ({ page }) => {
@@ -127,6 +196,21 @@ test.describe('Verlauf Desktop-Breite', () => {
       expect(result.available).toBeGreaterThanOrEqual(result.textWidth);
     });
   }
+});
+
+test.describe('Verlauf Desktop-Breite Schriftstress', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+  test.skip(({ isMobile }) => isMobile, 'nur Desktop');
+
+  test('Breite Schrift macht den Kategorienamen mindestens 5 % breiter', async ({ page }) => {
+    await setupCafeEntry(page);
+    await startEditing(page);
+    const select = editCategory(page);
+    const before = await textWidth(select, CATEGORY);
+    await applyFont(page, WIDE_FONT_CSS);
+    const after = await textWidth(select, CATEGORY);
+    expect(after).toBeGreaterThanOrEqual(before * 1.05);
+  });
 });
 
 // axe läuft auf allen Projekten, auch mobil.

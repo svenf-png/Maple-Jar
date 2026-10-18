@@ -276,7 +276,7 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                     <td className={`${styles.original} ${styles.right} num`}>
                       {e.currency === 'EUR' ? formatMoney(e.amountMinor, 'EUR', locale) : ''}
                     </td>
-                    <td>
+                    <td className={styles.editActions}>
                       <div className={styles.actions}>
                         <button
                           type="button"
