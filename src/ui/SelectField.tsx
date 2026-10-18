@@ -13,7 +13,7 @@ interface Props extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'className
 const WRAP_CLASS: Record<Variant, string | undefined> = {
   filter: undefined,
   edit: styles.wrapEdit,
-  plain: undefined,
+  plain: styles.wrapPlain,
 };
 
 const SELECT_CLASS: Record<Variant, string | undefined> = {

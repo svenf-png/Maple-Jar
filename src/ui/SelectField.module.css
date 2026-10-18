@@ -31,7 +31,9 @@
 .plain {
   /* Rahmenlos wie die Felder in einer Formularzeile, Text rechtsbündig. */
   min-width: max-content;
+  padding-right: calc(18px + var(--s-2));
   border: 0;
+  border-radius: var(--r-field);
   background: transparent;
   color: var(--label);
   text-align: right;
@@ -55,7 +57,6 @@
   }
   .plain:hover:not(:disabled) {
     background: var(--rowHover);
-    border-radius: var(--r-field);
   }
 }
 .select:focus-visible {
@@ -69,4 +70,8 @@
   transform: translateY(-50%);
   pointer-events: none;
   color: var(--label2);
+}
+/* Plain-Variante: Pfeil auf der Fluchtlinie der Kalender-Icons der Zeile. */
+.wrapPlain .chevron {
+  right: 0;
 }
