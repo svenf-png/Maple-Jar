@@ -48,7 +48,8 @@
   .face {
     transition: none;
   }
-  .item:active:not(:disabled) .face {
+  .item[aria-pressed="false"]:active:not(:disabled) .face,
+  .item[aria-pressed="true"]:active:not(:disabled) .face {
     transform: none;
   }
 }

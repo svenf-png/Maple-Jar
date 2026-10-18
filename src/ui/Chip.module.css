@@ -38,7 +38,8 @@
   .chip {
     transition: none;
   }
-  .chip:active:not(:disabled) {
+  .chip[aria-pressed="false"]:active:not(:disabled),
+  .chip[aria-pressed="true"]:active:not(:disabled) {
     transform: none;
   }
 }

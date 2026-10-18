@@ -51,6 +51,8 @@ const pairs: Array<[string, string]> = [
   ['label', 'fillActive'],
   ['onAcc', 'accHover'],
   ['onAcc', 'accActive'],
+  ['acc', 'accTintHover'],
+  ['acc', 'accTintActive'],
 ];
 
 describe.each([

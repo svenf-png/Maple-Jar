@@ -14,8 +14,8 @@
   --accTint: #f9e7e3;
   --accHover: #a52d25;
   --accActive: #8f251f;
-  --accTintHover: #f3d9d3;
-  --accTintActive: #ecc9c1;
+  --accTintHover: #f5dcd6;
+  --accTintActive: #f4dbd5;
   --onAcc: #ffffff;
   --warn: #a35700;
   --warnTint: #fcefd8;
@@ -76,8 +76,8 @@
     --accTint: #3b201b;
     --accHover: #e2634f;
     --accActive: #d65a46;
-    --accTintHover: #4a2a24;
-    --accTintActive: #58322b;
+    --accTintHover: #432621;
+    --accTintActive: #452722;
     --onAcc: #2a0c07;
     --warn: #f2a93b;
     --warnTint: #382813;
@@ -120,8 +120,8 @@
   --accTint: #3b201b;
   --accHover: #e2634f;
   --accActive: #d65a46;
-  --accTintHover: #4a2a24;
-  --accTintActive: #58322b;
+  --accTintHover: #432621;
+  --accTintActive: #452722;
   --onAcc: #2a0c07;
   --warn: #f2a93b;
   --warnTint: #382813;

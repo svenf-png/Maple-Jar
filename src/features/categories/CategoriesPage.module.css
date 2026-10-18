@@ -89,6 +89,16 @@
   background: var(--accTintActive);
   transform: scale(0.98);
 }
+@media (prefers-reduced-motion: reduce) {
+  .iconBtn,
+  .textBtn {
+    transition: none;
+  }
+  .iconBtn:active:not(:disabled),
+  .textBtn:active:not(:disabled) {
+    transform: none;
+  }
+}
 .iconBtn:disabled {
   color: var(--label3);
   cursor: default;
