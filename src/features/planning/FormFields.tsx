@@ -93,7 +93,7 @@ export function RepeatFields(props: {
         </label>
         <SelectField
           id={selectId}
-          variant="edit"
+          variant="plain"
           className={styles.selectField}
           value={props.unit}
           onChange={(e) => props.onUnit(e.target.value as RepeatUnit)}

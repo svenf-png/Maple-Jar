@@ -8,6 +8,7 @@
   display: flex;
   width: 100%;
 }
+
 .select {
   appearance: none;
   -webkit-appearance: none;
@@ -27,6 +28,16 @@
   background: var(--fill);
   transition: background-color 0.12s;
 }
+.plain {
+  /* Rahmenlos wie die Felder in einer Formularzeile, Text rechtsbündig. */
+  min-width: max-content;
+  border: 0;
+  background: transparent;
+  color: var(--label);
+  text-align: right;
+  text-align-last: right;
+  transition: background-color 0.12s;
+}
 .edit {
   /* Breite aus der breitesten Option, unabhängig vom Systemfont. */
   min-width: max-content;
@@ -41,6 +52,10 @@
   }
   .edit:hover:not(:disabled) {
     background: var(--fill);
+  }
+  .plain:hover:not(:disabled) {
+    background: var(--rowHover);
+    border-radius: var(--r-field);
   }
 }
 .select:focus-visible {
