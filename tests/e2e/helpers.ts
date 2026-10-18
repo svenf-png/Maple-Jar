@@ -120,3 +120,12 @@ export async function waitForAnimations(page: Page) {
     ),
   );
 }
+
+/**
+ * Vor einem axe-Lauf: Zeiger wegnehmen, damit kein Hover-Zustand (Hintergrund-Übergang) zählt,
+ * dann auf laufende CSS-Übergänge und Animationen warten.
+ */
+export async function settleForAxe(page: Page) {
+  await page.mouse.move(0, 0);
+  await waitForAnimations(page);
+}

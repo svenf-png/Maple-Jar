@@ -1,6 +1,13 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import { captureEntry, connectE2e, go, setupHousehold, waitForAnimations } from './helpers';
+import {
+  captureEntry,
+  connectE2e,
+  go,
+  settleForAxe,
+  setupHousehold,
+  waitForAnimations,
+} from './helpers';
 
 const CATEGORY = 'Restaurant und Café';
 const MERCHANT = 'Café B';
@@ -119,6 +126,7 @@ async function expectNoHorizontalOverflow(container: Locator) {
 
 /** Axe-Prüfung ohne Verstöße. */
 async function expectNoViolations(page: Page) {
+  await settleForAxe(page);
   const results = await new AxeBuilder({ page }).analyze();
   expect(
     results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),

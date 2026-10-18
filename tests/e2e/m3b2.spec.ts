@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 import { todayIso } from '../../src/data/today';
 import { addDays } from '../../src/domain/schedule';
-import { connectE2e, go, historyItems, setupHousehold, waitForAnimations } from './helpers';
+import { connectE2e, go, historyItems, settleForAxe, setupHousehold } from './helpers';
 
 // Testdaten (Einnahmen, Fixkosten, Sparziele) entstehen über `window.__e2e` (src/data/e2e-seed.ts, nur im E2E-Build),
 // solange die Formulare nicht Teil dieses Zweigs sind. Alles fiktiv.
@@ -193,7 +193,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(page.getByRole('button', { name: /Streaming-Abo B/ })).toBeVisible();
       await expect(page.getByRole('link', { name: /Sparziel A/ })).toBeVisible();
       const scan = async () => {
-        await waitForAnimations(page);
+        await settleForAxe(page);
         const results = await new AxeBuilder({ page }).analyze();
         expect(
           results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
