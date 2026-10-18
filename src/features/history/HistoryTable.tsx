@@ -226,7 +226,7 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                       />
                       {e.conflict ? <ConflictBadge entity="entry" rowId={e.id} /> : null}
                     </td>
-                    <td>
+                    <td className={styles.editCategory}>
                       <SelectField
                         variant="edit"
                         aria-label={t('history.table.category')}

@@ -118,10 +118,10 @@
 }
 .actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: var(--s-1);
-  white-space: nowrap;
 }
 .iconButton {
   display: inline-flex;
@@ -156,6 +156,14 @@
 .amountField {
   text-align: right;
   min-width: 96px;
+}
+/* Bearbeiten-Zeile: schmalere Zellenabstände, damit die Zeile auch mit breiterer Schrift in 1280 px passt. */
+.editing td {
+  padding-left: var(--s-2);
+  padding-right: var(--s-2);
+}
+.editCategory {
+  white-space: nowrap;
 }
 .amountWrap {
   display: inline-flex;
