@@ -35,6 +35,7 @@
 .text {
   min-height: 44px;
   padding: 0 var(--s-2);
+  border-radius: var(--r-field);
   background: none;
   color: var(--acc);
   font-size: 17px;
