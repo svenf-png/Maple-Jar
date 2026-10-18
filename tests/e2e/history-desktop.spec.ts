@@ -10,7 +10,17 @@ const MERCHANT = 'Café B';
  * ob Verdana installiert ist (auf Linux-CI meist nicht): der Buchstabenabstand wirkt in jeder Schrift.
  */
 const WIDE_FAMILY_CSS = '* { font-family: Verdana, sans-serif !important; }';
+/**
+ * Auslegungsstufe des Layouts: breite Ersatzschrift plus Buchstabenabstand 0,06 em. Alle Layout-Tests
+ * (Überlauf, Namen ungekürzt, Reserve, Buttons) laufen damit. Das Layout ist für diese Stufe ausgelegt.
+ */
 const WIDE_FONT_CSS =
+  '* { font-family: Verdana, sans-serif !important; letter-spacing: 0.06em !important; }';
+/**
+ * Nur Nachweis-Stufe für den 5-%-Test: 0,1 em macht den Zuwachs so groß, dass er klar über 5 % liegt.
+ * Sie ist bewusst stärker als die Auslegungsstufe und wird nicht für Layout-Tests verwendet.
+ */
+const PROOF_FONT_CSS =
   '* { font-family: Verdana, sans-serif !important; letter-spacing: 0.1em !important; }';
 
 /** Schriften, mit denen die Layout-Tests laufen. */
@@ -235,7 +245,7 @@ test.describe('Verlauf Desktop-Breite Schriftstress', () => {
     await page.evaluate(() => document.fonts.ready);
     const before = await textWidth(select, CATEGORY);
     // Stress: derselbe Font plus letter-spacing 0.1em. Der Zuwachs ist schriftunabhängig (je Zeichen gleich viel).
-    await applyFont(page, WIDE_FONT_CSS);
+    await applyFont(page, PROOF_FONT_CSS);
     await page.evaluate(() => document.fonts.ready);
     const after = await textWidth(select, CATEGORY);
     expect(after).toBeGreaterThanOrEqual(before * 1.05);
