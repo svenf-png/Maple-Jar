@@ -63,8 +63,7 @@
   font-size: 15px;
   flex: none;
 }
-.dateInput,
-.select {
+.dateInput {
   margin-left: auto;
   appearance: none;
   border: 0;
@@ -75,8 +74,8 @@
   min-width: 0;
   text-align: right;
 }
-.select {
-  cursor: pointer;
+.selectField {
+  margin-left: auto;
 }
 .block {
   display: flex;

@@ -4,7 +4,7 @@ import styles from './SelectField.module.css';
 
 interface Props extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'className'> {
   variant?: 'filter' | 'edit';
-  className?: string;
+  className?: string | undefined;
   children: ReactNode;
 }
 
