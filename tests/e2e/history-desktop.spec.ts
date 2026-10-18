@@ -142,6 +142,13 @@ test.describe('Verlauf Desktop-Breite', () => {
       await expect(page.getByRole('table')).toBeVisible();
       await expectNoHorizontalOverflow(tableContainer(page));
 
+      // Die Aktionsspalte bleibt im Tabellenfluss: Kopfzelle so hoch wie die übrigen Kopfzellen (Rahmenlinie läuft durch).
+      const headers = page.getByRole('columnheader');
+      const actionsHead = await requireBox(headers.filter({ hasText: 'Aktionen' }).first());
+      const dateHead = await requireBox(headers.filter({ hasText: 'Datum' }).first());
+      expect(actionsHead.width).toBeGreaterThan(1);
+      expect(Math.abs(actionsHead.height - dateHead.height)).toBeLessThan(1);
+
       // Suche und Filter bleiben bei 720 px, die Tabelle nutzt die volle Breite.
       const searchBox = await page
         .locator('input[type="search"]')

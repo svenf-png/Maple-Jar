@@ -191,8 +191,8 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
               <th scope="col" className={styles.right}>
                 {t('history.table.original')}
               </th>
-              <th scope="col" className={styles.srOnly}>
-                {t('history.table.actions')}
+              <th scope="col">
+                <span className={styles.srOnly}>{t('history.table.actions')}</span>
               </th>
             </tr>
           </thead>
