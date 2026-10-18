@@ -155,7 +155,7 @@
 }
 .amountField {
   text-align: right;
-  min-width: 110px;
+  min-width: 96px;
 }
 .amountWrap {
   display: inline-flex;

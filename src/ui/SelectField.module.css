@@ -27,7 +27,7 @@
   background: var(--fill);
 }
 .edit {
-  min-width: 240px;
+  min-width: 228px;
   border: 1.5px solid var(--info);
   border-radius: var(--r-field);
   background: var(--card);

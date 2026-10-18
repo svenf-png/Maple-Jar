@@ -5,7 +5,8 @@
   padding-top: var(--s-3);
 }
 @media (min-width: 1024px) {
-  .stack {
+  .search,
+  .filters {
     max-width: 720px;
   }
 }
