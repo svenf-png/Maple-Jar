@@ -17,7 +17,7 @@ const MERCHANT = 'Café B';
  * ob Verdana installiert ist (auf Linux-CI meist nicht): der Buchstabenabstand wirkt in jeder Schrift.
  */
 const WIDE_FONT_CSS =
-  '* { font-family: Verdana, sans-serif !important; letter-spacing: 0.06em !important; }';
+  '* { font-family: Verdana, sans-serif !important; letter-spacing: 0.1em !important; }';
 
 /** Schriften, mit denen die Layout-Tests laufen. */
 const FONTS = [
