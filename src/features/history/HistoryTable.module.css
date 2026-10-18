@@ -211,7 +211,12 @@
 .editActions .iconButton {
   padding: 0 var(--s-1);
 }
-/* Kategorie-Spalte der Bearbeiten-Zeile: fester Anteil der Tabelle. Die Auswahl passt sich an; Mindestbreite kommt nur aus dem Text. */
+/*
+ * Kategorie-Spalte der Bearbeiten-Zeile. `width: 28%` trägt das Layout: Ohne sie würde die Spalte auf die
+ * Mindestbreite der Auswahl kollabieren. Die Auswahl hat absichtlich keine eigene Mindestbreite (siehe
+ * SelectField `.edit`), damit die Tabelle auch mit breiter Schrift nicht überläuft. Sehr lange Namen werden
+ * bei schmalen Fenstern mit „…“ gekürzt. Keine min-width auf der Zelle setzen.
+ */
 .editCategory {
   width: 28%;
   white-space: nowrap;

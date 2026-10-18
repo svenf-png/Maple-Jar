@@ -41,8 +41,11 @@
   transition: background-color 0.12s;
 }
 .edit {
-  /* Keine Mindestbreite aus der längsten Option: die umgebende Zelle gibt die Breite vor, sonst sprengt
-     die breiteste Option bei breiter Schrift die Tabelle. Zu lange Namen kürzen sich mit „…“. */
+  /*
+   * Absichtlich keine eigene Mindestbreite (kein max-content aus der längsten Option): Die umgebende Zelle
+   * gibt die Breite vor (in der Verlauf-Tabelle `width: 28%`). Sonst sprengt die breiteste Option bei breiter
+   * Schrift die Tabelle. Sehr lange Namen werden bei schmalen Fenstern mit „…“ gekürzt.
+   */
   min-width: 0;
   border: 1.5px solid var(--info);
   border-radius: var(--r-field);
