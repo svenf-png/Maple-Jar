@@ -211,7 +211,9 @@
 .editActions .iconButton {
   padding: 0 var(--s-1);
 }
+/* Kategorie-Spalte der Bearbeiten-Zeile: fester Anteil der Tabelle. Die Auswahl passt sich an; Mindestbreite kommt nur aus dem Text. */
 .editCategory {
+  width: 28%;
   white-space: nowrap;
 }
 .amountWrap {

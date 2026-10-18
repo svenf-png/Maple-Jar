@@ -41,8 +41,9 @@
   transition: background-color 0.12s;
 }
 .edit {
-  /* Breite aus der breitesten Option, unabhängig vom Systemfont. */
-  min-width: max-content;
+  /* Keine Mindestbreite aus der längsten Option: die umgebende Zelle gibt die Breite vor, sonst sprengt
+     die breiteste Option bei breiter Schrift die Tabelle. Zu lange Namen kürzen sich mit „…“. */
+  min-width: 0;
   border: 1.5px solid var(--info);
   border-radius: var(--r-field);
   background: var(--card);
