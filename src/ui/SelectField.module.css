@@ -1,0 +1,46 @@
+.wrap {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+}
+.wrapEdit {
+  display: flex;
+  width: 100%;
+}
+.select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 calc(var(--s-3) + 18px + var(--s-2)) 0 var(--s-3);
+  font: inherit;
+  font-size: 16px;
+  color: var(--label);
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.filter {
+  min-width: 180px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+}
+.edit {
+  min-width: 240px;
+  border: 1.5px solid var(--info);
+  border-radius: var(--r-field);
+  background: var(--card);
+}
+.select:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
+}
+.chevron {
+  position: absolute;
+  right: var(--s-3);
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--label2);
+}

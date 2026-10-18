@@ -10,6 +10,7 @@ export { ListRow } from './ListRow';
 export { Numpad, pressKey } from './Numpad';
 export { ProgressBar } from './ProgressBar';
 export { Segmented } from './Segmented';
+export { SelectField } from './SelectField';
 export { StatusPill } from './StatusPill';
 export { SwipeRow } from './SwipeRow';
 export { TextField } from './TextField';

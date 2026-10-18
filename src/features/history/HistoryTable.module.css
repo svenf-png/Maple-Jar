@@ -53,7 +53,6 @@
 .sortButton:focus-visible,
 .iconButton:focus-visible,
 .field:focus-visible,
-.select:focus-visible,
 .row:focus-visible {
   outline: 2px solid var(--info);
   outline-offset: 2px;
@@ -143,8 +142,7 @@
   background: var(--acc);
   color: var(--onAcc);
 }
-.field,
-.select {
+.field {
   width: 100%;
   min-height: 44px;
   padding: 0 var(--s-2);

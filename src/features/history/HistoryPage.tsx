@@ -9,7 +9,7 @@ import { formatMoney } from '../../i18n/format';
 import { getLocale, t, useLang } from '../../i18n/t';
 import { SearchIcon } from '../../icons/ui-icons';
 import { useMedia } from '../../platform/use-media';
-import { Card, Segmented, SwipeRow, useToast } from '../../ui';
+import { Card, Segmented, SelectField, SwipeRow, useToast } from '../../ui';
 import { EntryRow } from '../shared/EntryRow';
 import { dayLabel, todayIso } from '../shared/helpers';
 import { ActivityFeed } from './ActivityFeed';
@@ -88,7 +88,7 @@ export function HistoryPage() {
               />
             </label>
             <div className={styles.filters}>
-              <select
+              <SelectField
                 aria-label={t('history.filter.period')}
                 value={period}
                 onChange={(e) => setPeriod(e.target.value as Period)}
@@ -96,8 +96,8 @@ export function HistoryPage() {
                 <option value="month">{t('history.period.month')}</option>
                 <option value="last">{t('history.period.last')}</option>
                 <option value="all">{t('history.period.all')}</option>
-              </select>
-              <select
+              </SelectField>
+              <SelectField
                 aria-label={t('history.filter.category')}
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
@@ -110,8 +110,8 @@ export function HistoryPage() {
                       {c.name}
                     </option>
                   ))}
-              </select>
-              <select
+              </SelectField>
+              <SelectField
                 aria-label={t('history.filter.person')}
                 value={personId}
                 onChange={(e) => setPersonId(e.target.value)}
@@ -122,7 +122,7 @@ export function HistoryPage() {
                     {m.displayName}
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </div>
             {groups.length === 0 ? (
               <p className={styles.empty}>{t('history.empty')}</p>

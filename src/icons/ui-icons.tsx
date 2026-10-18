@@ -80,6 +80,12 @@ export const ChevronRightIcon = (p: IconProps) => (
   </IconBase>
 );
 
+export const ChevronDownIcon = (p: IconProps) => (
+  <IconBase {...p} strokeWidth={W}>
+    <path d="M6 9l6 6 6-6" />
+  </IconBase>
+);
+
 export const KeyIcon = (p: IconProps) => (
   <IconBase {...p} strokeWidth={W}>
     <circle cx="8" cy="12" r="4" />

@@ -9,7 +9,7 @@ import { parseDecimalToMinor } from '../../domain/money';
 import { formatDay, formatMoney } from '../../i18n/format';
 import { getLocale, t, useLang } from '../../i18n/t';
 import { CalendarIcon, CheckIcon, EditIcon, TrashIcon, WarnIcon } from '../../icons/ui-icons';
-import { Card, CategoryTile, useToast } from '../../ui';
+import { Card, CategoryTile, SelectField, useToast } from '../../ui';
 import { ConflictBadge } from '../conflict/ConflictBadge';
 import { memberName, minorToInput } from '../shared/helpers';
 import styles from './HistoryTable.module.css';
@@ -227,8 +227,8 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                       {e.conflict ? <ConflictBadge entity="entry" rowId={e.id} /> : null}
                     </td>
                     <td>
-                      <select
-                        className={styles.select}
+                      <SelectField
+                        variant="edit"
                         aria-label={t('history.table.category')}
                         value={draft.categoryId}
                         onChange={(ev) => setDraft({ ...draft, categoryId: ev.target.value })}
@@ -238,7 +238,7 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                             {c.name}
                           </option>
                         ))}
-                      </select>
+                      </SelectField>
                     </td>
                     <td className={styles.person}>{memberName(members, e.paidBy)}</td>
                     <td className={styles.right}>

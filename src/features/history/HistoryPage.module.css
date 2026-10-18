@@ -37,16 +37,6 @@
   gap: var(--s-2);
   flex-wrap: wrap;
 }
-.filters select {
-  min-height: 44px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: var(--r-pill);
-  background: var(--fill);
-  color: var(--label);
-  font-size: 16px;
-  max-width: 100%;
-}
 .empty {
   color: var(--label2);
   text-align: center;
