@@ -18,8 +18,8 @@ const FONTS = [
   { name: 'Breite Schrift', css: WIDE_FONT_CSS },
 ] as const;
 
-/** Mindestabstand (px) zwischen dem natürlichen Tabellenmaß und der Containerbreite im Bearbeiten-Modus. */
-const MIN_RESERVE_PX = 30;
+/** Reserve (px), die der Container im Bearbeiten-Modus mindestens verkraften muss, ohne zu überlaufen. */
+const RESERVE_PX = 30;
 
 /** Haushalt mit einem Eintrag „Café B“ in der Kategorie „Restaurant und Café“ anlegen und zum Verlauf wechseln. */
 async function setupCafeEntry(page: Page) {
@@ -59,19 +59,22 @@ function tableContainer(page: Page): Locator {
 }
 
 /**
- * Reserve der Tabelle: Containerbreite minus natürliche Mindestbreite der Tabelle (Summe der Spalten-min-content).
- * Die max-content-Summe ist dafür ungeeignet, weil die Eingabefelder ihre Standardbreite einrechnen.
+ * Verengt den Container um `px` (Innenbreite, clientWidth) und liefert die Innenbreite davor und danach.
+ * Die Rechnung berücksichtigt Padding und Rahmen, je nach box-sizing.
  */
-async function tableReserve(container: Locator): Promise<number> {
-  return container.evaluate((el) => {
-    const table = el.querySelector('table');
-    if (!table) throw new Error('Tabelle fehlt');
-    const previous = table.style.width;
-    table.style.width = 'min-content';
-    const minWidth = table.getBoundingClientRect().width;
-    table.style.width = previous;
-    return el.clientWidth - minWidth;
-  });
+async function narrowContainer(
+  container: Locator,
+  px: number,
+): Promise<{ before: number; after: number }> {
+  return container.evaluate((el, reduce) => {
+    const before = el.clientWidth;
+    const style = getComputedStyle(el);
+    const padX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+    const borderX = parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth);
+    const target = before - reduce;
+    el.style.width = `${style.boxSizing === 'border-box' ? target + borderX : target - padX}px`;
+    return { before, after: el.clientWidth };
+  }, px);
 }
 
 /** Layout-Rechteck eines Elements; wirft, wenn es nicht sichtbar ist. */
@@ -157,18 +160,28 @@ test.describe('Verlauf Desktop-Breite', () => {
       await expectNoHorizontalOverflow(tableContainer(page));
 
       // Speichern und Abbrechen stehen auf einer Linie und sind bedienbar groß.
-      const saveBox = await requireBox(
-        page.locator('tbody').getByRole('button', { name: 'Speichern', exact: true }),
-      );
-      const cancelBox = await requireBox(
-        page.locator('tbody').getByRole('button', { name: 'Abbrechen', exact: true }),
-      );
+      const saveButton = page
+        .locator('tbody')
+        .getByRole('button', { name: 'Speichern', exact: true });
+      const cancelButton = page
+        .locator('tbody')
+        .getByRole('button', { name: 'Abbrechen', exact: true });
+      const saveBox = await requireBox(saveButton);
+      const cancelBox = await requireBox(cancelButton);
       expect(Math.abs(saveBox.y - cancelBox.y)).toBeLessThan(1);
       expect(saveBox.height).toBeGreaterThanOrEqual(44);
       expect(cancelBox.height).toBeGreaterThanOrEqual(44);
+      expect(saveBox.width).toBeGreaterThanOrEqual(44);
+      expect(cancelBox.width).toBeGreaterThanOrEqual(44);
 
-      // Im Bearbeiten-Modus bleibt genug Luft, bevor die Tabelle umbrechen oder überlaufen müsste.
-      expect(await tableReserve(tableContainer(page))).toBeGreaterThanOrEqual(MIN_RESERVE_PX);
+      // Reserve: Der Container wird um 30 px verengt. Die Tabelle muss dann weiterhin ohne seitliches
+      // Überlaufen passen, und Speichern und Abbrechen bleiben auf derselben Höhe wie vorher.
+      const rowY = saveBox.y;
+      const { before, after } = await narrowContainer(tableContainer(page), RESERVE_PX);
+      expect(Math.abs(before - after - RESERVE_PX)).toBeLessThanOrEqual(1);
+      await expectNoHorizontalOverflow(tableContainer(page));
+      expect(Math.abs((await requireBox(saveButton)).y - rowY)).toBeLessThan(1);
+      expect(Math.abs((await requireBox(cancelButton)).y - rowY)).toBeLessThan(1);
     });
 
     test(`Kategorie-Auswahl zeigt den Namen ungekürzt (${font.name})`, async ({ page }) => {
@@ -208,6 +221,7 @@ test.describe('Verlauf Desktop-Breite Schriftstress', () => {
     const select = editCategory(page);
     const before = await textWidth(select, CATEGORY);
     await applyFont(page, WIDE_FONT_CSS);
+    await page.evaluate(() => document.fonts.ready);
     const after = await textWidth(select, CATEGORY);
     expect(after).toBeGreaterThanOrEqual(before * 1.05);
   });

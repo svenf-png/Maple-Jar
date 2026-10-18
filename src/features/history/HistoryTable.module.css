@@ -24,7 +24,7 @@
   border-bottom: 1px solid var(--sep);
 }
 /* Bearbeiten-Zeile: schmalere Zellenabstände, damit die Zeile auch mit breiter Schrift in 1280 px passt. */
-.editing td {
+.table .editing td {
   padding-left: var(--s-1);
   padding-right: var(--s-1);
 }
@@ -162,7 +162,7 @@
   text-align: right;
   min-width: 96px;
 }
-/* Aktionszelle der Bearbeiten-Zeile: nimmt nur die Breite der beiden Knöpfe (max-content), Umbruch ausgeschlossen. */
+/* Aktionszelle der Bearbeiten-Zeile: width:1% lässt sie auf die Breite der Knöpfe schrumpfen, nowrap hält beide auf einer Zeile. */
 .editActions {
   width: 1%;
   white-space: nowrap;
