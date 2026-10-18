@@ -2,7 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { todayIso } from '../../src/data/today';
 import { createSharedServer } from './fake-supabase-route';
 import { PERSON_A, PERSON_B } from './fixtures/household';
-import { fillConnect, go, overviewHeading, setupHousehold } from './helpers';
+import { fillConnect, go, historyItems, overviewHeading, setupHousehold } from './helpers';
 
 // Zwei Geräte = zwei Browser-Kontexte gegen denselben Server. Fixkosten-Testdaten über `window.__e2e`
 // (src/data/e2e-seed.ts, nur im E2E-Build).
@@ -112,7 +112,7 @@ test('zwei Geräte: dieselbe Fixkosten-Fälligkeit auf beiden Geräten gebucht e
   await resync(b.page, '#/verlauf');
 
   for (const d of [a, b]) {
-    await expect(d.page.getByRole('link').filter({ hasText: 'Fixkosten' })).toHaveCount(1, {
+    await expect(historyItems(d.page).filter({ hasText: 'Fixkosten' })).toHaveCount(1, {
       timeout: 20_000,
     });
     expect(await entryCount(d.page)).toBe(1);
@@ -129,7 +129,7 @@ test('Autobook bucht beim Start nach dem ersten Sync und nicht doppelt nach Neul
   await seedFixed(a.page, true);
 
   await resync(a.page, '#/verlauf');
-  await expect(a.page.getByRole('link').filter({ hasText: 'Fixkosten' })).toHaveCount(1, {
+  await expect(historyItems(a.page).filter({ hasText: 'Fixkosten' })).toHaveCount(1, {
     timeout: 20_000,
   });
   const created = () => server.events.filter((e) => e.entity === 'entry').length;
@@ -138,7 +138,7 @@ test('Autobook bucht beim Start nach dem ersten Sync und nicht doppelt nach Neul
 
   await resync(a.page, '#/verlauf');
   await a.page.waitForTimeout(3000);
-  await expect(a.page.getByRole('link').filter({ hasText: 'Fixkosten' })).toHaveCount(1);
+  await expect(historyItems(a.page).filter({ hasText: 'Fixkosten' })).toHaveCount(1);
   expect(await entryCount(a.page)).toBe(1);
   expect(created()).toBe(before);
 });

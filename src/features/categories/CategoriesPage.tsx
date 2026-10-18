@@ -73,7 +73,7 @@ export function CategoriesPage() {
   }
 
   return (
-    <main className={styles.page}>
+    <div className={styles.page}>
       <div className={styles.bar}>
         <Link to="/einstellungen" className={styles.link}>
           {t('categories.back')}
@@ -202,6 +202,6 @@ export function CategoriesPage() {
           </form>
         ) : null}
       </Dialog>
-    </main>
+    </div>
   );
 }

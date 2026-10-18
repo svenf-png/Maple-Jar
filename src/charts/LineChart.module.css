@@ -1,0 +1,119 @@
+.figure {
+  --gutter: 44px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+.plot {
+  position: relative;
+  width: 100%;
+  height: 170px;
+  padding-left: var(--gutter);
+}
+@media (min-width: 1024px) {
+  .plot {
+    height: 300px;
+  }
+}
+.canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.grid {
+  stroke: var(--grid);
+}
+.zero {
+  stroke: var(--sep);
+}
+.today {
+  stroke: var(--label3);
+}
+.line {
+  fill: none;
+}
+.base {
+  stroke: var(--base);
+}
+.scen {
+  stroke: var(--scen);
+}
+.dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--card);
+  transform: translate(-50%, -50%);
+}
+.dotBase {
+  background: var(--base);
+}
+.dotScen {
+  background: var(--scen);
+}
+.tick {
+  position: absolute;
+  left: 0;
+  width: var(--gutter);
+  box-sizing: border-box;
+  padding-right: 6px;
+  text-align: right;
+  transform: translateY(-50%);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--label2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.todayLabel {
+  position: absolute;
+  top: 0;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--label2);
+  white-space: nowrap;
+}
+.months {
+  position: relative;
+  height: 16px;
+  margin-left: var(--gutter);
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--label2);
+}
+.month {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+}
+.alignStart {
+  transform: none;
+}
+.alignCenter {
+  transform: translateX(-50%);
+}
+.alignEnd {
+  transform: translateX(-100%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .line {
+    animation: fade-in 300ms ease-out;
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}

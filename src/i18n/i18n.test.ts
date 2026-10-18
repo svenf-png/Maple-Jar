@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { de } from './de';
 import { en } from './en';
-import { formatMoney, formatMonth, formatRate } from './format';
+import { formatCompact, formatMoney, formatMonth, formatMonthShort, formatRate } from './format';
 import { planDe } from './plan-de';
 import { planEn } from './plan-en';
 import { loadPlanMessages } from './plan-messages';
@@ -89,5 +89,17 @@ describe('weitere Formate', () => {
   });
   it('formatRate aus Mikro-Einheiten', () => {
     expect(formatRate(1_610_000n, 'de-DE')).toBe(`1,61${nbsp}CA$`);
+  });
+});
+
+describe('formatCompact / formatMonthShort', () => {
+  it('formatCompact: ganze CAD, Minuszeichen U+2212', () => {
+    expect(formatCompact(2000000n, 'de-DE')).toBe('20.000'); // Achsenbeschriftung in ganzen CAD
+    expect(formatCompact(1000000n, 'en-CA')).toBe('10,000');
+    expect(formatCompact(-50000n, 'de-DE')).toBe('−500');
+  });
+  it('formatMonthShort', () => {
+    expect(formatMonthShort('2027-03-01', 'de-DE')).toMatch(/^Mär/); // ICU der Laufzeit ("Mär" oder "März")
+    expect(formatMonthShort('2027-03-01', 'en-CA')).toBe('Mar');
   });
 });

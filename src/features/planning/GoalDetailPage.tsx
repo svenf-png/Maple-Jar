@@ -50,12 +50,12 @@ export function GoalDetailPage() {
 
   if (!goal) {
     return (
-      <main className={styles.detail}>
+      <div className={styles.detail}>
         <Link to="/planung" className={styles.link}>
           {t('goal.detail.back')}
         </Link>
         {loaded ? <p className={styles.muted}>{t('goal.detail.notFound')}</p> : null}
-      </main>
+      </div>
     );
   }
 
@@ -126,7 +126,7 @@ export function GoalDetailPage() {
   }
 
   return (
-    <main className={styles.detail}>
+    <div className={styles.detail}>
       <div className={styles.bar}>
         <Link to="/planung" className={styles.link}>
           {t('goal.detail.back')}
@@ -302,6 +302,6 @@ export function GoalDetailPage() {
         open={reached.open}
         onClose={reached.close}
       />
-    </main>
+    </div>
   );
 }

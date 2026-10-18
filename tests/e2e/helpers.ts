@@ -63,3 +63,60 @@ export const overviewHeading = (page: Page) =>
     level: 1,
     name: new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' }).format(new Date()),
   });
+
+/** Verlaufseintrag: auf Desktop die Tabellenzeile (trägt Beträge und Original), sonst der Link der Mobil-Liste. */
+/** Alle Verlaufseinträge: auf Desktop die Tabellenzeilen im Tabellenkörper (ohne Kopfzeile), sonst die Links. */
+export const historyItems = (page: Page) =>
+  (page.viewportSize()?.width ?? 0) >= 1024
+    ? page.locator('tbody').getByRole('row')
+    : page.getByRole('link');
+
+export const historyItem = (page: Page, name: RegExp) =>
+  (page.viewportSize()?.width ?? 0) >= 1024
+    ? page.getByRole('row', { name })
+    : page.getByRole('link', { name });
+
+/** Den 10. des Vormonats als `YYYY-MM-DD` (lokal), für Einträge im Durchschnitt der letzten 3 Monate. */
+function tenthOfLastMonth(now: Date = new Date()): string {
+  const d = new Date(now.getFullYear(), now.getMonth() - 1, 10);
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-10`;
+}
+
+/**
+ * Manuelle Ausgabe „Lebensmittel“ im Vormonat erfassen: Sie speist den Durchschnitt der letzten 3 Monate
+ * (Projektion, Regler). Das Datum wird nach dem Erfassen über `__e2e.actions.updateEntry` gesetzt.
+ */
+export async function seedLastMonthEntry(page: Page, amount: string, merchant: string) {
+  await captureEntry(page, { amount, category: 'Lebensmittel', merchant });
+  const bookedOn = tenthOfLastMonth();
+  await page.evaluate(async (bookedOn) => {
+    type Row = { id: string; hlc: string };
+    const w = window as unknown as {
+      __e2e: {
+        db: { entry: { toArray(): Promise<Row[]> } };
+        actions: {
+          updateEntry(db: unknown, id: string, patch: { bookedOn: string }): Promise<boolean>;
+        };
+      };
+    };
+    const { db, actions } = w.__e2e;
+    const rows = await db.entry.toArray();
+    const newest = rows.reduce((a, b) => (b.hlc > a.hlc ? b : a));
+    await actions.updateEntry(db, newest.id, { bookedOn });
+  }, bookedOn);
+}
+
+/** Wartet, bis alle laufenden CSS-Animationen fertig sind (Dialoge fahren ein; sonst Kontrast-Fehlalarm bei axe). */
+export async function waitForAnimations(page: Page) {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        // Endlos laufende Animationen (Lade-Indikatoren) enden nie und würden das Warten blockieren.
+        .filter((a) => !['finished', 'idle', 'paused'].includes(a.playState))
+        .filter((a) => a.effect?.getComputedTiming().endTime !== Infinity)
+        .map((a) => a.finished.catch(() => undefined)),
+    ),
+  );
+}

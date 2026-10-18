@@ -40,12 +40,12 @@ export function EntryDetailPage() {
 
   if (!entry) {
     return (
-      <main className={styles.page}>
+      <div className={styles.page}>
         <Link to="/verlauf" className={styles.back}>
           {t('detail.back')}
         </Link>
         <p className={styles.muted}>{t('detail.notFound')}</p>
-      </main>
+      </div>
     );
   }
 
@@ -78,7 +78,7 @@ export function EntryDetailPage() {
   }
 
   return (
-    <main className={styles.page}>
+    <div className={styles.page}>
       <div className={styles.bar}>
         <Link to="/verlauf" className={styles.back}>
           {t('detail.back')}
@@ -182,6 +182,6 @@ export function EntryDetailPage() {
           </span>
         </Button>
       ) : null}
-    </main>
+    </div>
   );
 }

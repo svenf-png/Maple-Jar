@@ -50,7 +50,7 @@ export function BudgetsPage() {
   }
 
   return (
-    <main className={styles.page}>
+    <div className={styles.page}>
       <div className={styles.bar}>
         <Link to="/" className={styles.link}>
           {t('budgets.back')}
@@ -132,6 +132,6 @@ export function BudgetsPage() {
           </div>
         </form>
       </Dialog>
-    </main>
+    </div>
   );
 }

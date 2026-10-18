@@ -13,7 +13,7 @@ interface Props {
 /** Rahmen der Planungs-Formulare im Stil des Erfassen-Blatts. */
 export function FormShell({ title, closeTo, children }: Props) {
   return (
-    <main className={styles.page}>
+    <div className={styles.page}>
       <section className={styles.sheet} aria-label={title}>
         <div className={styles.head}>
           <Link to={closeTo} className={styles.cancel}>
@@ -24,7 +24,7 @@ export function FormShell({ title, closeTo, children }: Props) {
         </div>
         {children}
       </section>
-    </main>
+    </div>
   );
 }
 
