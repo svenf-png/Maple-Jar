@@ -33,6 +33,29 @@
   color: var(--label2);
   cursor: default;
 }
+.reset {
+  border-radius: var(--r-button);
+  transition:
+    background-color 0.12s,
+    transform 0.12s;
+}
+@media (hover: hover) {
+  .reset:hover:not(:disabled) {
+    background: var(--accTintHover);
+  }
+}
+.reset:active:not(:disabled) {
+  background: var(--accTintActive);
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reset {
+    transition: none;
+  }
+  .reset:active:not(:disabled) {
+    transform: none;
+  }
+}
 .subtitle,
 .note,
 .subhead {
@@ -137,6 +160,26 @@
   flex: none;
   cursor: pointer;
   border-radius: 12px;
+  transition:
+    background-color 0.12s,
+    transform 0.12s;
+}
+@media (hover: hover) {
+  .iconBtn:hover:not(:disabled) {
+    background: var(--fillHover);
+  }
+}
+.iconBtn:active:not(:disabled) {
+  background: var(--fillActive);
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .iconBtn {
+    transition: none;
+  }
+  .iconBtn:active:not(:disabled) {
+    transform: none;
+  }
 }
 .outside {
   display: flex;

@@ -11,6 +11,18 @@
   font-weight: 600;
   border: 0;
   cursor: pointer;
+  transition: transform 0.12s;
+}
+.badge:active:not(:disabled) {
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .badge {
+    transition: none;
+  }
+  .badge:active:not(:disabled) {
+    transform: none;
+  }
 }
 .intro {
   color: var(--label2);

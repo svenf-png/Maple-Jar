@@ -24,6 +24,26 @@
   justify-content: center;
   gap: 3px;
   cursor: pointer;
+  transition:
+    background-color 0.12s,
+    transform 0.12s;
+}
+@media (hover: hover) {
+  .action:hover:not(:disabled) {
+    background: var(--accHover);
+  }
+}
+.action:active:not(:disabled) {
+  background: var(--accActive);
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .action {
+    transition: none;
+  }
+  .action:active:not(:disabled) {
+    transform: none;
+  }
 }
 .content {
   position: relative;

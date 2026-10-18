@@ -24,8 +24,31 @@
   font-size: 14px;
   font-weight: 600;
   color: var(--label);
+  transition:
+    background-color 0.12s,
+    transform 0.12s;
 }
 .item[aria-pressed="true"] .face {
   background: var(--card);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+}
+@media (hover: hover) {
+  .item[aria-pressed="false"]:hover:not(:disabled) .face {
+    background: var(--fillHover);
+  }
+}
+.item[aria-pressed="false"]:active:not(:disabled) .face {
+  background: var(--fillActive);
+  transform: scale(0.98);
+}
+.item[aria-pressed="true"]:active:not(:disabled) .face {
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .face {
+    transition: none;
+  }
+  .item:active:not(:disabled) .face {
+    transform: none;
+  }
 }

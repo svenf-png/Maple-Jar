@@ -35,4 +35,24 @@
   margin: -10px -8px -10px 12px;
   cursor: pointer;
   text-decoration: underline;
+  transition:
+    opacity 0.15s,
+    transform 0.12s;
+}
+/* Auf dunkler Toast-Fläche bleibt die Aktion über Deckkraft statt über Hintergrundfläche sichtbar. */
+@media (hover: hover) {
+  .action:hover:not(:disabled) {
+    opacity: 0.8;
+  }
+}
+.action:active:not(:disabled) {
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .action {
+    transition: none;
+  }
+  .action:active:not(:disabled) {
+    transform: none;
+  }
 }

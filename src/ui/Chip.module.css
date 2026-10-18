@@ -13,9 +13,34 @@
   font-weight: 500;
   cursor: pointer;
 }
+.chip {
+  transition:
+    background-color 0.12s,
+    transform 0.12s;
+}
 .chip[aria-pressed="true"] {
   background: var(--chip);
   color: var(--onCat);
+}
+@media (hover: hover) {
+  .chip[aria-pressed="false"]:hover:not(:disabled) {
+    background: var(--fillHover);
+  }
+}
+.chip[aria-pressed="false"]:active:not(:disabled) {
+  background: var(--fillActive);
+  transform: scale(0.98);
+}
+.chip[aria-pressed="true"]:active:not(:disabled) {
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .chip {
+    transition: none;
+  }
+  .chip:active:not(:disabled) {
+    transform: none;
+  }
 }
 .icon {
   display: grid;

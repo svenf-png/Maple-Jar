@@ -54,6 +54,19 @@
   color: inherit;
   font: inherit;
   cursor: pointer;
+  border-radius: var(--r-tile);
+  transition:
+    background-color 0.12s,
+    transform 0.12s;
+}
+@media (hover: hover) {
+  .sortButton:hover:not(:disabled) {
+    background: var(--fillHover);
+  }
+}
+.sortButton:active:not(:disabled) {
+  background: var(--fillActive);
+  transform: scale(0.98);
 }
 .sortButton:focus-visible,
 .iconButton:focus-visible,
@@ -142,10 +155,38 @@
   color: var(--label);
   font: inherit;
   cursor: pointer;
+  transition:
+    background-color 0.12s,
+    transform 0.12s;
 }
 .save {
   background: var(--acc);
   color: var(--onAcc);
+}
+@media (hover: hover) {
+  .iconButton:hover:not(:disabled) {
+    background: var(--fillHover);
+  }
+  .save:hover:not(:disabled) {
+    background: var(--accHover);
+  }
+}
+.iconButton:active:not(:disabled) {
+  background: var(--fillActive);
+  transform: scale(0.98);
+}
+.save:active:not(:disabled) {
+  background: var(--accActive);
+}
+@media (prefers-reduced-motion: reduce) {
+  .iconButton,
+  .sortButton {
+    transition: none;
+  }
+  .iconButton:active:not(:disabled),
+  .sortButton:active:not(:disabled) {
+    transform: none;
+  }
 }
 .field {
   width: 100%;

@@ -71,6 +71,26 @@
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+  transition:
+    background-color 0.12s,
+    transform 0.12s;
+}
+@media (hover: hover) {
+  .capture:hover:not(:disabled) {
+    background: var(--accHover);
+  }
+}
+.capture:active:not(:disabled) {
+  background: var(--accActive);
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .capture {
+    transition: none;
+  }
+  .capture:active:not(:disabled) {
+    transform: none;
+  }
 }
 .user {
   margin-top: auto;

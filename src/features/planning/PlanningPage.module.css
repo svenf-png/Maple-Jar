@@ -19,6 +19,26 @@
   place-items: center;
   cursor: pointer;
   flex: none;
+  transition:
+    background-color 0.12s,
+    transform 0.12s;
+}
+@media (hover: hover) {
+  .addBtn:hover:not(:disabled) {
+    background: var(--accHover);
+  }
+}
+.addBtn:active:not(:disabled) {
+  background: var(--accActive);
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .addBtn {
+    transition: none;
+  }
+  .addBtn:active:not(:disabled) {
+    transform: none;
+  }
 }
 .stack {
   display: flex;
@@ -254,6 +274,27 @@
   display: grid;
   place-items: center;
   cursor: pointer;
+  border-radius: var(--r-button);
+  transition:
+    background-color 0.12s,
+    transform 0.12s;
+}
+@media (hover: hover) {
+  .iconBtn:hover:not(:disabled) {
+    background: var(--fillHover);
+  }
+}
+.iconBtn:active:not(:disabled) {
+  background: var(--fillActive);
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .iconBtn {
+    transition: none;
+  }
+  .iconBtn:active:not(:disabled) {
+    transform: none;
+  }
 }
 .sheetForm {
   display: flex;

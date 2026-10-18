@@ -174,6 +174,26 @@
   padding: 0 14px;
   font-size: 15px;
   cursor: pointer;
+  transition:
+    background-color 0.12s,
+    transform 0.12s;
+}
+@media (hover: hover) {
+  .hintBtn:hover:not(:disabled) {
+    background: var(--fillHover);
+  }
+}
+.hintBtn:active:not(:disabled) {
+  background: var(--fillActive);
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hintBtn {
+    transition: none;
+  }
+  .hintBtn:active:not(:disabled) {
+    transform: none;
+  }
 }
 .error {
   display: flex;

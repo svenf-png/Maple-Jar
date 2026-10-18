@@ -25,6 +25,7 @@
   border: 0;
   border-radius: var(--r-pill);
   background: var(--fill);
+  transition: background-color 0.12s;
 }
 .edit {
   /* Breite aus der breitesten Option, unabhängig vom Systemfont. */
@@ -32,6 +33,15 @@
   border: 1.5px solid var(--info);
   border-radius: var(--r-field);
   background: var(--card);
+  transition: background-color 0.12s;
+}
+@media (hover: hover) {
+  .filter:hover:not(:disabled) {
+    background: var(--fillHover);
+  }
+  .edit:hover:not(:disabled) {
+    background: var(--fill);
+  }
 }
 .select:focus-visible {
   outline: 2px solid var(--info);

@@ -125,9 +125,29 @@
   display: grid;
   place-items: center;
   cursor: pointer;
+  transition:
+    background-color 0.12s,
+    transform 0.12s;
+}
+@media (hover: hover) {
+  .iconBtn:hover:not(:disabled) {
+    background: var(--fillHover);
+  }
+}
+.iconBtn:active:not(:disabled) {
+  background: var(--fillActive);
+  transform: scale(0.98);
 }
 .iconBtn[aria-pressed="true"] {
   border-color: var(--acc);
+}
+@media (prefers-reduced-motion: reduce) {
+  .iconBtn {
+    transition: none;
+  }
+  .iconBtn:active:not(:disabled) {
+    transform: none;
+  }
 }
 .check {
   display: flex;
@@ -190,6 +210,27 @@
   min-height: 44px;
   padding: 0 var(--s-2);
   cursor: pointer;
+  border-radius: var(--r-field);
+  transition:
+    background-color 0.12s,
+    transform 0.12s;
+}
+@media (hover: hover) {
+  .linkBtn:hover:not(:disabled) {
+    background: var(--accTintHover);
+  }
+}
+.linkBtn:active:not(:disabled) {
+  background: var(--accTintActive);
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .linkBtn {
+    transition: none;
+  }
+  .linkBtn:active:not(:disabled) {
+    transform: none;
+  }
 }
 .danger {
   color: var(--label);
