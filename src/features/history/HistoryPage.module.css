@@ -35,17 +35,52 @@
 .filters {
   display: flex;
   gap: var(--s-2);
-  flex-wrap: wrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 calc(-1 * var(--s-4));
+  padding: 2px var(--s-4);
 }
-.filters select {
-  min-height: 44px;
-  padding: 0 12px;
-  border: 0;
+.filters::-webkit-scrollbar {
+  display: none;
+}
+.chip {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
   border-radius: var(--r-pill);
-  background: var(--fill);
+  border: 1px solid var(--label3);
+  background: transparent;
   color: var(--label);
-  font-size: 16px;
-  max-width: 100%;
+}
+.chip svg {
+  position: absolute;
+  right: 12px;
+  transform: rotate(90deg);
+  pointer-events: none;
+}
+.chip select {
+  appearance: none;
+  height: 100%;
+  padding: 0 34px 0 14px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.chip select:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+.chipActive {
+  background: var(--acc);
+  border-color: var(--acc);
+  color: var(--onAcc);
 }
 .empty {
   color: var(--label2);

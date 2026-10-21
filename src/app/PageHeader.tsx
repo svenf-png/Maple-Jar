@@ -8,7 +8,7 @@ export function PageHeader({ title, showMeta }: { title: string; showMeta: boole
   const { household } = useReadySession();
   const names = household.members.map((m) => m.displayName);
   const date = new Intl.DateTimeFormat(getLocale(), {
-    weekday: 'long',
+    weekday: 'short',
     day: 'numeric',
     month: 'long',
   }).format(new Date());

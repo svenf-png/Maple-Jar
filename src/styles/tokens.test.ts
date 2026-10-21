@@ -42,6 +42,8 @@ const pairs: Array<[string, string]> = [
   ['label2', 'bg'],
   ['label2', 'card'],
   ['label2', 'fill'],
+  ['label2', 'warnTint'],
+  ['label', 'warnTint'],
   ['onAcc', 'acc'],
   ['warn', 'warnTint'],
   ['ok', 'okTint'],
@@ -57,6 +59,16 @@ describe.each([
   it.each(pairs)('%s auf %s ≥ 4,5:1', (fg, bg) => {
     const ratio = contrast(vars[fg] as string, vars[bg] as string);
     expect(ratio, `${fg}/${bg}`).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe.each([
+  ['hell', light],
+  ['dunkel (data-theme)', dark],
+  ['dunkel (Media-Query)', darkMedia],
+])('--label3 nur für Nicht-Text %s', (_name, vars) => {
+  it.each(['bg', 'card'])('≥ 3:1 auf %s (Linien, Rahmen, Symbole)', (bg) => {
+    expect(contrast(vars.label3 as string, vars[bg] as string)).toBeGreaterThanOrEqual(3);
   });
 });
 

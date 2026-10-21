@@ -59,3 +59,89 @@ li:last-child .row {
   font-size: 12px;
   color: var(--label2);
 }
+.notice {
+  background: var(--warnTint);
+  color: var(--warn);
+  border-radius: var(--r-list);
+  overflow: hidden;
+}
+.noticeBar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding-right: var(--s-3);
+}
+.noticeMain {
+  all: unset;
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 64px;
+  padding: var(--s-3) 0 var(--s-3) var(--s-4);
+  cursor: pointer;
+}
+.noticeMain:focus-visible,
+.bookAll:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: -2px;
+}
+.noticeMain svg {
+  flex: none;
+}
+.noticeText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.noticeText strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+.noticeSub {
+  font-size: 13px;
+  color: var(--label2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chev {
+  display: grid;
+  flex: none;
+  transition: transform 0.15s ease;
+}
+.chevOpen {
+  transform: rotate(90deg);
+}
+.bookAll {
+  all: unset;
+  box-sizing: border-box;
+  flex: none;
+  min-height: 44px;
+  padding: 0 var(--s-4);
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--r-button);
+  background: var(--card);
+  color: var(--label);
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.bookAll:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.notice .list {
+  background: var(--card);
+}
+@media (prefers-reduced-motion: reduce) {
+  .chev {
+    transition: none;
+  }
+}

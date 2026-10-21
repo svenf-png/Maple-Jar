@@ -1,9 +1,11 @@
 import { Link } from 'react-router';
 import { useSyncStatus } from '../data/sync/status-store';
 import { t } from '../i18n/t';
+import { CloudOkIcon } from '../icons/ui-icons';
 import { StatusPill } from '../ui';
+import styles from './SyncStatusPill.module.css';
 
-/** Sync-Status in der Seitenkopf-Pille: immer Icon plus Text, nie nur Farbe. */
+/** Sync-Status im Seitenkopf: Pille mit Icon und Text bei Abweichungen, sonst nur ein Icon-Button (44 × 44). */
 export function SyncStatusPill() {
   const status = useSyncStatus();
   switch (status.kind) {
@@ -20,6 +22,16 @@ export function SyncStatusPill() {
     case 'error':
       return <StatusPill variant="warn">{t('status.error')}</StatusPill>;
     case 'connected':
-      return <StatusPill variant="neutral">{t('status.connected')}</StatusPill>;
+      return (
+        <button
+          type="button"
+          className={styles.iconBtn}
+          aria-label={t('status.synced')}
+          title={t('status.synced')}
+          onClick={() => void import('../data/sync/runtime').then((r) => r.requestSync())}
+        >
+          <CloudOkIcon size={22} />
+        </button>
+      );
   }
 }

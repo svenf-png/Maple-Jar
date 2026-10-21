@@ -12,7 +12,7 @@ import type { KnownRate } from '../../domain/fx';
 import { type IncomeSplit, incomeSplit } from '../../domain/income-split';
 import { type Entry, monthOf } from '../../domain/model';
 import { formatApprox, formatMoney } from '../../i18n/format';
-import { getLocale, t } from '../../i18n/t';
+import { getLocale, type Locale, t } from '../../i18n/t';
 import { WarnIcon } from '../../icons/ui-icons';
 import { DonutChart } from './DonutChart';
 import { legendRows } from './donut-model';
@@ -139,4 +139,11 @@ export function IncomeLegend({ split }: { split: IncomeSplit }) {
       ) : null}
     </div>
   );
+}
+
+/** Gesamteinkommen des Monats für die Abschnittszeile „Anteil am Einkommen“ (leer ohne Einnahmen). */
+export function IncomeTotal({ split, locale }: { split: IncomeSplit; locale: Locale }) {
+  if (split.mode === 'noIncome') return null;
+  const text = formatMoney(split.incomeCadMinor, 'CAD', locale);
+  return <strong className="num">{split.approximate ? formatApprox(text) : text}</strong>;
 }

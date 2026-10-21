@@ -81,9 +81,8 @@ export function PlanningPage() {
 
   return (
     <>
-      <PageHeader title={t('plan.title')} showMeta={!desktop} />
-      <div className={styles.tabRow}>
-        <PlanTabs current="list" />
+      <div className={styles.top}>
+        <PageHeader title={t('plan.title')} showMeta={!desktop} />
         <button
           type="button"
           className={styles.newBtn}
@@ -93,6 +92,7 @@ export function PlanningPage() {
           {t('plan.new')}
         </button>
       </div>
+      <PlanTabs current="list" />
       <div className={styles.stack}>
         <section aria-labelledby="pl-goals">
           <div className={styles.sectionHead}>
