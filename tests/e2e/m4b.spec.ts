@@ -244,6 +244,11 @@ test.describe('M4 Teil B Mobil', () => {
     expect(tableBox).not.toBeNull();
     expect(panelBox).not.toBeNull();
     expect(panelBox?.y ?? 0).toBeGreaterThan(tableBox?.y ?? Number.POSITIVE_INFINITY);
+    // Die breite Tabelle scrollt in ihrem Bereich; die Seite selbst darf nicht seitlich scrollen.
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
     const results = await new AxeBuilder({ page }).analyze();
     expect(
       results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),

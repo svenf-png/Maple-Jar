@@ -1,4 +1,6 @@
 .wrap {
+  /* Hält die absolut positionierten Screenreader-Texte im Scrollbereich, sonst wird die Seite breiter. */
+  position: relative;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
