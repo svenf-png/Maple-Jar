@@ -1,22 +1,23 @@
-.top {
+.tabRow {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+  align-items: center;
   gap: var(--s-3);
 }
-.top > :first-child {
+.tabRow > nav {
   flex: 1;
+  min-width: 0;
 }
-.addBtn {
+.newBtn {
   appearance: none;
   border: 0;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--acc);
-  color: var(--onAcc);
-  display: grid;
-  place-items: center;
+  background: transparent;
+  color: var(--acc);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 var(--s-2);
   cursor: pointer;
   flex: none;
 }
@@ -160,10 +161,13 @@
 .statRow {
   display: flex;
   justify-content: space-between;
-  gap: var(--s-3);
+  gap: var(--s-1) var(--s-3);
   font-size: 14px;
   color: var(--label2);
   flex-wrap: wrap;
+}
+.nowrap {
+  white-space: nowrap;
 }
 .note {
   font-size: 14px;

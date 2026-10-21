@@ -31,7 +31,7 @@ export const planDe = {
   'conflict.title': 'Konflikt lösen',
 
   // planning (B1)
-  'plan.add': 'Hinzufügen',
+  'plan.new': 'Neu',
   'plan.add.title': 'Was möchtest du anlegen?',
   'plan.add.goal': 'Sparziel',
   'plan.add.fixed': 'Fixkosten',
@@ -56,6 +56,9 @@ export const planDe = {
   'goal.savedOf': '{saved} von {target}',
   'goal.percent': '{pct} % geschafft',
   'goal.needed': 'Nötig: {amount} / Monat',
+  'goal.statLine': '{pct} % · Ziel {date}',
+  'goal.neededShort': '{amount} / Monat nötig',
+  'goal.behind.chip': '{amount} hinter Plan',
   'goal.progress': 'Fortschritt {name}',
   'goal.behind.note': '{amount} hinter Plan. Mit {back} im {month} wieder im Plan.',
   'goal.behind.overdue': '{amount} hinter Plan. Das Zieldatum ist vorbei.',
@@ -161,7 +164,7 @@ export const planDe = {
   'donut.seg.budget': 'Budget-Ausgaben',
   'donut.seg.other': 'Andere Ausgaben',
   'donut.seg.saving': 'Sparen',
-  'donut.seg.free': 'Frei',
+  'donut.seg.free': 'Unverplant',
   'donut.part': '{label} {percent} %',
   'donut.pct': '{percent} %',
   'donut.aria.normal': 'Anteil am Einkommen von {total}: {parts}.',

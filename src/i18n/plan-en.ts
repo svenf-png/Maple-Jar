@@ -31,7 +31,7 @@ export const planEn: Record<PlanKey, string> = {
   'conflict.title': 'Resolve conflict',
 
   // planning (B1)
-  'plan.add': 'Add',
+  'plan.new': 'New',
   'plan.add.title': 'What would you like to add?',
   'plan.add.goal': 'Savings goal',
   'plan.add.fixed': 'Fixed costs',
@@ -56,6 +56,9 @@ export const planEn: Record<PlanKey, string> = {
   'goal.savedOf': '{saved} of {target}',
   'goal.percent': '{pct} % done',
   'goal.needed': 'Needed: {amount} / month',
+  'goal.statLine': '{pct} % · Goal {date}',
+  'goal.neededShort': '{amount} / month needed',
+  'goal.behind.chip': '{amount} behind plan',
   'goal.progress': 'Progress {name}',
   'goal.behind.note': '{amount} behind plan. With {back} in {month} you are back on plan.',
   'goal.behind.overdue': '{amount} behind plan. The target date has passed.',
@@ -160,7 +163,7 @@ export const planEn: Record<PlanKey, string> = {
   'donut.seg.budget': 'Budgeted spending',
   'donut.seg.other': 'Other spending',
   'donut.seg.saving': 'Saving',
-  'donut.seg.free': 'Free',
+  'donut.seg.free': 'Unallocated',
   'donut.part': '{label} {percent}%',
   'donut.pct': '{percent}%',
   'donut.aria.normal': 'Share of income of {total}: {parts}.',

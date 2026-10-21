@@ -84,6 +84,9 @@ describe.each([
       expect(contrast(seg(a), seg(b)), `${a}/${b}`).toBeGreaterThanOrEqual(1.2);
     }
   });
+  it('Sparen hebt sich von Budget-Ausgaben ab (≥ 2:1, auch in der Helligkeit)', () => {
+    expect(contrast(seg('seg-saving'), seg('seg-budget'))).toBeGreaterThanOrEqual(2);
+  });
   it('Überlauf ist von allen Segmenten unterscheidbar und nutzt nie --acc', () => {
     for (const n of segs) expect(seg('seg-overflow')).not.toBe(seg(n));
     for (const n of [...segs, 'seg-free', 'seg-overflow']) expect(vars[n]).not.toBe('var(--acc)');

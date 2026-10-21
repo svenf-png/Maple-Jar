@@ -12,9 +12,8 @@ import { useReadySession } from '../../data/use-session';
 import { activeGoals, planDeviation, savedByGoal } from '../../domain/goals';
 import type { FixedCost, Income } from '../../domain/model';
 import { toCadMinor } from '../../domain/money';
-import { formatApprox, formatDay, formatMoney } from '../../i18n/format';
+import { formatApprox, formatMoney } from '../../i18n/format';
 import { getLocale, t, useLang } from '../../i18n/t';
-import { PlusIcon } from '../../icons/ui-icons';
 import { useTodayRate } from '../../platform/use-fx';
 import { useMedia } from '../../platform/use-media';
 import { Button, Card, CategoryTile, EmptyState } from '../../ui';
@@ -22,7 +21,7 @@ import { ConflictBadge } from '../conflict/ConflictBadge';
 import { BottomSheet } from '../shared/BottomSheet';
 import { memberName, todayIso } from '../shared/helpers';
 import { amountWithOriginal, dueLabel, perMonthLabel, repeatLabel } from '../shared/plan-format';
-import { GoalStats } from './GoalParts';
+import { GoalCardBody } from './GoalParts';
 import styles from './PlanningPage.module.css';
 import { PlanTabs } from './PlanTabs';
 import { monthlyCadTotal, nextOccurrence } from './plan-helpers';
@@ -82,18 +81,18 @@ export function PlanningPage() {
 
   return (
     <>
-      <div className={styles.top}>
-        <PageHeader title={t('plan.title')} showMeta={!desktop} />
+      <PageHeader title={t('plan.title')} showMeta={!desktop} />
+      <div className={styles.tabRow}>
+        <PlanTabs current="list" />
         <button
           type="button"
-          className={styles.addBtn}
-          aria-label={t('plan.add')}
+          className={styles.newBtn}
+          aria-haspopup="dialog"
           onClick={() => setAdding(true)}
         >
-          <PlusIcon size={24} />
+          {t('plan.new')}
         </button>
       </div>
-      <PlanTabs current="list" />
       <div className={styles.stack}>
         <section aria-labelledby="pl-goals">
           <div className={styles.sectionHead}>
@@ -122,28 +121,7 @@ export function PlanningPage() {
                   <li key={g.id}>
                     <Card radius="list">
                       <Link to={`/ziel/${g.id}`} className={styles.goalLink}>
-                        <span className={styles.goalHead}>
-                          <CategoryTile icon={g.icon} color={g.color} size={44} />
-                          <span className={styles.goalText}>
-                            <span className={styles.rowTitle}>{g.name}</span>
-                            <span className={styles.rowSub}>
-                              {t('goal.until', {
-                                date: formatDay(g.targetDate, locale, {
-                                  day: 'numeric',
-                                  month: 'short',
-                                  year: 'numeric',
-                                }),
-                              })}
-                            </span>
-                          </span>
-                          <span className={`${styles.amount} num`}>
-                            {t('goal.savedOf', {
-                              saved: formatMoney(s, g.currency, locale),
-                              target: formatMoney(g.targetMinor, g.currency, locale),
-                            })}
-                          </span>
-                        </span>
-                        <GoalStats goal={g} savedMinor={s} dev={dev} today={today} />
+                        <GoalCardBody goal={g} savedMinor={s} dev={dev} today={today} />
                       </Link>
                       {g.conflict ? (
                         <div className={styles.badgeWrap}>
