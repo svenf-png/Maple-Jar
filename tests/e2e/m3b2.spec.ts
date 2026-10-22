@@ -2,7 +2,14 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 import { todayIso } from '../../src/data/today';
 import { addDays } from '../../src/domain/schedule';
-import { connectE2e, go, historyItems, setupHousehold, waitForAnimations } from './helpers';
+import {
+  connectE2e,
+  go,
+  historyItems,
+  setupHousehold,
+  waitForAnimations,
+  waitForSheetSettled,
+} from './helpers';
 
 // Testdaten (Einnahmen, Fixkosten, Sparziele) entstehen über `window.__e2e` (src/data/e2e-seed.ts, nur im E2E-Build),
 // solange die Formulare nicht Teil dieses Zweigs sind. Alles fiktiv.
@@ -218,10 +225,9 @@ for (const scheme of ['light', 'dark'] as const) {
       await page.getByRole('button', { name: /Fixkosten.*offen/ }).click(); // Liste der offenen Fixkosten
       await scan();
       await page.getByRole('button', { name: /^Als bezahlt buchen: Streaming-Abo B/ }).click();
-      await page.waitForTimeout(500); // Einblend-Animation des Blatts abwarten (axe misst sonst Zwischenfarben)
-      await expect(
-        page.getByRole('dialog').getByRole('button', { name: 'Als bezahlt buchen' }),
-      ).toBeVisible();
+      const dialog = page.getByRole('dialog');
+      await expect(dialog.getByRole('button', { name: 'Als bezahlt buchen' })).toBeVisible();
+      await waitForSheetSettled(dialog); // Endzustand des Blatts abwarten (axe misst sonst Zwischenfarben)
       await scan();
     });
   });

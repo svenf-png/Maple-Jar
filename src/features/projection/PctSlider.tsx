@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { PCT_MAX, PCT_MIN, PCT_STEP } from '../../domain/scenario';
 import { getLocale } from '../../i18n/t';
 import { CategoryTile } from '../../ui';
@@ -29,12 +29,15 @@ export function PctSlider({ label, value, onCommit, hint, tileIcon, tileColor }:
     latest.current = { value, onCommit };
   });
 
+  // Layout-Effekte laufen synchron im Commit: Listener und Übernahme von `value` stehen,
+  // bevor eine (z. B. automatisierte oder sehr schnelle) Eingabe eintreffen kann. Passive
+  // Effekte liefen erst nach dem Zeichnen und ließen dafür eine Lücke.
   // Der Entwurf folgt dem gespeicherten Wert, solange nicht gezogen wird.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!dragging.current) setDraft(value);
   }, [value]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     const onNativeChange = () => {

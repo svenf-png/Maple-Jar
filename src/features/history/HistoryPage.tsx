@@ -2,6 +2,7 @@ import { lazy, type ReactNode, Suspense, useMemo, useState } from 'react';
 import { PageHeader } from '../../app/PageHeader';
 import { deleteEntry, restoreEntry } from '../../data/actions';
 import { db } from '../../data/db';
+import { usePendingRows } from '../../data/pending';
 import { useCategories, useEntries } from '../../data/repos';
 import { useReadySession } from '../../data/use-session';
 import { filterEntries, groupByDay, type Period } from '../../domain/history';
@@ -38,6 +39,7 @@ export function HistoryPage() {
   const toast = useToast();
   const desktop = useMedia('(min-width: 1024px)');
   const { household } = useReadySession();
+  const pendingRows = usePendingRows();
   const categories = useCategories();
   const entries = useEntries();
   const [tab, setTab] = useState<Tab>('entries');
@@ -173,6 +175,7 @@ export function HistoryPage() {
                           entry={e}
                           category={byId.get(e.categoryId)}
                           members={household.members}
+                          pending={pendingRows.has(`entry:${e.id}`)}
                         />
                       </SwipeRow>
                     ))}

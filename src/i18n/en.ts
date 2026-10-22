@@ -20,7 +20,9 @@ export const en: Record<MessageKey, string> = {
   'status.offline': 'Offline',
   'status.pending': '{count} waiting to sync',
   'status.reauth': 'Sign in again',
-  'status.error': 'Sync problem',
+  'status.errorRetry': 'Sync problem · Try again',
+  'status.offlinePending': 'Offline · {count} waiting to sync',
+  'status.syncing': 'Syncing …',
   'status.member': 'Member {name}',
 
   'connect.subtitle': 'Your shared household budget.',
@@ -180,6 +182,8 @@ export const en: Record<MessageKey, string> = {
   'capture.save': 'Save',
   'capture.saveChanges': 'Save changes',
   'capture.saved': 'Saved',
+  'capture.savedOffline':
+    'Saved on this device. It will sync automatically once you are back online.',
   'capture.suggestion': 'Suggested from {count} earlier purchases',
   'capture.suggestion.one': 'Suggested from 1 earlier purchase',
   'capture.suggestions': 'Suggestions',

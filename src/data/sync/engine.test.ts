@@ -19,15 +19,29 @@ describe('reduceSync / statusOf', () => {
   it('offline hat Vorrang vor ausstehend, Anmeldung erneuern vor offline', () => {
     let s = reduceSync(base, { type: 'pending', count: 2 });
     s = reduceSync(s, { type: 'online', online: false });
-    expect(statusOf(s)).toEqual({ kind: 'offline' });
+    expect(statusOf(s)).toEqual({ kind: 'offline', pending: 2 });
     s = reduceSync(s, { type: 'failure', problem: 'auth' });
     expect(statusOf(s)).toEqual({ kind: 'reauth' });
   });
 
-  it('Netzfehler zeigt Offline, andere Fehler zeigen Sync gestört (ohne ausstehende)', () => {
+  it('Netzfehler ohne offene Änderungen zeigt offline mit null wartenden', () => {
     expect(statusOf(reduceSync(base, { type: 'failure', problem: 'network' }))).toEqual({
       kind: 'offline',
+      pending: 0,
     });
+  });
+
+  it('Fehler schlägt ausstehend, Anmeldung erneuern schlägt Fehler', () => {
+    let s = reduceSync(reduceSync(base, { type: 'pending', count: 3 }), {
+      type: 'failure',
+      problem: 'server',
+    });
+    expect(statusOf(s)).toEqual({ kind: 'error' });
+    s = reduceSync(s, { type: 'failure', problem: 'auth' });
+    expect(statusOf(s)).toEqual({ kind: 'reauth' });
+  });
+
+  it('andere Fehler zeigen Sync gestört (ohne ausstehende)', () => {
     expect(statusOf(reduceSync(base, { type: 'failure', problem: 'server' }))).toEqual({
       kind: 'error',
     });

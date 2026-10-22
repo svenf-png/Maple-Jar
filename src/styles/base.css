@@ -8,6 +8,15 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Fokussierte und angesprungene Elemente dürfen nicht hinter der fixierten Tabbar landen (WCAG 2.4.11).
+   Höhe der Tabbar: 88 px inkl. Safe-Area-Padding (border-box, siehe Tabbar.module.css), daher kein
+   env(safe-area-inset-bottom) zusätzlich. Ab dem Desktop-Breakpoint (1024 px) gibt es sie nicht. */
+@media (max-width: 1023.98px) {
+  html {
+    scroll-padding-bottom: calc(88px + var(--s-2));
+  }
+}
+
 body {
   margin: 0;
   background: var(--bg);
@@ -50,6 +59,12 @@ p {
 :focus-visible {
   outline: 2px solid var(--acc);
   outline-offset: 2px;
+}
+
+/* nur Programmfokus nach Seitenwechsel, kein Bedienelement */
+h1[tabindex="-1"]:focus,
+main[tabindex="-1"]:focus {
+  outline: none;
 }
 
 .type-large-title {

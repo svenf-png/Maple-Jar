@@ -1,28 +1,54 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import { useSyncStatus } from '../data/sync/status-store';
-import { t } from '../i18n/t';
-import { CloudOkIcon } from '../icons/ui-icons';
+import { retrySync } from '../data/sync/control';
+import { useSyncState, useSyncStatus } from '../data/sync/status-store';
+import { t, useLang } from '../i18n/t';
+import { CloudOkIcon, CloudUpIcon } from '../icons/ui-icons';
 import { StatusPill } from '../ui';
 import styles from './SyncStatusPill.module.css';
+import { WifiOffIcon } from './status-icons';
 
-/** Sync-Status im Seitenkopf: Pille mit Icon und Text bei Abweichungen, sonst nur ein Icon-Button (44 × 44). */
+/** Sync-Status: immer Symbol plus Text, nie nur Farbe (verbunden: Icon-Button 44 × 44 mit Beschriftung). Die Live-Region steht vor dem Inhalt. */
 export function SyncStatusPill() {
+  useLang();
   const status = useSyncStatus();
+  const { running } = useSyncState();
+  let content: ReactNode;
   switch (status.kind) {
     case 'reauth':
-      return (
-        <Link to="/anmelden" aria-label={t('status.reauth')}>
+      content = (
+        <Link to="/anmelden" className={styles.hit}>
           <StatusPill variant="warn">{t('status.reauth')}</StatusPill>
         </Link>
       );
+      break;
     case 'offline':
-      return <StatusPill variant="warn">{t('status.offline')}</StatusPill>;
-    case 'pending':
-      return <StatusPill variant="info">{t('status.pending', { count: status.count })}</StatusPill>;
+      content = (
+        <StatusPill variant="neutral" icon={WifiOffIcon}>
+          {status.pending > 0
+            ? t('status.offlinePending', { count: status.pending })
+            : t('status.offline')}
+        </StatusPill>
+      );
+      break;
     case 'error':
-      return <StatusPill variant="warn">{t('status.error')}</StatusPill>;
+      content = (
+        <button type="button" className={styles.hit} onClick={() => retrySync()} disabled={running}>
+          <StatusPill variant="warn">
+            {t(running ? 'status.syncing' : 'status.errorRetry')}
+          </StatusPill>
+        </button>
+      );
+      break;
+    case 'pending':
+      content = (
+        <StatusPill variant="info" icon={CloudUpIcon}>
+          {t('status.pending', { count: status.count })}
+        </StatusPill>
+      );
+      break;
     case 'connected':
-      return (
+      content = (
         <button
           type="button"
           className={styles.iconBtn}
@@ -33,5 +59,11 @@ export function SyncStatusPill() {
           <CloudOkIcon size={22} />
         </button>
       );
+      break;
   }
+  return (
+    <span role="status" className={styles.live}>
+      {content}
+    </span>
+  );
 }

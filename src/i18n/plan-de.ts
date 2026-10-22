@@ -4,6 +4,7 @@
 export const planDe = {
   // shared (Foundation)
   'plan.title': 'Planung',
+  'row.pending': 'Wartet auf Sync',
   'plan.stub': 'In Arbeit',
   'plan.perMonth': '≈ {amount} / Monat',
   'plan.repeat.once': 'Einmalig',
@@ -303,6 +304,32 @@ export const planDe = {
   'scen.adopt.text': 'Die Regler dieser Kategorien stehen danach wieder auf 0 %.',
   'scen.adopt.confirm': 'Übernehmen',
   'scen.adopt.done': 'Budgets ab {month} übernommen',
+  // export (M5)
+  'settings.exportCsv': 'Einträge exportieren (CSV)',
+  'settings.exportCsv.action': 'Exportieren',
+  'csv.date': 'Datum',
+  'csv.merchant': 'Händler',
+  'csv.note': 'Notiz',
+  'csv.category': 'Kategorie',
+  'csv.amount': 'Betrag',
+  'csv.currency': 'Währung',
+  'csv.amountCad': 'Betrag CAD',
+  'csv.paidBy': 'Bezahlt von',
+  'csv.source': 'Quelle',
+  'csv.source.manual': 'Manuell',
+  'csv.source.fixed': 'Fixkosten',
+  // states (M5)
+  'conflict.banner.label': 'Konflikte',
+  'conflict.banner.one': 'Ein Konflikt wartet auf dich',
+  'conflict.banner.many': '{count} Konflikte warten auf dich',
+  'conflict.banner.hint':
+    'Ihr habt dasselbe auf zwei Geräten geändert. Entscheide, welche Version bleibt.',
+  // install (M5)
+  'install.title': 'Auf dem Home-Bildschirm nutzen',
+  'install.before': 'Tippe in Safari auf',
+  'install.after': 'und wähle „Zum Home-Bildschirm“.',
+  'install.shareIcon': 'Teilen-Symbol',
+  'install.close': 'Hinweis schließen',
 } as const;
 
 export type PlanKey = keyof typeof planDe;

@@ -16,6 +16,11 @@ export function afterReauth(): void {
   void load().then((r) => r.requestSync());
 }
 
+/** Erneut synchronisieren (Knopf „Erneut versuchen“). */
+export function retrySync(): void {
+  void load().then((r) => r.requestSync());
+}
+
 /** Startet bzw. stoppt den Sync passend zur Sitzung (einmal aus `main.tsx` aufrufen). */
 export function initSyncRuntime(): void {
   onDisconnect(async () => {

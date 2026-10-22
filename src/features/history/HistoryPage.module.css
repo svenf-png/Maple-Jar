@@ -62,7 +62,9 @@
 }
 .chip select {
   appearance: none;
-  height: 100%;
+  /* Der Rahmen des Chips liegt innerhalb der 44 px; das Feld gleicht ihn aus, damit das Touch-Ziel 44 px hoch ist. */
+  margin: -1px;
+  height: calc(100% + 2px);
   padding: 0 34px 0 14px;
   border: 0;
   border-radius: inherit;

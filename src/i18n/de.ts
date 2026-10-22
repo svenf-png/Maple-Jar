@@ -18,7 +18,9 @@ export const de = {
   'status.offline': 'Offline',
   'status.pending': '{count} warten auf Sync',
   'status.reauth': 'Anmeldung erneuern',
-  'status.error': 'Sync gestört',
+  'status.errorRetry': 'Sync gestört · Erneut versuchen',
+  'status.offlinePending': 'Offline · {count} warten auf Sync',
+  'status.syncing': 'Synchronisiere …',
   'status.member': 'Mitglied {name}',
 
   'connect.subtitle': 'Euer gemeinsames Haushaltsbuch.',
@@ -181,6 +183,8 @@ export const de = {
   'capture.save': 'Speichern',
   'capture.saveChanges': 'Änderungen speichern',
   'capture.saved': 'Gespeichert',
+  'capture.savedOffline':
+    'Auf dem Gerät gespeichert. Wird automatisch übertragen, sobald ihr wieder online seid.',
   'capture.suggestion': 'Vorschlag aus {count} früheren Einkäufen',
   'capture.suggestion.one': 'Vorschlag aus 1 früheren Einkauf',
   'capture.suggestions': 'Vorschläge',

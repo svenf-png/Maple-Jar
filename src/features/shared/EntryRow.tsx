@@ -3,7 +3,7 @@ import type { HouseholdMember } from '../../data/household';
 import { type Category, type Entry, entryCad } from '../../domain/model';
 import { formatMoney } from '../../i18n/format';
 import { getLocale, t } from '../../i18n/t';
-import { CalendarIcon, InfoIcon } from '../../icons/ui-icons';
+import { CalendarIcon, CloudUpIcon, InfoIcon } from '../../icons/ui-icons';
 import { CategoryTile } from '../../ui';
 import styles from './EntryRow.module.css';
 import { memberName } from './helpers';
@@ -12,10 +12,12 @@ interface Props {
   entry: Entry;
   category: Category | undefined;
   members: readonly HouseholdMember[];
+  /** Änderung wartet noch in der Outbox (Anzeige „Wartet auf Sync“). */
+  pending?: boolean;
 }
 
 /** Zeile für Übersicht und Verlauf: Hauptbetrag in CAD, Originalbetrag in EUR darunter. */
-export function EntryRow({ entry, category, members }: Props) {
+export function EntryRow({ entry, category, members, pending = false }: Props) {
   const locale = getLocale();
   const fixed = entry.source === 'fixed';
   // Die Plan-Texte laden die Routen (Übersicht, Verlauf) vor dem Rendern; fehlen sie, entfällt die Marke.
@@ -28,7 +30,14 @@ export function EntryRow({ entry, category, members }: Props) {
       <span className={styles.text}>
         <span className={styles.title}>{title}</span>
         <span className={styles.sub}>
-          {sub}
+          {pending ? (
+            <span className={styles.pending}>
+              <CloudUpIcon size={14} />
+              {t('row.pending')}
+            </span>
+          ) : (
+            sub
+          )}
           {fixed && fixedLabel !== 'fixed.badge' ? (
             <span className={styles.fixed}>
               <CalendarIcon size={14} />

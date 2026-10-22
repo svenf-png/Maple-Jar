@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { PageHeader } from '../../app/PageHeader';
+import { usePendingRows } from '../../data/pending';
 import { useBudgets, useCategories, useEntries, useFixedCosts } from '../../data/repos';
 import { useReadySession } from '../../data/use-session';
 import { monthSummary } from '../../domain/budget';
@@ -13,10 +14,13 @@ import { Card, ProgressBar } from '../../ui';
 import { BudgetRowView } from '../shared/BudgetRowView';
 import { EntryRow } from '../shared/EntryRow';
 import { todayIso } from '../shared/helpers';
+import { CoachMark } from './CoachMark';
+import { ConflictBanner } from './ConflictBanner';
 import { DueNext } from './DueNext';
 import { hasSplitData } from './donut-model';
 import { GoalCards } from './GoalCards';
 import { IncomeDonutChart, IncomeLegend, IncomeTotal, useIncomeSplit } from './IncomeDonut';
+import { InstallHint } from './InstallHint';
 import styles from './OverviewPage.module.css';
 
 /** Hero-Betrag: Zahl und Währungssymbol als getrennte Spans in einem nowrap-Container. */
@@ -45,6 +49,7 @@ export function OverviewPage() {
   const locale = getLocale();
   const desktop = useMedia('(min-width: 1024px)');
   const { household } = useReadySession();
+  const pendingRows = usePendingRows();
   const categories = useCategories();
   const budgets = useBudgets();
   const entries = useEntries();
@@ -80,6 +85,8 @@ export function OverviewPage() {
     <>
       <PageHeader title={formatMonth(month, locale)} showMeta={!desktop} />
       <div className={styles.stack}>
+        <ConflictBanner />
+        <InstallHint />
         {onboarding ? (
           <Card className={styles.card}>
             <section className={styles.welcome} aria-labelledby="welcome-title">
@@ -224,6 +231,7 @@ export function OverviewPage() {
                     entry={e}
                     category={byId.get(e.categoryId)}
                     members={household.members}
+                    pending={pendingRows.has(`entry:${e.id}`)}
                   />
                 ))}
               </Card>
@@ -238,6 +246,7 @@ export function OverviewPage() {
           </section>
         </div>
       </div>
+      {onboarding && !desktop ? <CoachMark /> : null}
     </>
   );
 }

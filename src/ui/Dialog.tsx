@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useId, useRef } from 'react';
 import styles from './Dialog.module.css';
+import { useRestoreFocus } from './use-restore-focus';
 
 interface Props {
   open: boolean;
@@ -12,6 +13,7 @@ interface Props {
 export function Dialog({ open, title, onClose, children }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  useRestoreFocus(open, ref);
   useEffect(() => {
     const d = ref.current;
     if (!d) return;

@@ -4,6 +4,7 @@ import type { PlanKey } from './plan-de';
 export const planEn: Record<PlanKey, string> = {
   // shared (Foundation)
   'plan.title': 'Planning',
+  'row.pending': 'Waiting to sync',
   'plan.stub': 'Work in progress',
   'plan.perMonth': '≈ {amount} / month',
   'plan.repeat.once': 'One-time',
@@ -302,4 +303,30 @@ export const planEn: Record<PlanKey, string> = {
   'scen.adopt.text': 'The sliders of these categories return to 0 % afterwards.',
   'scen.adopt.confirm': 'Adopt',
   'scen.adopt.done': 'Budgets adopted from {month}',
+  // export (M5)
+  'settings.exportCsv': 'Export entries (CSV)',
+  'settings.exportCsv.action': 'Export',
+  'csv.date': 'Date',
+  'csv.merchant': 'Merchant',
+  'csv.note': 'Note',
+  'csv.category': 'Category',
+  'csv.amount': 'Amount',
+  'csv.currency': 'Currency',
+  'csv.amountCad': 'Amount CAD',
+  'csv.paidBy': 'Paid by',
+  'csv.source': 'Source',
+  'csv.source.manual': 'Manual',
+  'csv.source.fixed': 'Fixed costs',
+  // states (M5)
+  'conflict.banner.label': 'Conflicts',
+  'conflict.banner.one': 'One conflict needs your decision',
+  'conflict.banner.many': '{count} conflicts need your decision',
+  'conflict.banner.hint':
+    'You both changed the same thing on two devices. Decide which version stays.',
+  // install (M5)
+  'install.title': 'Use it from your Home Screen',
+  'install.before': 'In Safari, tap',
+  'install.after': 'and choose “Add to Home Screen”.',
+  'install.shareIcon': 'Share icon',
+  'install.close': 'Dismiss hint',
 };

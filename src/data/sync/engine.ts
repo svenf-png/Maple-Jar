@@ -53,17 +53,18 @@ export function reduceSync(state: SyncState, action: SyncAction): SyncState {
 
 export type SyncStatus =
   | { kind: 'reauth' }
-  | { kind: 'offline' }
-  | { kind: 'pending'; count: number }
+  | { kind: 'offline'; pending: number }
   | { kind: 'error' }
+  | { kind: 'pending'; count: number }
   | { kind: 'connected' };
 
-/** Anzeige-Status. Reihenfolge: Anmeldung > Offline > ausstehend > Fehler > verbunden. */
+/** Anzeige-Status. Reihenfolge: Anmeldung > Offline > Fehler > ausstehend > verbunden. */
 export function statusOf(state: SyncState): SyncStatus {
   if (state.problem === 'auth') return { kind: 'reauth' };
-  if (!state.online || state.problem === 'network') return { kind: 'offline' };
-  if (state.pending > 0) return { kind: 'pending', count: state.pending };
+  if (!state.online || state.problem === 'network')
+    return { kind: 'offline', pending: state.pending };
   if (state.problem) return { kind: 'error' };
+  if (state.pending > 0) return { kind: 'pending', count: state.pending };
   return { kind: 'connected' };
 }
 
