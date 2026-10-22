@@ -26,6 +26,11 @@
 .table tbody tr:last-child td {
   border-bottom: 0;
 }
+.table th:first-child,
+.table td:first-child {
+  /* Abstand zum Kartenrand, damit die erste Spalte nicht am Rand klebt. */
+  padding-left: var(--s-3);
+}
 .right {
   text-align: right;
   white-space: nowrap;
