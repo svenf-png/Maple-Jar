@@ -31,6 +31,9 @@
   /* Abstand zum Kartenrand, damit die erste Spalte nicht am Rand klebt. */
   padding-left: var(--s-3);
 }
+.dateCell {
+  white-space: nowrap;
+}
 .right {
   text-align: right;
   white-space: nowrap;

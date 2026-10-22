@@ -213,7 +213,7 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                     className={styles.editing}
                     onKeyDown={(ev) => onEditRowKeyDown(ev, e.id)}
                   >
-                    <td>{dayText}</td>
+                    <td className={styles.dateCell}>{dayText}</td>
                     <td>
                       <input
                         ref={merchantRef}
@@ -310,7 +310,7 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                   className={styles.row}
                   onFocus={() => setActiveId(e.id)}
                 >
-                  <td>{dayText}</td>
+                  <td className={styles.dateCell}>{dayText}</td>
                   <td>
                     <Link to={`/eintrag/${e.id}`} className={styles.link}>
                       <span className={styles.title}>
