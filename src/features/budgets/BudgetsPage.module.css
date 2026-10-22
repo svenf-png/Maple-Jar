@@ -59,6 +59,23 @@
   background: transparent;
   cursor: pointer;
 }
+/* Der Overlay-Button liegt über dem Inhalt; eine Hintergrundfläche dort würde den Text verdecken. Die Zeile (.item) färbt sich deshalb mit, wenn der Overlay gehovert oder gedrückt wird. */
+.item {
+  transition: background-color 0.12s;
+}
+@media (hover: hover) {
+  .item:hover {
+    background: var(--rowHover);
+  }
+}
+.item:active {
+  background: var(--fillActive);
+}
+@media (prefers-reduced-motion: reduce) {
+  .item {
+    transition: none;
+  }
+}
 .noLimit {
   display: flex;
   align-items: center;

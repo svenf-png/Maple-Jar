@@ -9,7 +9,7 @@ import { parseDecimalToMinor } from '../../domain/money';
 import { formatDay, formatMoney } from '../../i18n/format';
 import { getLocale, t, useLang } from '../../i18n/t';
 import { CalendarIcon, CheckIcon, EditIcon, TrashIcon, WarnIcon } from '../../icons/ui-icons';
-import { Card, CategoryTile, useToast } from '../../ui';
+import { Card, CategoryTile, SelectField, useToast } from '../../ui';
 import { ConflictBadge } from '../conflict/ConflictBadge';
 import { memberName, minorToInput } from '../shared/helpers';
 import styles from './HistoryTable.module.css';
@@ -191,8 +191,8 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
               <th scope="col" className={styles.right}>
                 {t('history.table.original')}
               </th>
-              <th scope="col" className={styles.srOnly}>
-                {t('history.table.actions')}
+              <th scope="col">
+                <span className={styles.srOnly}>{t('history.table.actions')}</span>
               </th>
             </tr>
           </thead>
@@ -213,7 +213,7 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                     className={styles.editing}
                     onKeyDown={(ev) => onEditRowKeyDown(ev, e.id)}
                   >
-                    <td>{dayText}</td>
+                    <td className={styles.dateCell}>{dayText}</td>
                     <td>
                       <input
                         ref={merchantRef}
@@ -226,9 +226,9 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                       />
                       {e.conflict ? <ConflictBadge entity="entry" rowId={e.id} /> : null}
                     </td>
-                    <td>
-                      <select
-                        className={styles.select}
+                    <td className={styles.editCategory}>
+                      <SelectField
+                        variant="edit"
                         aria-label={t('history.table.category')}
                         value={draft.categoryId}
                         onChange={(ev) => setDraft({ ...draft, categoryId: ev.target.value })}
@@ -238,7 +238,7 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                             {c.name}
                           </option>
                         ))}
-                      </select>
+                      </SelectField>
                     </td>
                     <td className={styles.person}>{memberName(members, e.paidBy)}</td>
                     <td className={styles.right}>
@@ -276,7 +276,7 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                     <td className={`${styles.original} ${styles.right} num`}>
                       {e.currency === 'EUR' ? formatMoney(e.amountMinor, 'EUR', locale) : ''}
                     </td>
-                    <td>
+                    <td className={styles.editActions}>
                       <div className={styles.actions}>
                         <button
                           type="button"
@@ -310,7 +310,7 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                   className={styles.row}
                   onFocus={() => setActiveId(e.id)}
                 >
-                  <td>{dayText}</td>
+                  <td className={styles.dateCell}>{dayText}</td>
                   <td>
                     <Link to={`/eintrag/${e.id}`} className={styles.link}>
                       <span className={styles.title}>

@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import { connectE2e, go, setupHousehold, waitForAnimations } from './helpers';
+import { connectE2e, go, settleForAxe, setupHousehold } from './helpers';
 
 for (const scheme of ['light', 'dark'] as const) {
   test.describe(`M3 Teil B Fundament (${scheme})`, () => {
@@ -12,7 +12,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await go(page, '#/planung');
       await expect(page.getByRole('heading', { level: 1, name: 'Planung' })).toBeVisible();
       await expect(page.getByText('Noch kein Sparziel')).toBeVisible();
-      await waitForAnimations(page);
+      await settleForAxe(page);
       const results = await new AxeBuilder({ page }).analyze();
       expect(
         results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),

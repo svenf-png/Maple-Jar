@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { buildSetupLink } from '../../src/data/setup-link';
 import { ANON_KEY, PERSON_A, PROJECT_URL } from './fixtures/household';
-import { overviewHeading, setupHousehold } from './helpers';
+import { overviewHeading, settleForAxe, setupHousehold } from './helpers';
 
 const link = buildSetupLink('https://app.example/', { projectUrl: PROJECT_URL, anonKey: ANON_KEY });
 const fragment = link.slice(link.indexOf('#'));
@@ -63,6 +63,7 @@ test('Einstellungen: Einrichtungslink erzeugen, Bildschirm ohne axe-Verstöße',
   await page.getByRole('button', { name: 'Link erstellen' }).click();
   const field = page.getByLabel('Weiteres Gerät einrichten');
   await expect(field).toHaveValue(/#\/verbinden\?u=.*&k=/);
+  await settleForAxe(page);
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.map((v) => v.id)).toEqual([]);
 });

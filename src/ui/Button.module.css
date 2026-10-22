@@ -7,7 +7,10 @@
   justify-content: center;
   gap: var(--s-2);
   font-weight: 600;
-  transition: opacity 0.15s;
+  transition:
+    background-color 0.12s,
+    transform 0.12s,
+    opacity 0.15s;
 }
 .button:disabled {
   opacity: 0.55;
@@ -32,6 +35,7 @@
 .text {
   min-height: 44px;
   padding: 0 var(--s-2);
+  border-radius: var(--r-field);
   background: none;
   color: var(--acc);
   font-size: 17px;
@@ -43,4 +47,37 @@
   border-radius: 50%;
   background: var(--acc);
   color: var(--onAcc);
+}
+@media (hover: hover) {
+  .primary:hover:not(:disabled),
+  .fab:hover:not(:disabled) {
+    background: var(--accHover);
+  }
+  .secondary:hover:not(:disabled) {
+    background: var(--fillHover);
+  }
+  .text:hover:not(:disabled) {
+    background: var(--accTintHover);
+  }
+}
+.primary:active:not(:disabled),
+.fab:active:not(:disabled) {
+  background: var(--accActive);
+  transform: scale(0.98);
+}
+.secondary:active:not(:disabled) {
+  background: var(--fillActive);
+  transform: scale(0.98);
+}
+.text:active:not(:disabled) {
+  background: var(--accTintActive);
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+  .button:active:not(:disabled) {
+    transform: none;
+  }
 }

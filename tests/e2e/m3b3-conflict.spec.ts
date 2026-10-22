@@ -7,8 +7,8 @@ import {
   fillConnect,
   go,
   overviewHeading,
+  settleForAxe,
   setupHousehold,
-  waitForAnimations,
   waitForSheetSettled,
 } from './helpers';
 
@@ -260,7 +260,7 @@ for (const scheme of ['light', 'dark'] as const) {
     await dialog.getByRole('radio', { name: /Version von Person B/ }).check();
     await animationsDone(d.a.page);
     await waitForSheetSettled(dialog);
-    await waitForAnimations(d.a.page);
+    await settleForAxe(d.a.page);
     const results = await new AxeBuilder({ page: d.a.page }).analyze();
     expect(
       results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
@@ -291,7 +291,7 @@ for (const scheme of ['light', 'dark'] as const) {
     await expect(dialog.getByText(/95,00/)).toBeVisible();
     await animationsDone(d.a.page);
     await waitForSheetSettled(dialog);
-    await waitForAnimations(d.a.page);
+    await settleForAxe(d.a.page);
     const results = await new AxeBuilder({ page: d.a.page }).analyze();
     expect(
       results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
@@ -312,7 +312,7 @@ for (const scheme of ['light', 'dark'] as const) {
     await expect(d.a.page.getByRole('region', { name: 'Konflikte' })).toBeVisible({
       timeout: 20_000,
     });
-    await waitForAnimations(d.a.page);
+    await settleForAxe(d.a.page);
     const results = await new AxeBuilder({ page: d.a.page }).analyze();
     expect(
       results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),

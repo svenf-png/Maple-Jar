@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 export interface IconProps {
   size?: number;
-  className?: string;
+  className?: string | undefined;
 }
 
 interface BaseProps extends IconProps {

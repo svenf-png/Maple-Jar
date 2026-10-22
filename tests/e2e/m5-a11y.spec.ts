@@ -278,6 +278,21 @@ test('Alle Hauptseiten: interaktive Ziele sind mindestens 44 px', async ({ page 
     await expect(page.getByRole('heading', { level: 1, name: 'Verlauf' })).toBeVisible();
     await expect(historyItem(page, /Supermarkt A/)).toBeVisible();
   });
+  // Desktop: die Bearbeiten-Zeile der Tabelle (SelectField `edit`, Betragsfeld, Speichern/Abbrechen).
+  if ((page.viewportSize()?.width ?? 0) >= 1024) {
+    await historyItem(page, /Supermarkt A/)
+      .getByRole('button', { name: 'Bearbeiten' })
+      .click();
+    // Der Filter „Kategorie“ oberhalb der Tabelle liegt außerhalb von tbody.
+    const editCategory = page.locator('tbody').getByRole('combobox', { name: 'Kategorie' });
+    await expect(editCategory).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Abbrechen' })).toBeEnabled();
+    await waitForAnimations(page);
+    const editRow = await smallTargets(page);
+    if (editRow.length) failures.push(`#/verlauf (Bearbeiten-Zeile): ${editRow.join(' | ')}`);
+    await page.getByRole('button', { name: 'Abbrechen' }).click();
+    await expect(editCategory).toHaveCount(0);
+  }
   const activityTab = page.getByRole('button', { name: 'Aktivität', exact: true });
   await activityTab.click();
   await expect(activityTab).toHaveAttribute('aria-pressed', 'true');
@@ -296,6 +311,15 @@ test('Alle Hauptseiten: interaktive Ziele sind mindestens 44 px', async ({ page 
       'page',
     );
     await expect(page.getByRole('slider', { name: /Lebensmittel/ })).toBeVisible();
+  });
+  // Formulare mit der Wiederholung als SelectField (`plain`).
+  await check('#/einnahme/neu', async () => {
+    await expect(page.getByRole('heading', { level: 1, name: 'Neue Einnahme' })).toBeVisible();
+    await expect(page.getByLabel('Wiederholung')).toBeVisible();
+  });
+  await check('#/fixkosten/neu', async () => {
+    await expect(page.getByRole('heading', { level: 1, name: 'Neue Fixkosten' })).toBeVisible();
+    await expect(page.getByLabel('Wiederholung')).toBeVisible();
   });
   await check('#/einstellungen', async () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Einstellungen' })).toBeVisible();

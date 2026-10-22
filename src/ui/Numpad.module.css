@@ -18,6 +18,25 @@
   cursor: pointer;
   color: var(--label);
 }
-.key:active {
-  background: var(--fill);
+.key {
+  transition:
+    background-color 0.12s,
+    transform 0.12s;
+}
+@media (hover: hover) {
+  .key:hover:not(:disabled) {
+    background: var(--fill2);
+  }
+}
+.key:active:not(:disabled) {
+  background: var(--fillActive);
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .key {
+    transition: none;
+  }
+  .key:active:not(:disabled) {
+    transform: none;
+  }
 }

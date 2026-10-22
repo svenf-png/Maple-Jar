@@ -17,8 +17,8 @@ import {
   fillConnect,
   go,
   overviewHeading,
+  settleForAxe,
   setupHousehold,
-  waitForAnimations,
 } from './helpers';
 
 test.use({ serviceWorkers: 'block', viewport: { width: 390, height: 844 } });
@@ -158,7 +158,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await go(page, '#/');
       await expect(page.getByText('Offline · 1 warten auf Sync', { exact: true })).toBeVisible();
       await expect(page.getByRole('link', { name: /Café B/ })).toBeVisible();
-      await waitForAnimations(page);
+      await settleForAxe(page);
       const results = await new AxeBuilder({ page }).analyze();
       expect(
         results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
@@ -174,7 +174,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(
         page.getByRole('button', { name: 'Sync gestört · Erneut versuchen' }),
       ).toBeVisible({ timeout: 20_000 });
-      await waitForAnimations(page);
+      await settleForAxe(page);
       const results = await new AxeBuilder({ page }).analyze();
       expect(
         results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
@@ -194,7 +194,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(
         page.getByRole('heading', { level: 1, name: 'Anmeldung erneuern' }),
       ).toBeVisible();
-      await waitForAnimations(page);
+      await settleForAxe(page);
       const results = await new AxeBuilder({ page }).analyze();
       expect(
         results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
@@ -254,7 +254,7 @@ for (const scheme of ['light', 'dark'] as const) {
         page.getByRole('note').filter({ hasText: 'Hier tippen, um eine Ausgabe zu erfassen' }),
       ).toBeVisible();
       await expect(page.getByText('Noch keine Einträge', { exact: true })).toBeVisible();
-      await waitForAnimations(page);
+      await settleForAxe(page);
       expect(await axeViolations(page)).toEqual([]);
     });
 
@@ -270,14 +270,14 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(near).toBeVisible();
       expect(await near.evaluate((el) => el.querySelector('svg') !== null)).toBe(true);
       await expect(page.getByText('85 % erreicht')).toBeVisible();
-      await waitForAnimations(page);
+      await settleForAxe(page);
       expect(await axeViolations(page)).toEqual([]);
 
       await captureEntry(page, { amount: '20', category: 'Lebensmittel' });
       await go(page, '#/');
       await expect(page.getByText('Über Budget', { exact: true })).toBeVisible();
       await expect(page.getByText(/Budget um .* überschritten/)).toBeVisible();
-      await waitForAnimations(page);
+      await settleForAxe(page);
       expect(await axeViolations(page)).toEqual([]);
     });
 
@@ -294,7 +294,7 @@ for (const scheme of ['light', 'dark'] as const) {
       const dialog = page.getByRole('dialog', { name: 'Sparziel A ist geschafft!' });
       await expect(dialog).toBeVisible();
       await expect(dialog.getByText('Sparziel erreicht', { exact: true })).toBeVisible();
-      await waitForAnimations(page);
+      await settleForAxe(page);
       expect(await axeViolations(page)).toEqual([]);
 
       await dialog.getByRole('button', { name: 'Abschließen' }).click();
