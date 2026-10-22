@@ -47,7 +47,7 @@ function mount(props: Partial<Parameters<typeof ConfirmDialog>[0]>) {
 describe('ConfirmDialog mit Warnung', () => {
   it('zeigt die Anzahl im Text und alle drei Aktionen', () => {
     const { host, button } = mount({});
-    expect(host.textContent).toContain('3 Einträge sind noch nicht synchronisiert');
+    expect(host.textContent).toContain('Noch nicht synchronisiert: 3');
     expect(button('Erst synchronisieren')).toBeTruthy();
     expect(button('Trotzdem abmelden und verwerfen')).toBeTruthy();
     expect(button('Abbrechen')).toBeTruthy();

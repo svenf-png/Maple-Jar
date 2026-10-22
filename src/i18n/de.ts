@@ -143,7 +143,7 @@ export const de = {
     'Zugangsdaten und alle lokalen Daten werden von diesem Gerät gelöscht. Die Daten im Supabase-Projekt bleiben erhalten.',
   'settings.logout.confirm': 'Abmelden',
   'settings.logout.pendingText':
-    'Achtung: {count} Einträge sind noch nicht synchronisiert und gehen beim Abmelden verloren.',
+    'Noch nicht synchronisiert: {count}. Beim Abmelden gehen diese Änderungen verloren.',
   'settings.logout.syncFirst': 'Erst synchronisieren',
   'settings.logout.discard': 'Trotzdem abmelden und verwerfen',
 
