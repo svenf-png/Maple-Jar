@@ -4,8 +4,6 @@ import { PageHeader } from '../../app/PageHeader';
 import { db } from '../../data/db';
 import { exportEntriesCsv, exportEventsJson } from '../../data/export';
 import { findMember } from '../../data/household';
-import { disconnect } from '../../data/session';
-import { retrySync } from '../../data/sync/control';
 import { todayIso } from '../../data/today';
 import { useLiveQuery } from '../../data/use-live-query';
 import { useReadySession } from '../../data/use-session';
@@ -17,7 +15,8 @@ import { usePersisted } from '../../platform/persist';
 import { readTheme, setTheme, type ThemePref } from '../../platform/theme';
 import { useTodayRate } from '../../platform/use-fx';
 import { useMedia } from '../../platform/use-media';
-import { Avatar, Button, Card, ConfirmDialog, ListRow, Segmented } from '../../ui';
+import { Avatar, Button, Card, ListRow, Segmented } from '../../ui';
+import { LogoutDialog, useLogoutTexts } from './LogoutDialog';
 import styles from './SettingsPage.module.css';
 import { SetupLinkCard } from './SetupLinkCard';
 
@@ -29,6 +28,8 @@ export function SettingsPage() {
   const fx = useTodayRate(household.settings.fxProvider);
   const [theme, setThemeState] = useState<ThemePref>(readTheme());
   const [confirm, setConfirm] = useState(false);
+  const logoutTexts = useLogoutTexts();
+  const [logoutError, setLogoutError] = useState(false);
   const me = findMember(household, userId);
   const other = household.members.find((m) => m.userId !== userId);
 
@@ -216,26 +217,20 @@ export function SettingsPage() {
         <Button variant="secondary" onClick={() => setConfirm(true)}>
           {t('settings.logout')}
         </Button>
+        {logoutError ? (
+          <p role="alert" className={styles.sub}>
+            {logoutTexts.error}
+          </p>
+        ) : null}
       </div>
-      <ConfirmDialog
+      <LogoutDialog
         open={confirm}
-        title={t('settings.logout.confirmTitle')}
-        text={
-          pending > 0
-            ? t('settings.logout.pendingText', { count: pending })
-            : t('settings.logout.confirmText')
-        }
-        confirmLabel={t(pending > 0 ? 'settings.logout.discard' : 'settings.logout.confirm')}
-        altLabel={pending > 0 ? t('settings.logout.syncFirst') : undefined}
-        onAlt={() => {
-          setConfirm(false);
-          retrySync();
+        pending={pending}
+        onOpenChange={(o) => {
+          setConfirm(o);
+          if (o) setLogoutError(false);
         }}
-        onCancel={() => setConfirm(false)}
-        onConfirm={() => {
-          setConfirm(false);
-          disconnect({ discardPending: pending > 0 }).catch(() => setConfirm(true));
-        }}
+        onError={() => setLogoutError(true)}
       />
     </>
   );

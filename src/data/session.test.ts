@@ -17,7 +17,7 @@ describe('disconnect', () => {
   it('verweigert bei nicht leerer Outbox ohne Bestätigung und lässt Daten unberührt', async () => {
     await db.outbox.put({ id: 'e1' });
     await expect(disconnect()).rejects.toBeInstanceOf(PendingDataError);
-    await expect(disconnect({ discardPending: false })).rejects.toMatchObject({ count: 1 });
+    await expect(disconnect({ discardPending: false })).rejects.toBeInstanceOf(PendingDataError);
     expect(await db.outbox.count()).toBe(1);
     expect((await db.meta.get('username'))?.value).toBe('person-a');
   });

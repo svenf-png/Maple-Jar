@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { setLang, t } from '../i18n/t';
+import { setLang } from '../i18n/t';
 import { ConfirmDialog } from './ConfirmDialog';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -31,9 +31,9 @@ function mount(props: Partial<Parameters<typeof ConfirmDialog>[0]>) {
       <ConfirmDialog
         open
         title="Titel"
-        text={t('settings.logout.pendingText', { count: 3 })}
-        confirmLabel={t('settings.logout.discard')}
-        altLabel={t('settings.logout.syncFirst')}
+        text={'Noch nicht synchronisiert: 3. Beim Abmelden gehen sie verloren.'}
+        confirmLabel={'Trotzdem abmelden'}
+        altLabel={'Erst synchronisieren'}
         {...handlers}
         {...props}
       />,
@@ -49,7 +49,7 @@ describe('ConfirmDialog mit Warnung', () => {
     const { host, button } = mount({});
     expect(host.textContent).toContain('Noch nicht synchronisiert: 3');
     expect(button('Erst synchronisieren')).toBeTruthy();
-    expect(button('Trotzdem abmelden und verwerfen')).toBeTruthy();
+    expect(button('Trotzdem abmelden')).toBeTruthy();
     expect(button('Abbrechen')).toBeTruthy();
   });
 

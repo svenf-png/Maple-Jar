@@ -73,6 +73,9 @@ for (const scheme of ['light', 'dark'] as const) {
       await dialog.getByRole('button', { name: 'Abbrechen', exact: true }).click();
       await expect(dialog).toBeHidden();
       await expect(page).toHaveURL(/#\/einstellungen$/);
+      await expect(
+        page.getByText('Offline · 1 warten auf Sync', { exact: true }).filter({ visible: true }),
+      ).toBeVisible();
 
       // „Erst synchronisieren“ schließt den Dialog und löscht nichts (offline bleibt der Eintrag wartend)
       await logout.click();

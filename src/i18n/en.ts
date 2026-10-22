@@ -141,9 +141,6 @@ export const en: Record<MessageKey, string> = {
   'settings.logout.confirmText':
     'Credentials and all local data are deleted from this device. The data in the Supabase project is kept.',
   'settings.logout.confirm': 'Sign out',
-  'settings.logout.pendingText': 'Not yet synced: {count}. Signing out discards these changes.',
-  'settings.logout.syncFirst': 'Sync first',
-  'settings.logout.discard': 'Sign out anyway and discard',
 
   'overview.available': 'Budget left',
   'overview.state.ok': 'On track',
