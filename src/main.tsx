@@ -5,6 +5,7 @@ import { loadSession } from './data/session';
 import { initSyncRuntime } from './data/sync/control';
 import { initLang } from './i18n/t';
 import { requestPersistence } from './platform/persist';
+import { registerServiceWorker } from './platform/sw-update';
 import { initTheme } from './platform/theme';
 import './styles/tokens.css';
 import './styles/base.css';
@@ -14,10 +15,9 @@ initTheme();
 initLang();
 void requestPersistence();
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  // Eigene Registrierung (Datei statt Inline-Skript, ohne workbox-window). autoUpdate: skipWaiting + clientsClaim.
-  void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, {
-    scope: import.meta.env.BASE_URL,
-  });
+  // Eigene Registrierung (Datei statt Inline-Skript, ohne workbox-window). registerType 'prompt': Der neue Worker wartet,
+  // bis der Hinweis „Neue Version verfügbar“ bestätigt wird (kein skipWaiting, kein Reload ohne Tipp).
+  registerServiceWorker();
 }
 void loadSession().then(initSyncRuntime);
 if (import.meta.env.VITE_E2E === '1') void import('./data/e2e-seed');
