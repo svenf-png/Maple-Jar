@@ -4,8 +4,8 @@ import { useBudgets, useCategories, useEntries, useFixedCosts } from '../../data
 import { useReadySession } from '../../data/use-session';
 import { monthSummary } from '../../domain/budget';
 import { monthOf } from '../../domain/model';
-import { formatMoney, formatMonth } from '../../i18n/format';
-import { getLocale, t, useLang } from '../../i18n/t';
+import { formatMoney, formatMoneyShort, formatMoneySplit, formatMonth } from '../../i18n/format';
+import { getLocale, type Locale, t, useLang } from '../../i18n/t';
 import { CheckIcon, WarnIcon } from '../../icons/ui-icons';
 import { useEntryRate } from '../../platform/use-fx';
 import { useMedia } from '../../platform/use-media';
@@ -16,8 +16,29 @@ import { todayIso } from '../shared/helpers';
 import { DueNext } from './DueNext';
 import { hasSplitData } from './donut-model';
 import { GoalCards } from './GoalCards';
-import { IncomeDonutChart, IncomeLegend, useIncomeSplit } from './IncomeDonut';
+import { IncomeDonutChart, IncomeLegend, IncomeTotal, useIncomeSplit } from './IncomeDonut';
 import styles from './OverviewPage.module.css';
+
+/** Hero-Betrag: Zahl und Währungssymbol als getrennte Spans in einem nowrap-Container. */
+function HeroAmount({
+  minor,
+  locale,
+  className,
+}: {
+  minor: bigint;
+  locale: Locale;
+  className: string;
+}) {
+  const { amount, symbol, symbolFirst } = formatMoneySplit(minor, 'CAD', locale);
+  const cur = <span className={styles.bigCur}>{symbol}</span>;
+  return (
+    <div className={`${className} num`}>
+      {symbolFirst ? cur : null}
+      <span>{amount}</span>
+      {symbolFirst ? null : cur}
+    </div>
+  );
+}
 
 export function OverviewPage() {
   useLang();
@@ -98,21 +119,24 @@ export function OverviewPage() {
                 </span>
               </div>
               <div className={styles.heroMain}>
-                <div className={`${styles.big} ${showSplit ? styles.bigWithChart : ''} num`}>
-                  {formatMoney(summary.remaining, 'CAD', locale)}
-                </div>
+                <HeroAmount
+                  minor={summary.remaining}
+                  locale={locale}
+                  className={`${styles.big} ${showSplit ? styles.bigWithChart : ''}`}
+                />
                 {showSplit ? <IncomeDonutChart split={split} /> : null}
               </div>
               <ProgressBar
                 value={pct}
                 label={t('overview.available')}
-                tone={stateWarn ? 'warn' : 'acc'}
+                tone={stateWarn ? 'warn' : 'ok'}
               />
               <div className={`${styles.heroMeta} num`}>
                 <span>
                   {t('overview.spentOf', {
-                    spent: formatMoney(summary.totalSpent, 'CAD', locale),
-                    limit: formatMoney(summary.totalLimit, 'CAD', locale),
+                    spent: formatMoneySplit(summary.totalSpent, 'CAD', locale, { trimWhole: true })
+                      .amount,
+                    limit: formatMoneyShort(summary.totalLimit, 'CAD', locale),
                   })}
                 </span>
                 <span>
@@ -121,13 +145,16 @@ export function OverviewPage() {
                     : t('overview.daysLeft', { count: summary.daysLeft })}
                 </span>
               </div>
-              <div className={styles.perDay}>
+              <div className={`${styles.perDay} ${styles.rowBetween}`}>
                 <span className={styles.muted}>{t('overview.perDay')}</span>
                 <strong className="num">{formatMoney(summary.perDay, 'CAD', locale)}</strong>
               </div>
               {showSplit ? (
                 <div className={styles.perDay}>
-                  <span className={styles.muted}>{t('donut.title')}</span>
+                  <div className={styles.rowBetween}>
+                    <span className={styles.muted}>{t('donut.title')}</span>
+                    <IncomeTotal split={split} locale={locale} />
+                  </div>
                   <IncomeLegend split={split} />
                 </div>
               ) : null}

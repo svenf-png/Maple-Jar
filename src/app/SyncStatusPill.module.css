@@ -1,0 +1,16 @@
+.iconBtn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ok);
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.iconBtn:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: -2px;
+}

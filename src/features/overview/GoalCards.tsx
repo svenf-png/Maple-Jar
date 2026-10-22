@@ -1,10 +1,12 @@
 import { Link } from 'react-router';
 import { useContributions, useGoals } from '../../data/repos';
 import { activeGoals, planDeviation, progress, savedByGoal } from '../../domain/goals';
+import type { Goal } from '../../domain/model';
 import { formatMoney } from '../../i18n/format';
 import { getLocale, t } from '../../i18n/t';
 import { CheckIcon, WarnIcon } from '../../icons/ui-icons';
 import { CategoryTile, ProgressBar } from '../../ui';
+import { GoalCardBody } from '../planning/GoalParts';
 import { goalStatusView } from '../shared/plan-format';
 import styles from './GoalCards.module.css';
 import sectionStyles from './OverviewPage.module.css';
@@ -27,37 +29,55 @@ export function GoalCards({ today }: { today: string }) {
           {t('overview.goals.all')}
         </Link>
       </div>
-      <ul className={styles.grid}>
-        {goals.map((g) => {
-          const have = saved.get(g.id) ?? 0n;
-          const pct = progress(g, have);
-          const view = goalStatusView(planDeviation(g, have, today).status);
-          const warn = view.variant === 'warn';
-          return (
-            <li key={g.id} className={styles.cell}>
-              <Link to={`/ziel/${g.id}`} className={styles.card}>
-                <CategoryTile icon={g.icon} color={g.color} size={32} />
-                <span className={styles.name}>{g.name}</span>
-                <ProgressBar value={pct} label={g.name} tone="cat" color={g.color} height={6} />
-                <span className={`${styles.of} num`}>
-                  {t('overview.goals.of', {
-                    pct,
-                    target: formatMoney(g.targetMinor, g.currency, locale),
-                  })}
-                </span>
-                <span className={`${styles.status} ${warn ? styles.warn : ''}`}>
-                  {warn ? (
-                    <WarnIcon size={14} />
-                  ) : view.variant === 'ok' ? (
-                    <CheckIcon size={14} />
-                  ) : null}
-                  {t(view.key)}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      {goals.length === 1 && goals[0] ? (
+        <FullGoalCard goal={goals[0]} saved={saved.get(goals[0].id) ?? 0n} today={today} />
+      ) : (
+        <ul className={styles.grid}>
+          {goals.map((g) => {
+            const have = saved.get(g.id) ?? 0n;
+            const pct = progress(g, have);
+            const view = goalStatusView(planDeviation(g, have, today).status);
+            const warn = view.variant === 'warn';
+            return (
+              <li key={g.id} className={styles.cell}>
+                <Link to={`/ziel/${g.id}`} className={styles.card}>
+                  <CategoryTile icon={g.icon} color={g.color} size={32} />
+                  <span className={styles.name}>{g.name}</span>
+                  <ProgressBar value={pct} label={g.name} tone="cat" color={g.color} height={6} />
+                  <span className={`${styles.of} num`}>
+                    {t('overview.goals.of', {
+                      pct,
+                      target: formatMoney(g.targetMinor, g.currency, locale),
+                    })}
+                  </span>
+                  <span className={`${styles.status} ${warn ? styles.warn : ''}`}>
+                    {warn ? (
+                      <WarnIcon size={14} />
+                    ) : view.variant === 'ok' ? (
+                      <CheckIcon size={14} />
+                    ) : null}
+                    {t(view.key)}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </section>
+  );
+}
+
+/** Genau ein Ziel: Karte in voller Breite mit denselben drei Zeilen wie in der Planung. */
+function FullGoalCard({ goal, saved, today }: { goal: Goal; saved: bigint; today: string }) {
+  return (
+    <Link to={`/ziel/${goal.id}`} className={styles.fullCard}>
+      <GoalCardBody
+        goal={goal}
+        savedMinor={saved}
+        dev={planDeviation(goal, saved, today)}
+        today={today}
+      />
+    </Link>
   );
 }

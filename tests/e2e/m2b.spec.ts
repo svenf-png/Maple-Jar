@@ -91,7 +91,9 @@ test('Offline erfassen und nach der Rückkehr synchronisieren', async ({ page, c
   }
   await context.setOffline(false);
   if ((page.viewportSize()?.width ?? 0) < 1024) {
-    await expect(page.getByText('Verbunden', { exact: true })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Synchronisiert' })).toBeVisible({
+      timeout: 15_000,
+    });
   }
   const pending = await page.evaluate(
     () =>

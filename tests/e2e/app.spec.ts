@@ -59,7 +59,7 @@ test('2: noch kein Haushalt → Einrichten → Übersicht', async ({ page }) => 
   await expect(page.getByText('Noch keine zweite Person eingetragen')).toBeVisible();
 });
 
-test('3: vorhandener Haushalt (Mitglied) → direkt Übersicht, Status „Verbunden“', async ({
+test('3: vorhandener Haushalt (Mitglied) → direkt Übersicht, Status „Synchronisiert“', async ({
   page,
 }) => {
   await connect(page, 'member');
@@ -68,7 +68,7 @@ test('3: vorhandener Haushalt (Mitglied) → direkt Übersicht, Status „Verbun
   if (!isDesktop(page)) {
     await expect(page.getByRole('img', { name: 'Person A' })).toBeVisible();
     await expect(page.getByRole('img', { name: 'Person B' })).toBeVisible();
-    await expect(page.getByText('Verbunden', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Synchronisiert' })).toBeVisible();
   }
 });
 

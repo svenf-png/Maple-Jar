@@ -418,6 +418,50 @@ export async function bookFixedCost(
   return 'booked';
 }
 
+export interface BookedDue {
+  entryId: string;
+  result: 'booked' | 'restored';
+}
+
+/**
+ * Bucht mehrere Fälligkeiten über dieselbe Action wie das einzelne Buchen (`bookFixedCost`: deterministische
+ * Eintrags-ID, Buchungsdatum = Fälligkeit). Bereits gebuchte werden übersprungen, Fehler einzelner Fälligkeiten
+ * (z. B. EUR ohne Kurs) brechen den Lauf nicht ab und werden in `failed` gezählt. `booked` genügt für `undoBookedDues`.
+ */
+export async function bookDueItems(
+  db: MapleJarDb,
+  items: ReadonlyArray<{ fixedCostId: string; dueOn: string }>,
+  rate: RateSource,
+  today: string,
+): Promise<{ booked: BookedDue[]; failed: number }> {
+  const cache = new Map<string, KnownRate | null>();
+  const rateFor = async (dueOn: string): Promise<KnownRate | null> => {
+    if (typeof rate !== 'function') return rate;
+    if (!cache.has(dueOn)) cache.set(dueOn, await rate(dueOn).catch(() => null));
+    return cache.get(dueOn) ?? null;
+  };
+  const booked: BookedDue[] = [];
+  let failed = 0;
+  for (const item of items) {
+    try {
+      const fc = await db.fixedCost.get(item.fixedCostId);
+      const known = fc?.currency === 'EUR' ? await rateFor(item.dueOn) : null;
+      const result = await bookFixedCost(db, item.fixedCostId, item.dueOn, known, { today });
+      if (result !== 'already') {
+        booked.push({ entryId: await fixedCostEntryId(item.fixedCostId, item.dueOn), result });
+      }
+    } catch {
+      failed++;
+    }
+  }
+  return { booked, failed };
+}
+
+/** Macht `bookDueItems` rückgängig: löscht genau die dabei angelegten bzw. wiederhergestellten Einträge. */
+export async function undoBookedDues(db: MapleJarDb, booked: readonly BookedDue[]): Promise<void> {
+  for (const b of booked) await deleteEntry(db, b.entryId);
+}
+
 /** Kurs für eine Fälligkeit: fester Kurs, keiner, oder eine Abfrage je Fälligkeitstag (z. B. Tageskurs). */
 export type RateSource = KnownRate | null | ((dueOn: string) => Promise<KnownRate | null>);
 
