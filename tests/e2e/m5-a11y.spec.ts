@@ -110,6 +110,25 @@ test.describe('Fokusführung', () => {
     await expect(page.locator('body')).toBeFocused();
   });
 
+  test('Fokus liegt nicht hinter der Tabbar (mobil)', async ({ page }) => {
+    // Die Tabbar gibt es nur unter 1024 px; auf dem Desktop gibt es nichts zu prüfen.
+    if ((page.viewportSize()?.width ?? 0) >= 1024) return;
+    await start(page);
+    await seedEntry(page);
+    await go(page, '#/einstellungen');
+    await expect(page.getByRole('heading', { level: 1, name: 'Einstellungen' })).toBeVisible();
+    await page.getByRole('button', { name: 'Daten exportieren (JSON)' }).focus();
+    await page.keyboard.press('Tab');
+    const csv = page.getByRole('button', { name: 'Einträge exportieren (CSV)' });
+    await expect(csv).toBeFocused();
+    await waitForAnimations(page);
+    const button = await csv.boundingBox();
+    const nav = await page.getByRole('navigation', { name: 'Hauptnavigation' }).boundingBox();
+    expect(button).not.toBeNull();
+    expect(nav).not.toBeNull();
+    expect((button?.y ?? 0) + (button?.height ?? 0)).toBeLessThanOrEqual(nav?.y ?? 0);
+  });
+
   test('Dialog gibt den Fokus an den Auslöser zurück (Escape und Abbrechen)', async ({ page }) => {
     await start(page);
     await go(page, '#/einstellungen');
