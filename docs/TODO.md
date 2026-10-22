@@ -2,34 +2,33 @@
 
 Stand 22.10.2026 (Basis `main` 1f3124a). Quelle: Lückenbericht vom 22.10.2026, Stichproben im Code geprüft.
 Schwere: **hoch** / **mittel** / **niedrig**. [V] = vermutet, nicht belegt. Belege als `Datei:Zeile` auf dem Stand oben.
-Ziel-Meilenstein in Klammern; M6 ist in `docs/prompts/M6.md` beschrieben, M7 sind Kandidaten ohne Plan.
+Ziel-Meilenstein in Klammern; M6 ist in `docs/prompts/M6.md` beschrieben (Entscheidungen vom 22.10.2026 in §7),
+M7 sind Kandidaten ohne Plan. Supabase-Migrationen: `0001` und `0002` (PR #18) belegt, Neues ab `0003`.
 
 ## In Arbeit
 
 - **Abmelden bei offenem Sync schützen** (hoch) – `disconnect()` löscht die ganze lokale Datenbank samt Outbox
   ohne Prüfung, der Bestätigungstext warnt nicht. Beleg: `src/data/session.ts:182-201`, `src/i18n/de.ts:142`.
-  Status: in Arbeit (Branch `fix/logout-guard`, Draft-PR #17).
+  Status: in Arbeit, PR #17 (Branch `fix/logout-guard`).
 - **Verlauf in Desktop-Breite, SelectField, Hover-Zustände** – Draft-PR #11, in Arbeit.
-- **Update-Fenster für neue App-Versionen** – Draft-PR #15, in Arbeit. Kostet laut Bericht etwa 0,6 KB Budget
+- **Update-Fenster für neue App-Versionen** – in Arbeit, PR #15 (Branch `feat/update-prompt`). Kostet laut Bericht etwa 0,6 KB Budget
   (main 149,12 KB, mit #15 etwa 149,7 KB von 150 KB).
+- **Keepalive** (mittel–hoch) – gelöst in PR #18 (Branch `fix/keepalive-rpc`, Merge steht aus). Ursachen: Geplante
+  Workflows laufen nur auf dem Default-Branch, und der war bis 22.10. ein alter Branch ohne `keepalive.yml`; der Ping
+  ging an `household`, auf die `anon` keinerlei Rechte hat (`supabase/migrations/0001_init.sql:101`). Neu: Migration
+  `supabase/migrations/0002_keepalive.sql` mit `public.keepalive()`, vom Nutzer im Projekt eingespielt; Workflow-Lauf auf
+  dem Branch ergab HTTP 200. Die Migrationsnummer `0002` ist damit belegt, weitere Migrationen ab `0003`.
 
 ## Datensicherheit
 
-- **Keepalive lief nie** (mittel–hoch) – Geplante Workflows laufen nur auf dem Default-Branch, der bis 22.10. keine
-  `keepalive.yml` hatte. Der erste manuelle Lauf scheitert an der Namensauflösung: Das Secret `SUPABASE_URL` zeigt auf
-  eine Adresse, die es nicht gibt. Beleg: `.github/workflows/keepalive.yml`.
-  Status: **blockiert**, das echte Supabase-Projekt wird mit dem Nutzer geklärt.
-- **Keepalive-Ping trifft eine gesperrte Tabelle** (mittel) [V] – `anon` hat keinerlei Rechte auf `household`, der
-  Ping bekommt deshalb vermutlich 401 statt einer leeren Liste und beendet den Job rot. Der Kommentar im Workflow
-  („RLS liefert eine leere Liste“) passt nicht zum Schema. Ob eine abgelehnte Anfrage als Aktivität zählt, ist
-  ungeprüft. Beleg: `supabase/migrations/0001_init.sql:101`, `.github/workflows/keepalive.yml:27-37`.
-  Status: blockiert (wie oben); beim Entsperren mit lösen.
 - **Kein Rückweg aus dem JSON-Export** (hoch) – Es gibt keinen Import. Geht das Supabase-Projekt verloren, lässt sich
   die empfohlene Sicherung nicht wieder einspielen; neue Konten haben neue IDs, und RLS erlaubt nur
-  `author = auth.uid()`. Beleg: `src/data/export.ts:6-9`, `supabase/migrations/0001_init.sql:124-126`. (M6-C)
+  `author = auth.uid()`. Beleg: `src/data/export.ts:6-9`, `supabase/migrations/0001_init.sql:124-126`. (M6-C: jede
+  Person spielt ihre eigenen Ereignisse ein; eine Server-Funktion für fremde Ereignisse ist M7-Kandidat, Migration ab
+  `0003`.)
 - **Echtes Supabase und Gerätetests nicht belegt** (mittel) [V] – Haptik, VoiceOver, Install-Hinweis, Flugmodus,
   CSV in der Tabellenkalkulation und der Betrieb gegen ein echtes Projekt sind laut PRs ungeprüft.
-  Status: Nutzer-Checkliste aus PR #10, nach Klärung des Projekts.
+  Status: Nutzer-Checkliste aus PR #10; das Projekt ist geklärt und wieder aktiv.
 
 ## M5 Teil 2 (M6-A)
 
@@ -73,9 +72,12 @@ Ziel-Meilenstein in Klammern; M6 ist in `docs/prompts/M6.md` beschrieben, M7 sin
 - **Wiederherstellung aus dem JSON-Export** (hoch) – siehe Datensicherheit.
 - **„Zuletzt synchronisiert“ unsichtbar** (mittel) – `lastSyncAt` wird nur im Speicher geführt und nirgends angezeigt.
   Beleg: `src/data/sync/engine.ts:18,42`.
-- **Fehlerzustände nicht unterscheidbar** (mittel) – Die Zustandsmaschine kennt `forbidden`, `rate` und `server`, die
+- **Fehlerzustände nicht unterscheidbar** (hoch) – Die Zustandsmaschine kennt `forbidden`, `rate` und `server`, die
   Pille zeigt aber immer „Sync gestört · Erneut versuchen“. Ein gelöschtes Projekt (Adresse nicht auflösbar) erscheint
-  dauerhaft als „Offline“. Beleg: `src/data/sync/engine.ts:62-69`, `src/app/SyncStatusPill.tsx:34-42`.
+  dauerhaft als „Offline“. Am 22.10.2026 echt eingetreten: Das pausierte Projekt war per DNS nicht auflösbar
+  (NXDOMAIN), die App zeigte nur „Offline“ statt des Lösungswegs (im Supabase-Dashboard wiederherstellen).
+  Beleg: `src/data/remote/supabase-transport.ts:85-86`, `src/data/sync/engine.ts:62-69`,
+  `src/app/SyncStatusPill.tsx:34-42`. (M6-C, Task C1/C2 mit E2E-Test)
 - **Passwort ändern nur im Supabase-Dashboard** (mittel) – kein Code, kein Hilfetext.
   Beleg: `src/data/remote/sync-transport.ts:43-58`.
 - **Diagnose schwer verständlich** (niedrig) – geparkte Ereignisse zeigen nur Rohgrund und Nummer.
@@ -103,7 +105,7 @@ Ziel-Meilenstein in Klammern; M6 ist in `docs/prompts/M6.md` beschrieben, M7 sin
   Datum. Offen bis zum Gerätetest. Beleg: `src/domain/csv.ts:53,55`.
 - **Realtime und Verdichtung (Snapshot)** (niedrig) – laut `docs/PLAN.md` optional bzw. bei Bedarf; derzeit nicht nötig.
 - **Größenbudget fast ausgeschöpft** (mittel) – 149,12 von 150 KB auf `main`. Neues nur per `import()`; M6-A schafft
-  Puffer (Strategie im M6-Plan).
+  Puffer durch lazy Laden der Verbinden-Seite, das Budget wird nicht angehoben (M6.md, Entscheidung 8).
 
 ## Bewusst hingenommen
 
