@@ -4,13 +4,16 @@ import { defineConfig, devices } from '@playwright/test';
 const executablePath = process.env.PW_CHROMIUM_PATH;
 const chromium = executablePath ? { launchOptions: { executablePath } } : {};
 
+// Tests mit dem Tag @desktop messen Desktop-Layout bzw. Hover und laufen nicht in den Mobil-Projekten.
+const desktopOnly = /@desktop/;
+
 const projects = [
-  { name: 'chromium-mobile', use: { ...devices['Pixel 7'], ...chromium } },
+  { name: 'chromium-mobile', use: { ...devices['Pixel 7'], ...chromium }, grepInvert: desktopOnly },
   { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'], ...chromium } },
   ...(process.env.E2E_SKIP_WEBKIT
     ? []
     : [
-        { name: 'webkit-mobile', use: { ...devices['iPhone 14'] } },
+        { name: 'webkit-mobile', use: { ...devices['iPhone 14'] }, grepInvert: desktopOnly },
         { name: 'webkit-desktop', use: { ...devices['Desktop Safari'] } },
       ]),
 ];

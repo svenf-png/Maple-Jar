@@ -142,10 +142,8 @@ async function applyFont(page: Page, css: string | null) {
   if (css) await page.addStyleTag({ content: css });
 }
 
-test.describe('Verlauf Desktop-Breite', () => {
+test.describe('Verlauf Desktop-Breite', { tag: '@desktop' }, () => {
   test.use({ viewport: { width: 1280, height: 800 } });
-  // Layout-Messungen gelten nur für den Desktop; auf den Mobil-Projekten entfallen sie.
-  test.skip(({ isMobile }) => isMobile, 'nur Desktop');
 
   for (const font of FONTS) {
     test(`Tabelle passt bei 1280 px ohne seitliches Scrollen (${font.name})`, async ({ page }) => {
@@ -230,9 +228,8 @@ test.describe('Verlauf Desktop-Breite', () => {
   }
 });
 
-test.describe('Verlauf Desktop-Breite Schriftstress', () => {
+test.describe('Verlauf Desktop-Breite Schriftstress', { tag: '@desktop' }, () => {
   test.use({ viewport: { width: 1280, height: 800 } });
-  test.skip(({ isMobile }) => isMobile, 'nur Desktop');
 
   test('Letter-Spacing-Stress macht den Kategorienamen (gleiche Ersatzschrift) mindestens 5 % breiter', async ({
     page,
@@ -301,9 +298,8 @@ async function expectScheme(page: Page, scheme: 'light' | 'dark') {
 }
 
 // Hover-Zustände gelten nur mit (hover: hover), also nur auf Desktop-Projekten.
-test.describe('Verlauf Desktop-Breite Hover', () => {
+test.describe('Verlauf Desktop-Breite Hover', { tag: '@desktop' }, () => {
   test.use({ viewport: { width: 1280, height: 800 } });
-  test.skip(({ isMobile }) => isMobile, 'nur Desktop: Hover-Zustand gilt nur mit (hover: hover)');
 
   test('Icon-Button „Bearbeiten“ wechselt bei Hover die Hintergrundfarbe', async ({ page }) => {
     await setupCafeEntry(page);
