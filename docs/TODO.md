@@ -1,23 +1,28 @@
 # Maple Jar: Backlog
 
-Stand 22.10.2026 (Basis `main` 1f3124a). Quelle: Lückenbericht vom 22.10.2026, Stichproben im Code geprüft.
+Stand 22.10.2026 (Belege auf `main` 1f3124a, Status nachgeführt bis 9f02ecc).
+Quelle: Lückenbericht vom 22.10.2026, Stichproben im Code geprüft.
 Schwere: **hoch** / **mittel** / **niedrig**. [V] = vermutet, nicht belegt. Belege als `Datei:Zeile` auf dem Stand oben.
 Ziel-Meilenstein in Klammern; M6 ist in `docs/prompts/M6.md` beschrieben (Entscheidungen vom 22.10.2026 in §7),
 M7 sind Kandidaten ohne Plan. Supabase-Migrationen: `0001` und `0002` (PR #18) belegt, Neues ab `0003`.
 
-## In Arbeit
+## Laufende und frisch erledigte PRs
 
 - **Abmelden bei offenem Sync schützen** (hoch) – `disconnect()` löscht die ganze lokale Datenbank samt Outbox
   ohne Prüfung, der Bestätigungstext warnt nicht. Beleg: `src/data/session.ts:182-201`, `src/i18n/de.ts:142`.
   Status: in Arbeit, PR #17 (Branch `fix/logout-guard`).
 - **Verlauf in Desktop-Breite, SelectField, Hover-Zustände** – Draft-PR #11, in Arbeit.
-- **Update-Fenster für neue App-Versionen** – in Arbeit, PR #15 (Branch `feat/update-prompt`). Kostet laut Bericht etwa 0,6 KB Budget
-  (main 149,12 KB, mit #15 etwa 149,7 KB von 150 KB).
+- **Update-Fenster für neue App-Versionen** – erledigt, PR #15 gemergt (9f02ecc) und live. `main` liegt danach bei
+  149,81 KB von 150 KB (CI-Lauf 39856099341).
 - **Keepalive** (mittel–hoch) – gelöst in PR #18 (Branch `fix/keepalive-rpc`, Merge steht aus). Ursachen: Geplante
   Workflows laufen nur auf dem Default-Branch, und der war bis 22.10. ein alter Branch ohne `keepalive.yml`; der Ping
   ging an `household`, auf die `anon` keinerlei Rechte hat (`supabase/migrations/0001_init.sql:101`). Neu: Migration
   `supabase/migrations/0002_keepalive.sql` mit `public.keepalive()`, vom Nutzer im Projekt eingespielt; Workflow-Lauf auf
   dem Branch ergab HTTP 200. Die Migrationsnummer `0002` ist damit belegt, weitere Migrationen ab `0003`.
+  Befund dabei: Die Default-Privilegien von Supabase geben `anon` und `authenticated` `EXECUTE` auf neue Funktionen in
+  `public`; `0001_init.sql` entzog nur `from public`. PR #18 entzieht `anon` ausdrücklich und setzt
+  `alter default privileges … revoke execute on functions from anon`. Regel ab jetzt: jede neue Funktion
+  `revoke execute … from public, anon`, dann gezieltes `grant`.
 
 ## Datensicherheit
 
@@ -104,8 +109,9 @@ M7 sind Kandidaten ohne Plan. Supabase-Migrationen: `0001` und `0002` (PR #18) b
 - **CSV-Beträge als `12.50`** (niedrig) – Deutsche Tabellenkalkulationen lesen das unter Umständen als Text oder
   Datum. Offen bis zum Gerätetest. Beleg: `src/domain/csv.ts:53,55`.
 - **Realtime und Verdichtung (Snapshot)** (niedrig) – laut `docs/PLAN.md` optional bzw. bei Bedarf; derzeit nicht nötig.
-- **Größenbudget fast ausgeschöpft** (mittel) – 149,12 von 150 KB auf `main`. Neues nur per `import()`; M6-A schafft
-  Puffer durch lazy Laden der Verbinden-Seite, das Budget wird nicht angehoben (M6.md, Entscheidung 8).
+- **Größenbudget praktisch voll** (hoch) – 149,81 von 150 KB auf `main` nach PR #15, mit PR #11 etwa 149,98 KB.
+  Neues nur per `import()`; M6-A schafft Puffer durch lazy Laden der Verbinden-Seite als zwingend ersten Schritt (Task A0), das Budget wird nicht angehoben
+  (M6.md, Entscheidung 8).
 
 ## Bewusst hingenommen
 
