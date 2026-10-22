@@ -18,6 +18,7 @@ Dashboard bzw. zur Laufzeit in der App eingegeben.
    ablehnt, eine andere neutrale Domain wählen und `ADDRESS_DOMAIN` entsprechend ändern (vor dem ersten Verbinden).
 4. **SQL einspielen:** SQL Editor, Inhalt von `supabase/migrations/0001_init.sql` einfügen und ausführen. Alternativ
    per Supabase CLI (`supabase db push`), falls du die CLI nutzt.
+   Danach `supabase/migrations/0002_keepalive.sql` auf dieselbe Weise einspielen (Keepalive-Funktion, siehe unten).
 5. **RLS-Prüfung** (siehe unten), bevor du die App verbindest.
 6. **URL und öffentlicher Schlüssel:** Project Settings, Data API bzw. API Keys. Kopiere die Projekt-URL
    (`https://<projekt>.supabase.co`) und den öffentlichen Schlüssel (anon bzw. publishable). **Nie** den geheimen
@@ -36,10 +37,11 @@ Dashboard bzw. zur Laufzeit in der App eingegeben.
 | `setup_household(...)`, `join_household(...)` | `security definer` mit leerem `search_path`, einzige Wege, `household`/`members` zu beschreiben |
 | `household_status()` | Zustand (existiert / Anzahl / bin ich Mitglied) für Konten, die noch nicht Mitglied sind |
 | `is_member()` | Hilfsfunktion für die Richtlinien |
+| `keepalive()` | Migration 0002: gibt nur `1` zurück, liest nichts; als einzige Funktion auch für `anon` ausführbar |
 
 Zugriffsregeln: RLS ist auf allen Tabellen aktiv. Lesen und Anhängen (`events`) nur für Mitglieder, beim Anhängen muss
 `author` das eigene Konto sein. Es gibt weder Rechte noch Richtlinien für `update`/`delete` auf `events`. Die Anonymrolle
-(`anon`) hat auf keine Tabelle und keine Funktion Zugriff. Jede neue Tabelle bekommt RLS im selben Commit.
+(`anon`) hat auf keine Tabelle Zugriff und darf nur `keepalive()` ausführen. Jede neue Tabelle bekommt RLS im selben Commit.
 
 ## RLS-Prüfliste
 
@@ -73,9 +75,15 @@ Von Hand (App oder REST, jeweils mit dem öffentlichen Schlüssel):
   Projekte lassen sich im Dashboard wiederherstellen. Die Doku nennt dafür je nach Seitenversion 90 Tage oder
   1 Jahr (die Angaben widersprechen sich, ungeprüft). Danach gibt es nur noch einen Backup-Download.
   Regelmäßig die Daten exportieren (Einstellungen, „Daten exportieren (JSON)“) oder auf einen bezahlten Plan wechseln.
-* **Keep-Alive:** `.github/workflows/keepalive.yml` ruft alle drei Tage `GET /rest/v1/household?select=id&limit=1` auf.
-  Die Doku spricht davon, dass „einige Nutzeranfragen an die Datenbank pro Tag“ in der letzten Woche genügen. Ob
-  eine nicht angemeldete Anfrage, die per RLS leer bleibt, als Aktivität zählt, ist ungeprüft. Den Workflow nach dem
-  Einrichten einmal manuell starten (Actions, keepalive, Run workflow) und nach einer Woche prüfen, ob das Projekt
-  aktiv bleibt. Secrets: `SUPABASE_URL`, `SUPABASE_ANON_KEY` (Repository-Einstellungen). GitHub kann geplante
-  Workflows in Repos ohne Aktivität nach 60 Tagen automatisch deaktivieren.
+* **Keep-Alive:** siehe nächster Abschnitt.
+
+## Keepalive
+
+`.github/workflows/keepalive.yml` ruft alle drei Tage (`cron: '17 6 */3 * *'`) per `POST /rest/v1/rpc/keepalive` die
+Funktion `public.keepalive()` (Migration 0002) auf, damit das Free-Plan-Projekt nicht wegen Inaktivität pausiert wird.
+Ein Tabellenzugriff wäre für `anon` mit 401 abgewiesen worden. Voraussetzung ist, dass 0002 im Projekt eingespielt ist.
+Secrets (Repository-Einstellungen): `SUPABASE_URL`, `SUPABASE_ANON_KEY`. Fehlen sie, tut der Job nichts. Geplante Läufe
+starten nur auf dem Default-Branch. Bei Fehlern gibt der Job Statuscode sowie `code` und `message` der Antwort aus.
+Nach dem Einspielen von 0002 einmal manuell starten (Actions, keepalive, Run workflow). Ob ein solcher Aufruf als
+Aktivität zählt, ist ungeprüft: nach einer Woche kontrollieren, ob das Projekt aktiv bleibt. GitHub kann geplante
+Workflows in Repos ohne Aktivität nach 60 Tagen automatisch deaktivieren.

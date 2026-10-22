@@ -1,7 +1,7 @@
 -- Maple Jar: manuelle RLS-Prüfung für den SQL Editor.
 --
 -- Voraussetzungen:
---   * 0001_init.sql ist eingespielt, es gibt noch KEINEN Haushalt (frisches Projekt, vor dem ersten Verbinden).
+--   * 0001_init.sql und 0002_keepalive.sql sind eingespielt, es gibt noch KEINEN Haushalt (frisches Projekt, vor dem ersten Verbinden).
 --   * Die beiden Konten existieren (Authentication, Users).
 -- Das Skript läuft in einer Transaktion und endet mit ROLLBACK: nichts bleibt zurück.
 -- Bei Erfolg erscheint die Meldung "RLS-Pruefung bestanden". Jede fehlgeschlagene Erwartung bricht mit
@@ -55,6 +55,14 @@ begin
   perform pg_temp.expect_error('select * from public.household', '42501', 'anon liest household');
   perform pg_temp.expect_error('select * from public.members', '42501', 'anon liest members');
   perform pg_temp.expect_error('select public.household_status()', '42501', 'anon ruft household_status');
+  perform pg_temp.expect_error('select public.is_member()', '42501', 'anon ruft is_member');
+  perform pg_temp.expect_error('select public.current_username()', '42501', 'anon ruft current_username');
+  perform pg_temp.expect_error(
+    $q$select public.setup_household('X', null, date '2027-01-01', date '2027-12-31', 'ECB', 'X', '#2C6CB0', 'de-DE')$q$,
+    '42501', 'anon ruft setup_household');
+  perform pg_temp.expect_error($q$select public.join_household('X', '#2C6CB0', 'de-DE')$q$, '42501', 'anon ruft join_household');
+  -- Einzige anonym erlaubte Funktion: keepalive() (0002), liefert 1 und liest keine Daten.
+  if public.keepalive() is distinct from 1 then raise exception 'FAIL: anon keepalive() liefert nicht 1'; end if;
   reset role;
 
   -- 2. Konto A, noch kein Mitglied
