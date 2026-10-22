@@ -2,14 +2,19 @@ name: ci
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
-  ci:
-    name: ci
+  checks:
+    name: checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,14 +34,37 @@ jobs:
       - run: npm run check:privacy
         env:
           PRIVACY_DENYLIST: ${{ secrets.PRIVACY_DENYLIST }}
-      - run: npx playwright install --with-deps chromium webkit
-      - run: npm run test:e2e
+
+  e2e:
+    name: e2e (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    # Runs in parallel to `checks` on purpose (minimal total time).
+    container:
+      # The image tag MUST match the exact @playwright/test version in
+      # package-lock.json (browsers are baked into the image). Bump both together.
+      image: mcr.microsoft.com/playwright:v1.64.0-noble
+      options: --ipc=host
+    env:
+      # Playwright docs/known GitHub Actions container issue: HOME must be /root.
+      HOME: /root
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium-mobile, chromium-desktop, webkit-mobile, webkit-desktop]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright test --project=${{ matrix.project }}
         env:
           CI: 'true'
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.project }}
           path: |
             playwright-report/
             test-results/
