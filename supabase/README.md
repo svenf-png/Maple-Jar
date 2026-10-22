@@ -44,8 +44,10 @@ Zugriffsregeln: RLS ist auf allen Tabellen aktiv. Lesen und Anhängen (`events`)
 (`anon`) hat auf keine Tabelle Zugriff und darf nach Migration 0002 nur `keepalive()` ausführen. Supabase vergibt per
 Default-Privilegien `execute` auf neue Funktionen direkt an `anon` und `authenticated`; `revoke ... from public` in 0001
 entzog das nicht. 0002 entzieht es für die sechs Funktionen aus 0001 ausdrücklich von `anon` (`authenticated`
-bleibt) und setzt die Default-Privilegien für künftige Funktionen zurück. Die Funktionen lehnten anonyme Aufrufer
-schon vorher selbst ab, es wurden keine Daten offengelegt. Jede neue Tabelle bekommt RLS im selben Commit.
+bleibt) und entfernt den Supabase-Default für `anon` bei künftigen Funktionen. PostgreSQL gibt neuen Funktionen
+trotzdem weiterhin `execute` an PUBLIC: Jede neue Funktion braucht `revoke all ... from public` und ein gezieltes
+grant. Es wurden keine Daten offengelegt: `is_member()` lieferte für anonyme Aufrufer `false`,
+`current_username()` `null`, die übrigen Funktionen lehnten sie ab. Jede neue Tabelle bekommt RLS im selben Commit.
 
 ## RLS-Prüfliste
 

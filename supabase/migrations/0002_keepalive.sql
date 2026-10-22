@@ -35,9 +35,11 @@ revoke execute on function public.current_username() from anon;
 revoke execute on function public.setup_household(text, text, date, date, text, text, text, text) from anon;
 revoke execute on function public.join_household(text, text, text) from anon;
 
--- Künftige Funktionen in `public`, die die ausführende Rolle (hier der SQL-Editor) anlegt, bekommen kein
--- automatisches Ausführungsrecht für anon mehr. Wirkt nicht rückwirkend und nicht für Funktionen, die andere
--- Rollen anlegen. keepalive() hat sein grant oben ausdrücklich.
+-- Entfernt nur den direkten Supabase-Default für anon bei Funktionen, die die ausführende Rolle (hier der
+-- SQL-Editor) künftig in `public` anlegt. Wirkt nicht rückwirkend und nicht für andere Rollen. Achtung:
+-- PostgreSQL gibt jeder neuen Funktion weiterhin `execute` an PUBLIC (und damit auch an anon); das lässt sich
+-- per Schema-Default nicht entziehen. Jede neue Funktion braucht deshalb weiter `revoke all ... from public`
+-- und ein gezieltes grant. keepalive() hat sein grant oben ausdrücklich.
 alter default privileges in schema public revoke execute on functions from anon;
 
 -- Schema-Recht: 0001 entzieht `usage` auf Schema `public` nicht. Supabase vergibt es standardmäßig an anon
