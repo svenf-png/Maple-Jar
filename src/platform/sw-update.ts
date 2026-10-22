@@ -28,6 +28,28 @@ export function startUpdateChecks(
   });
 }
 
+/**
+ * Vollbild-Formulare ohne Tab-Leiste: Der Hinweis würde Felder und die Speichern-Schaltfläche verdecken.
+ * Muster auf den Hash-Pfad (ohne Query), passend zu `subPages()` in `src/app/router.tsx`.
+ */
+export const FORM_PATHS: readonly RegExp[] = [
+  /^\/erfassen$/,
+  /^\/eintrag\/[^/]+\/bearbeiten$/,
+  /^\/ziel\/neu$/,
+  /^\/ziel\/[^/]+\/bearbeiten$/,
+  /^\/fixkosten\/[^/]+$/,
+  /^\/einnahme\/[^/]+$/,
+];
+
+export function isFormPath(pathname: string): boolean {
+  return FORM_PATHS.some((re) => re.test(pathname));
+}
+
+/** Hinweis zeigen, wenn ein Update wartet und die Seite kein Vollbild-Formular ist. */
+export function shouldShowUpdatePrompt(pending: boolean, pathname: string): boolean {
+  return pending && !isFormPath(pathname);
+}
+
 /* ---------- Store ---------- */
 
 let updateWaiting = false;

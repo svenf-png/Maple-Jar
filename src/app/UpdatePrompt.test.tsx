@@ -1,5 +1,6 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const store = vi.hoisted(() => {
@@ -18,6 +19,8 @@ const store = vi.hoisted(() => {
     getUpdateSnapshot: () => waiting,
     dismissUpdate: vi.fn(() => set(false)),
     applyRegisteredUpdate: vi.fn(),
+    shouldShowUpdatePrompt: (pending: boolean, pathname: string) =>
+      pending && pathname !== '/erfassen',
   };
 });
 vi.mock('../platform/sw-update', () => store);
@@ -29,11 +32,17 @@ import { UpdatePrompt } from './UpdatePrompt';
 let host: HTMLDivElement;
 let root: Root;
 
-function mount() {
+function mount(path = '/') {
   host = document.createElement('div');
   document.body.appendChild(host);
   root = createRoot(host);
-  act(() => root.render(<UpdatePrompt />));
+  act(() =>
+    root.render(
+      <MemoryRouter initialEntries={[path]}>
+        <UpdatePrompt />
+      </MemoryRouter>,
+    ),
+  );
 }
 
 const status = () => host.querySelector('[role="status"]');
@@ -57,6 +66,11 @@ describe('UpdatePrompt', () => {
     act(() => store.set(true));
     expect(status()).not.toBeNull();
     expect(host.textContent).toMatch(/Neue Version verfügbar|New version available/);
+  });
+  it('bleibt auf einem Vollbild-Formular verborgen', () => {
+    mount('/erfassen');
+    act(() => store.set(true));
+    expect(status()).toBeNull();
   });
   it('Später blendet aus', () => {
     mount();

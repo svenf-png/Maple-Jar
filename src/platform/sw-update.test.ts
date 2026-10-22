@@ -4,6 +4,8 @@ import {
   canUpdate,
   dismissUpdate,
   getUpdateSnapshot,
+  isFormPath,
+  shouldShowUpdatePrompt,
   startUpdateChecks,
   subscribeUpdate,
   UPDATE_CHECK_MIN_GAP_MS,
@@ -187,5 +189,39 @@ describe('applyUpdate', () => {
     applyUpdate(fakeReg().reg, sw, reload);
     expect(reload).toHaveBeenCalledTimes(1);
     expect(sw.addEventListener).not.toHaveBeenCalled();
+  });
+});
+
+describe('shouldShowUpdatePrompt', () => {
+  it('zeigt auf normalen Seiten, wenn ein Update wartet', () => {
+    for (const path of [
+      '/',
+      '/verlauf',
+      '/einstellungen',
+      '/budgets',
+      '/eintrag/abc',
+      '/ziel/abc',
+      '/planung',
+    ]) {
+      expect(shouldShowUpdatePrompt(true, path)).toBe(true);
+    }
+  });
+  it('zeigt nichts ohne wartendes Update', () => {
+    expect(shouldShowUpdatePrompt(false, '/')).toBe(false);
+  });
+  it('hält den Hinweis auf Vollbild-Formularen zurück', () => {
+    for (const path of [
+      '/erfassen',
+      '/eintrag/abc/bearbeiten',
+      '/ziel/neu',
+      '/ziel/abc/bearbeiten',
+      '/fixkosten/neu',
+      '/fixkosten/abc',
+      '/einnahme/neu',
+      '/einnahme/abc',
+    ]) {
+      expect(isFormPath(path)).toBe(true);
+      expect(shouldShowUpdatePrompt(true, path)).toBe(false);
+    }
   });
 });

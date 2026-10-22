@@ -1,9 +1,11 @@
 import { useSyncExternalStore } from 'react';
+import { useLocation } from 'react-router';
 import { t, useLang } from '../i18n/t';
 import {
   applyRegisteredUpdate,
   dismissUpdate,
   getUpdateSnapshot,
+  shouldShowUpdatePrompt,
   subscribeUpdate,
 } from '../platform/sw-update';
 import { Button } from '../ui';
@@ -12,8 +14,9 @@ import styles from './UpdatePrompt.module.css';
 /** Nicht-modaler Hinweis auf eine neue Version. Neu geladen wird erst nach dem Tipp, der Fokus bleibt unberührt. */
 export function UpdatePrompt() {
   useLang();
+  const { pathname } = useLocation();
   const waiting = useSyncExternalStore(subscribeUpdate, getUpdateSnapshot, () => false);
-  if (!waiting) return null;
+  if (!shouldShowUpdatePrompt(waiting, pathname)) return null;
   return (
     <div className={styles.prompt} role="status">
       <div className={styles.text}>
