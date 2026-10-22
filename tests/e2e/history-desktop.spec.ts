@@ -364,3 +364,44 @@ for (const scheme of ['light', 'dark'] as const) {
     });
   });
 }
+
+// Kein @desktop-Tag: die Prüfung läuft auch auf den Mobil-Projekten.
+for (const { name, width, expected } of [
+  { name: 'Mobil (390 px)', width: 390, expected: null },
+  { name: 'Desktop (1280 px)', width: 1280, expected: 720 },
+] as const) {
+  test.describe(`Verlauf Tabs und Aktivitäts-Feed ${name}`, () => {
+    test.use({ viewport: { width, height: 800 } });
+
+    test('Tab-Leiste ist so breit wie die Suche (Desktop 720 px, mobil volle Breite)', async ({ page }) => {
+      await connectE2e(page, 'empty');
+      await setupHousehold(page);
+      await go(page, '#/verlauf');
+      const tabs = await requireBox(page.getByRole('group', { name: 'Ansicht' }));
+      const search = await requireBox(
+        page.getByRole('searchbox', { name: 'Händler, Notiz, Betrag' }),
+      );
+      expect(Math.abs(tabs.width - search.width)).toBeLessThan(1.5);
+      if (expected) expect(Math.abs(tabs.width - expected)).toBeLessThan(1.5);
+      else expect(tabs.width).toBeGreaterThan(width - 80);
+    });
+
+    test('Tagesgruppen im Aktivitäts-Feed haben den Abstand --s-3 (12 px)', async ({ page }) => {
+      await connectE2e(page, 'empty');
+      await setupHousehold(page);
+      // Zwei Tage Daten: das Datum des Ereignisses folgt der Uhr der Seite.
+      await page.clock.setFixedTime(new Date('2026-03-10T12:00:00'));
+      await captureEntry(page, { amount: '5,00', category: CATEGORY, merchant: 'Café B' });
+      await page.clock.setFixedTime(new Date('2026-03-11T12:00:00'));
+      await captureEntry(page, { amount: '6,00', category: CATEGORY, merchant: 'Café C' });
+      await go(page, '#/verlauf');
+      await page.getByRole('button', { name: 'Aktivität' }).click();
+      const days = page.locator('main section[aria-label]');
+      await expect(days).toHaveCount(2);
+      const first = await requireBox(days.nth(0));
+      const second = await requireBox(days.nth(1));
+      expect(Math.round(second.y - (first.y + first.height))).toBe(12);
+      if (expected) expect(Math.abs(first.width - expected)).toBeLessThan(1.5);
+    });
+  });
+}
