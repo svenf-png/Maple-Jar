@@ -78,3 +78,24 @@
   font-size: 13px;
   color: var(--label2);
 }
+.project {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  color: var(--label2);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.linkBtn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--acc);
+  font: inherit;
+  font-weight: 600;
+  min-height: 44px;
+  padding: 0 var(--s-2);
+  cursor: pointer;
+  flex: none;
+}

@@ -25,6 +25,11 @@ export const de = {
   'connect.projectUrl': 'Projekt-URL',
   'connect.projectUrlPlaceholder': 'https://projekt.supabase.co',
   'connect.anonKey': 'Öffentlicher Schlüssel',
+  'connect.link': 'Einrichtungslink einfügen',
+  'connect.linkHint': 'Optional. Füllt Projekt-URL und Schlüssel aus.',
+  'connect.error.link': 'Dieser Link ist ungültig. Bitte den ganzen Link einfügen.',
+  'connect.project': 'Projekt: {host}',
+  'connect.otherProject': 'Ändern',
   'connect.username': 'Benutzername',
   'connect.password': 'Passwort',
   'connect.submit': 'Verbinden',
@@ -66,11 +71,11 @@ export const de = {
   'help.step5':
     'Öffne Project Settings, Data API bzw. API Keys und kopiere die Projekt-URL und den öffentlichen Schlüssel (anon bzw. publishable). Den geheimen Schlüssel (service_role) trägst du nie in die App ein.',
   'help.step6':
-    'Öffne die App-Adresse, gib Projekt-URL, öffentlichen Schlüssel, Benutzername und Passwort ein und tippe auf „Verbinden“. Die erste Person richtet den Haushalt ein.',
+    'Öffne die App-Adresse, gib Projekt-URL, öffentlichen Schlüssel, Benutzername und Passwort ein und tippe auf „Verbinden“. Die erste Person richtet den Haushalt ein. Danach erzeugst du unter Einstellungen einen Einrichtungslink für weitere Geräte: Dort fehlen dann Projekt-URL und Schlüssel, es genügen Benutzername und Passwort.',
   'help.step7':
     'Die zweite Person verbindet sich mit ihrem eigenen Konto und tritt dem Haushalt dabei selbst bei.',
   'help.step8':
-    'iPhone: App-Adresse in Safari öffnen, „Zum Home-Bildschirm“ wählen und in der installierten App verbinden. Safari und Home-Bildschirm-App speichern getrennt.',
+    'iPhone: App-Adresse in Safari öffnen, „Zum Home-Bildschirm“ wählen und in der installierten App verbinden. Safari und Home-Bildschirm-App speichern getrennt, deshalb den Einrichtungslink in der installierten App einfügen.',
   'help.step9':
     'Free-Projekte werden nach einer Woche Inaktivität pausiert. Exportiere deshalb regelmäßig unter Einstellungen die Daten als JSON.',
 
@@ -114,6 +119,14 @@ export const de = {
   'settings.fx.unavailable': 'Nicht verfügbar',
   'settings.device': 'Gerät',
   'settings.persisted': 'Speicher dauerhaft',
+  'settings.setupLink': 'Weiteres Gerät einrichten',
+  'settings.setupLink.hint': 'Link mit Projekt-URL und öffentlichem Schlüssel, ohne Passwort.',
+  'settings.setupLink.create': 'Link erstellen',
+  'settings.setupLink.copy': 'Kopieren',
+  'settings.setupLink.copied': 'Kopiert',
+  'settings.setupLink.error': 'Kein Zugang gespeichert. Bitte neu anmelden.',
+  'settings.setupLink.warning':
+    'Nur privat weitergeben, nicht in Chats oder öffentlichen Notizen. iPhone: Link in der installierten Home-Bildschirm-App einfügen, nicht in Safari öffnen.',
   'settings.export': 'Daten exportieren (JSON)',
   'settings.export.action': 'Exportieren',
   'settings.export.error': 'Der Export ist fehlgeschlagen.',
