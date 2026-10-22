@@ -35,7 +35,7 @@ export default defineConfig({
     react(),
     cspPlugin(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       injectRegister: false,
       includeAssets: ['logo.svg', 'apple-touch-icon.png'],
       manifest: {
@@ -56,6 +56,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
         navigateFallback: 'index.html',
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\.frankfurter\.dev\/.*/,
