@@ -96,6 +96,13 @@
     background: var(--accHover);
   }
 }
+/* Gedrückt: nur Farbe (kein Transform), daher auch mit reduzierter Bewegung unverändert. */
+.chip:has(select:not(:disabled)):active {
+  background: var(--fillActive);
+}
+.chipActive:has(select:not(:disabled)):active {
+  background: var(--accActive);
+}
 @media (prefers-reduced-motion: reduce) {
   .chip {
     transition: none;
