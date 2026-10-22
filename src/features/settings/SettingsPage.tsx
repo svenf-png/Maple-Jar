@@ -5,6 +5,7 @@ import { db } from '../../data/db';
 import { exportEntriesCsv, exportEventsJson } from '../../data/export';
 import { findMember } from '../../data/household';
 import { disconnect } from '../../data/session';
+import { retrySync } from '../../data/sync/control';
 import { todayIso } from '../../data/today';
 import { useLiveQuery } from '../../data/use-live-query';
 import { useReadySession } from '../../data/use-session';
@@ -38,6 +39,7 @@ export function SettingsPage() {
     [],
     0,
   );
+  const pending = useLiveQuery(() => db.outbox.count(), [], 0);
   const [exportError, setExportError] = useState(false);
   const [csvError, setCsvError] = useState(false);
 
@@ -218,12 +220,21 @@ export function SettingsPage() {
       <ConfirmDialog
         open={confirm}
         title={t('settings.logout.confirmTitle')}
-        text={t('settings.logout.confirmText')}
-        confirmLabel={t('settings.logout.confirm')}
+        text={
+          pending > 0
+            ? t('settings.logout.pendingText', { count: pending })
+            : t('settings.logout.confirmText')
+        }
+        confirmLabel={t(pending > 0 ? 'settings.logout.discard' : 'settings.logout.confirm')}
+        altLabel={pending > 0 ? t('settings.logout.syncFirst') : undefined}
+        onAlt={() => {
+          setConfirm(false);
+          retrySync();
+        }}
         onCancel={() => setConfirm(false)}
         onConfirm={() => {
           setConfirm(false);
-          void disconnect();
+          disconnect({ discardPending: pending > 0 }).catch(() => setConfirm(true));
         }}
       />
     </>
