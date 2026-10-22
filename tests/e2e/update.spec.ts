@@ -32,24 +32,32 @@ async function startServer(): Promise<{ server: ChildProcess; copy: string }> {
   const server = spawn(
     'node_modules/.bin/vite',
     ['preview', '--outDir', copy, '--port', String(PORT), '--strictPort'],
-    { stdio: ['ignore', 'pipe', 'inherit'] },
+    // Ohne Farbcodes, sonst steht die Adresse nicht als zusammenhängender Text in der Ausgabe.
+    { stdio: ['ignore', 'pipe', 'inherit'], env: { ...process.env, NO_COLOR: '1' } },
   );
-  await new Promise<void>((resolve, reject) => {
-    const timer = setTimeout(
-      () => reject(new Error('Der Testserver ist nicht gestartet.')),
-      20_000,
-    );
-    server.once('exit', (code) => {
-      clearTimeout(timer);
-      reject(new Error(`Der Testserver endete vorzeitig (Code ${code}).`));
-    });
-    server.stdout?.on('data', (chunk: Buffer) => {
-      if (chunk.toString().includes(`localhost:${PORT}`)) {
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error('Der Testserver ist nicht gestartet.')),
+        20_000,
+      );
+      server.once('exit', (code) => {
         clearTimeout(timer);
-        resolve();
-      }
+        reject(new Error(`Der Testserver endete vorzeitig (Code ${code}).`));
+      });
+      server.stdout?.on('data', (chunk: Buffer) => {
+        const text = chunk.toString();
+        if (text.includes('localhost:') && text.includes(String(PORT))) {
+          clearTimeout(timer);
+          resolve();
+        }
+      });
     });
-  });
+  } catch (error) {
+    server.kill();
+    rmSync(copy, { recursive: true, force: true });
+    throw error;
+  }
   return { server, copy };
 }
 
