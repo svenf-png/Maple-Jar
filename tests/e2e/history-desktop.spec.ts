@@ -373,7 +373,9 @@ for (const { name, width, expected } of [
   test.describe(`Verlauf Tabs und Aktivitäts-Feed ${name}`, () => {
     test.use({ viewport: { width, height: 800 } });
 
-    test('Tab-Leiste ist so breit wie die Suche (Desktop 720 px, mobil volle Breite)', async ({ page }) => {
+    test('Tab-Leiste ist so breit wie die Suche (Desktop 720 px, mobil volle Breite)', async ({
+      page,
+    }) => {
       await connectE2e(page, 'empty');
       await setupHousehold(page);
       await go(page, '#/verlauf');
