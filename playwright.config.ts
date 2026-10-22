@@ -4,17 +4,31 @@ import { defineConfig, devices } from '@playwright/test';
 const executablePath = process.env.PW_CHROMIUM_PATH;
 const chromium = executablePath ? { launchOptions: { executablePath } } : {};
 
+// update.spec.ts braucht für den echten Worker-Wechsel einen eigenen Server (Port 4180) und läuft nur in
+// chromium-desktop: ein Browser genügt als Nachweis, die Logik ist per Unit-Test abgedeckt.
+const skipUpdate = { testIgnore: /update\.spec\.ts/ };
+
 // Tests mit dem Tag @desktop messen Desktop-Layout bzw. Hover und laufen nicht in den Mobil-Projekten.
-const desktopOnly = /@desktop/;
+const mobileOnlyTests = { grepInvert: /@desktop/ };
 
 const projects = [
-  { name: 'chromium-mobile', use: { ...devices['Pixel 7'], ...chromium }, grepInvert: desktopOnly },
+  {
+    name: 'chromium-mobile',
+    use: { ...devices['Pixel 7'], ...chromium },
+    ...skipUpdate,
+    ...mobileOnlyTests,
+  },
   { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'], ...chromium } },
   ...(process.env.E2E_SKIP_WEBKIT
     ? []
     : [
-        { name: 'webkit-mobile', use: { ...devices['iPhone 14'] }, grepInvert: desktopOnly },
-        { name: 'webkit-desktop', use: { ...devices['Desktop Safari'] } },
+        {
+          name: 'webkit-mobile',
+          use: { ...devices['iPhone 14'] },
+          ...skipUpdate,
+          ...mobileOnlyTests,
+        },
+        { name: 'webkit-desktop', use: { ...devices['Desktop Safari'] }, ...skipUpdate },
       ]),
 ];
 

@@ -312,4 +312,9 @@ export const en: Record<MessageKey, string> = {
 
   'error.title': 'Something went wrong',
   'error.reload': 'Reload',
+
+  'update.title': 'New version available',
+  'update.sub': 'Your data stays safe.',
+  'update.later': 'Later',
+  'update.reload': 'Reload',
 };

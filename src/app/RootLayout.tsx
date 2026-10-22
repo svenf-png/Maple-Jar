@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import { focusHeading, focusUnclaimed, shouldMoveFocus } from './route-focus';
+import { UpdatePrompt } from './UpdatePrompt';
 
 /**
  * Wurzel-Route: setzt nach jedem Seitenwechsel den Fokus auf die Überschrift, damit Tastatur und
@@ -20,5 +21,10 @@ export function RootLayout() {
       if (focusUnclaimed(atNavigation, document.activeElement, document.body)) focusHeading();
     });
   }, [pathname]);
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      <UpdatePrompt />
+    </>
+  );
 }
