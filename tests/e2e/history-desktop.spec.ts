@@ -381,7 +381,7 @@ for (const { name, width, expected } of [
       await go(page, '#/verlauf');
       const tabs = await requireBox(page.getByRole('group', { name: 'Ansicht' }));
       const search = await requireBox(
-        page.getByRole('searchbox', { name: 'Händler, Notiz, Betrag' }),
+        page.getByRole('searchbox', { name: 'Händler, Notiz, Betrag' }).locator('..'),
       );
       expect(Math.abs(tabs.width - search.width)).toBeLessThan(1.5);
       if (expected) expect(Math.abs(tabs.width - expected)).toBeLessThan(1.5);
@@ -389,10 +389,11 @@ for (const { name, width, expected } of [
     });
 
     test('Tagesgruppen im Aktivitäts-Feed haben den Abstand --s-3 (12 px)', async ({ page }) => {
+      // Zwei Tage Daten: das Datum des Ereignisses folgt der Uhr der Seite. Die Uhr wird vor dem
+      // Haushalt gesetzt, weil die Ereignisuhr (HLC) nie hinter bereits geschriebene Ereignisse zurückgeht.
+      await page.clock.setFixedTime(new Date('2026-03-10T12:00:00'));
       await connectE2e(page, 'empty');
       await setupHousehold(page);
-      // Zwei Tage Daten: das Datum des Ereignisses folgt der Uhr der Seite.
-      await page.clock.setFixedTime(new Date('2026-03-10T12:00:00'));
       await captureEntry(page, { amount: '5,00', category: CATEGORY, merchant: 'Café B' });
       await page.clock.setFixedTime(new Date('2026-03-11T12:00:00'));
       await captureEntry(page, { amount: '6,00', category: CATEGORY, merchant: 'Café C' });
