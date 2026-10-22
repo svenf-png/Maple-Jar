@@ -36,7 +36,7 @@ jobs:
           PRIVACY_DENYLIST: ${{ secrets.PRIVACY_DENYLIST }}
 
   e2e:
-    name: e2e (${{ matrix.project }})
+    name: e2e (${{ matrix.project }} ${{ matrix.shard }}/${{ matrix.total }})
     runs-on: ubuntu-latest
     # Runs in parallel to `checks` on purpose (minimal total time).
     container:
@@ -44,13 +44,17 @@ jobs:
       # package-lock.json (browsers are baked into the image). Bump both together.
       image: mcr.microsoft.com/playwright:v1.64.0-noble
       options: --ipc=host
-    env:
-      # Playwright docs/known GitHub Actions container issue: HOME must be /root.
-      HOME: /root
     strategy:
       fail-fast: false
       matrix:
-        project: [chromium-mobile, chromium-desktop, webkit-mobile, webkit-desktop]
+        include:
+          - { project: chromium-mobile, shard: 1, total: 1 }
+          - { project: chromium-desktop, shard: 1, total: 1 }
+          - { project: webkit-mobile, shard: 1, total: 3 }
+          - { project: webkit-mobile, shard: 2, total: 3 }
+          - { project: webkit-mobile, shard: 3, total: 3 }
+          - { project: webkit-desktop, shard: 1, total: 2 }
+          - { project: webkit-desktop, shard: 2, total: 2 }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -58,13 +62,13 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npx playwright test --project=${{ matrix.project }}
+      - run: npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/${{ matrix.total }}
         env:
           CI: 'true'
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report-${{ matrix.project }}
+          name: playwright-report-${{ matrix.project }}-${{ matrix.shard }}of${{ matrix.total }}
           path: |
             playwright-report/
             test-results/
