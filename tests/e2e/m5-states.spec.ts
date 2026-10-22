@@ -71,7 +71,9 @@ test('Offline mit wartendem Eintrag, Wartet auf Sync, Rückkehr online', async (
   await expect(row.getByText('Wartet auf Sync', { exact: true })).toBeVisible();
 
   await context.setOffline(false);
-  await expect(page.getByText('Verbunden', { exact: true })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole('button', { name: 'Synchronisiert' })).toBeVisible({
+    timeout: 20_000,
+  });
   await expect(page.getByText('Wartet auf Sync', { exact: true })).toHaveCount(0);
   await expect
     .poll(() => server.events.some((e) => e.entity === 'entry'), { timeout: 20_000 })
@@ -89,7 +91,9 @@ test('Sync gestört zeigt Erneut versuchen und stellt den Sync wieder her', asyn
 
   await context.unroute(`${PROJECT_URL}/rest/v1/**`, handler);
   await retry.click();
-  await expect(page.getByText('Verbunden', { exact: true })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole('button', { name: 'Synchronisiert' })).toBeVisible({
+    timeout: 20_000,
+  });
 });
 
 test('Sitzung abgelaufen: Anmeldung erneuern, dann Sync wieder verbunden', async ({ browser }) => {
@@ -116,7 +120,9 @@ test('Sitzung abgelaufen: Anmeldung erneuern, dann Sync wieder verbunden', async
   await page.getByLabel('Passwort').fill(PERSON_A.password);
   await page.getByRole('button', { name: 'Anmelden', exact: true }).click();
   await expect(page).toHaveURL(/#\/$/);
-  await expect(page.getByText('Verbunden', { exact: true })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole('button', { name: 'Synchronisiert' })).toBeVisible({
+    timeout: 20_000,
+  });
   await expect
     .poll(() => server.events.some((e) => e.entity === 'entry'), { timeout: 20_000 })
     .toBe(true);
@@ -125,10 +131,12 @@ test('Sitzung abgelaufen: Anmeldung erneuern, dann Sync wieder verbunden', async
 test.describe('Desktop-Pille in der Seitenleiste', () => {
   test.use({ viewport: { width: 1280, height: 900 } });
 
-  test('zeigt Verbunden und danach Offline', async ({ browser }) => {
+  test('zeigt Synchronisiert und danach Offline', async ({ browser }) => {
     const { page } = await startDevice(browser, { viewport: { width: 1280, height: 900 } });
     const side = page.getByRole('complementary');
-    await expect(side.getByText('Verbunden', { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(side.getByRole('button', { name: 'Synchronisiert' })).toBeVisible({
+      timeout: 20_000,
+    });
 
     await page.context().setOffline(true);
     await page.evaluate(() => window.dispatchEvent(new Event('offline')));
