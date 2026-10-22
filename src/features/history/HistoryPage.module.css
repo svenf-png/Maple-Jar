@@ -5,6 +5,8 @@
   padding-top: var(--s-3);
 }
 @media (min-width: 1024px) {
+  /* Nur die Einträge-Tabelle nutzt die volle Breite; Tabs, Aktivitäts-Feed, Suche und Filter bleiben bei 720 px. */
+  .narrow,
   .search,
   .filters {
     max-width: 720px;

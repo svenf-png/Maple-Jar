@@ -76,17 +76,21 @@ export function HistoryPage() {
     <>
       <PageHeader title={t('history.title')} showMeta={!desktop} />
       <div className={styles.stack}>
-        <Segmented
-          label={t('history.tabs')}
-          value={tab}
-          options={[
-            { value: 'entries', label: t('history.tab.entries') },
-            { value: 'activity', label: t('history.tab.activity') },
-          ]}
-          onChange={setTab}
-        />
+        <div className={styles.narrow}>
+          <Segmented
+            label={t('history.tabs')}
+            value={tab}
+            options={[
+              { value: 'entries', label: t('history.tab.entries') },
+              { value: 'activity', label: t('history.tab.activity') },
+            ]}
+            onChange={setTab}
+          />
+        </div>
         {tab === 'activity' ? (
-          <ActivityFeed />
+          <div className={styles.narrow}>
+            <ActivityFeed />
+          </div>
         ) : (
           <>
             <label className={styles.search}>
