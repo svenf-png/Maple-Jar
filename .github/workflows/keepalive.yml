@@ -31,13 +31,20 @@ jobs:
           # Funktion für die Anonymrolle freigegeben. Gezeigt werden nur Statuscode sowie code und
           # message der Fehlerantwort, nie Header, URL oder Schlüssel.
           body=$(mktemp)
-          code=$(curl --silent --show-error --output "$body" --write-out '%{http_code}' \
+          # Kein --show-error und stderr verworfen: Netzfehlermeldungen von curl enthalten den Host.
+          rc=0
+          code=$(curl --silent --output "$body" --write-out '%{http_code}' \
             --max-time 30 \
             --request POST \
             --header "apikey: $SUPABASE_ANON_KEY" \
             --header "Content-Type: application/json" \
             --data '{}' \
-            "$SUPABASE_URL/rest/v1/rpc/keepalive")
+            "$SUPABASE_URL/rest/v1/rpc/keepalive" 2>/dev/null) || rc=$?
+          if [ "$rc" -ne 0 ]; then
+            echo "curl fehlgeschlagen, Exitcode: $rc"
+            echo "Ping fehlgeschlagen."
+            exit 1
+          fi
           echo "HTTP status: $code"
           case "$code" in
             2*) ;;

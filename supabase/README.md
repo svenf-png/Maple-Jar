@@ -41,7 +41,11 @@ Dashboard bzw. zur Laufzeit in der App eingegeben.
 
 Zugriffsregeln: RLS ist auf allen Tabellen aktiv. Lesen und Anhängen (`events`) nur für Mitglieder, beim Anhängen muss
 `author` das eigene Konto sein. Es gibt weder Rechte noch Richtlinien für `update`/`delete` auf `events`. Die Anonymrolle
-(`anon`) hat auf keine Tabelle Zugriff und darf nur `keepalive()` ausführen. Jede neue Tabelle bekommt RLS im selben Commit.
+(`anon`) hat auf keine Tabelle Zugriff und darf nach Migration 0002 nur `keepalive()` ausführen. Supabase vergibt per
+Default-Privilegien `execute` auf neue Funktionen direkt an `anon` und `authenticated`; `revoke ... from public` in 0001
+entzog das nicht. 0002 entzieht es für die sechs Funktionen aus 0001 ausdrücklich von `anon` (`authenticated`
+bleibt) und setzt die Default-Privilegien für künftige Funktionen zurück. Die Funktionen lehnten anonyme Aufrufer
+schon vorher selbst ab, es wurden keine Daten offengelegt. Jede neue Tabelle bekommt RLS im selben Commit.
 
 ## RLS-Prüfliste
 
@@ -82,6 +86,15 @@ Von Hand (App oder REST, jeweils mit dem öffentlichen Schlüssel):
 `.github/workflows/keepalive.yml` ruft alle drei Tage (`cron: '17 6 */3 * *'`) per `POST /rest/v1/rpc/keepalive` die
 Funktion `public.keepalive()` (Migration 0002) auf, damit das Free-Plan-Projekt nicht wegen Inaktivität pausiert wird.
 Ein Tabellenzugriff wäre für `anon` mit 401 abgewiesen worden. Voraussetzung ist, dass 0002 im Projekt eingespielt ist.
+Kontrollschritt nach dem Einspielen (SQL Editor), erwartet: nur `keepalive` mit `true` in der Spalte `anon_execute`:
+
+```sql
+select p.proname, has_function_privilege('anon', p.oid, 'execute') as anon_execute
+from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public' order by p.proname;
+```
+
+Bei Netzfehlern gibt der Job nur den curl-Exitcode aus (die Fehlermeldung enthielte den Host).
 Secrets (Repository-Einstellungen): `SUPABASE_URL`, `SUPABASE_ANON_KEY`. Fehlen sie, tut der Job nichts. Geplante Läufe
 starten nur auf dem Default-Branch. Bei Fehlern gibt der Job Statuscode sowie `code` und `message` der Antwort aus.
 Nach dem Einspielen von 0002 einmal manuell starten (Actions, keepalive, Run workflow). Ob ein solcher Aufruf als
