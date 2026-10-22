@@ -18,6 +18,7 @@ import { useTodayRate } from '../../platform/use-fx';
 import { useMedia } from '../../platform/use-media';
 import { Avatar, Button, Card, ConfirmDialog, ListRow, Segmented } from '../../ui';
 import styles from './SettingsPage.module.css';
+import { SetupLinkCard } from './SetupLinkCard';
 
 export function SettingsPage() {
   const lang = useLang();
@@ -164,6 +165,7 @@ export function SettingsPage() {
             <ListRow title={t('settings.budgets')} chevron />
           </Link>
         </Card>
+        <SetupLinkCard />
         <Card>
           <ListRow
             title={t('settings.export')}
