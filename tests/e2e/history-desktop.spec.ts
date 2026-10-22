@@ -316,17 +316,19 @@ test.describe('Verlauf Desktop-Breite Hover', () => {
     expect(await background(edit)).not.toBe('rgba(0, 0, 0, 0)');
   });
 
-  test('Filter „Kategorie“ wechselt bei Hover die Hintergrundfarbe ohne Verschiebung', async ({
+  test('Filter „Kategorie“ wechselt bei Hover die Hintergrundfarbe des Chips ohne Verschiebung', async ({
     page,
   }) => {
     await setupCafeEntry(page);
     const filter = page.getByRole('combobox', { name: 'Kategorie', exact: true });
-    const before = await background(filter);
+    // Die Chip-Zeile (FilterChip) färbt den Rahmen um das Select; das Select selbst ist transparent.
+    const chip = filter.locator('..');
+    const before = await background(chip);
     await filter.hover();
     await expect.poll(() => isHovered(filter)).toBe(true);
-    await expect.poll(() => background(filter)).not.toBe(before);
-    expect(await background(filter)).not.toBe('rgba(0, 0, 0, 0)');
-    expect(await filter.evaluate((el) => getComputedStyle(el).transform)).toBe('none');
+    await expect.poll(() => background(chip)).not.toBe(before);
+    expect(await background(chip)).not.toBe('rgba(0, 0, 0, 0)');
+    expect(await chip.evaluate((el) => getComputedStyle(el).transform)).toBe('none');
   });
 });
 
