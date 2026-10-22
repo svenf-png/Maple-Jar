@@ -25,48 +25,69 @@ import {
 const PORT = 4180;
 test.use({ baseURL: `http://localhost:${PORT}/` });
 
+let server: ChildProcess | undefined;
+let copy = '';
+
 /** Startet `vite preview` mit einer Kopie von dist/ und wartet auf die Adresse. */
-async function startServer(): Promise<{ server: ChildProcess; copy: string }> {
-  const copy = mkdtempSync(join(tmpdir(), 'maple-jar-update-'));
+async function startServer(): Promise<void> {
+  copy = mkdtempSync(join(tmpdir(), 'maple-jar-update-'));
   cpSync('dist', copy, { recursive: true });
-  const server = spawn(
+  const child = spawn(
     'node_modules/.bin/vite',
     ['preview', '--outDir', copy, '--port', String(PORT), '--strictPort'],
     // Ohne Farbcodes, sonst steht die Adresse nicht als zusammenhängender Text in der Ausgabe.
     { stdio: ['ignore', 'pipe', 'inherit'], env: { ...process.env, NO_COLOR: '1' } },
   );
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error('Der Testserver ist nicht gestartet.')),
-        20_000,
-      );
-      server.once('exit', (code) => {
-        clearTimeout(timer);
-        reject(new Error(`Der Testserver endete vorzeitig (Code ${code}).`));
-      });
-      server.stdout?.on('data', (chunk: Buffer) => {
-        const text = chunk.toString();
-        if (text.includes('localhost:') && text.includes(String(PORT))) {
-          clearTimeout(timer);
-          resolve();
-        }
-      });
+  server = child;
+  await new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error('Der Testserver ist nicht gestartet.')),
+      20_000,
+    );
+    child.once('exit', (code) => {
+      clearTimeout(timer);
+      reject(new Error(`Der Testserver endete vorzeitig (Code ${code}).`));
     });
-  } catch (error) {
-    server.kill();
-    rmSync(copy, { recursive: true, force: true });
-    throw error;
-  }
-  return { server, copy };
+    child.stdout?.on('data', (chunk: Buffer) => {
+      const text = chunk.toString();
+      if (text.includes('localhost:') && text.includes(String(PORT))) {
+        clearTimeout(timer);
+        resolve();
+      }
+    });
+  });
 }
+
+/** Beendet den Server, wartet (begrenzt) auf sein Ende, damit der Port frei ist, und räumt auf. */
+async function stopServer(): Promise<void> {
+  const child = server;
+  server = undefined;
+  if (child && child.exitCode === null && child.signalCode === null) {
+    const exited = new Promise<void>((resolve) => child.once('exit', () => resolve()));
+    child.kill();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const limit = new Promise<void>((resolve) => {
+      timer = setTimeout(() => {
+        child.kill('SIGKILL');
+        resolve();
+      }, 5_000);
+    });
+    await Promise.race([exited, limit]);
+    clearTimeout(timer);
+  }
+  if (copy) rmSync(copy, { recursive: true, force: true });
+  copy = '';
+}
+
+test.beforeAll(startServer);
+// Auch nach einem fehlgeschlagenen Start aufräumen, sonst scheitert der Retry an --strictPort.
+test.afterAll(stopServer);
 
 test('Neue Version: Hinweis statt stillem Reload, „Später“, „Neu laden“, Daten bleiben', async ({
   page,
 }) => {
   test.setTimeout(120_000);
-  const { server, copy } = await startServer();
-  try {
+  {
     await connectE2e(page, 'empty');
     await setupHousehold(page);
     await captureEntry(page, {
@@ -104,6 +125,14 @@ test('Neue Version: Hinweis statt stillem Reload, „Später“, „Neu laden“
     expect(await page.evaluate(() => (window as unknown as { __alive?: boolean }).__alive)).toBe(
       true,
     );
+
+    // Auf dem Vollbild-Formular (ohne Tab-Leiste) bleibt der Hinweis zurück und kommt danach wieder.
+    await go(page, '#/erfassen');
+    await expect(page.getByRole('heading', { name: 'Neue Ausgabe' })).toBeVisible();
+    await expect(prompt).toHaveCount(0);
+    await go(page, '#/');
+    await expect(overviewHeading(page)).toBeVisible();
+    await expect(prompt).toBeVisible();
 
     // Der Hinweis erscheint auch auf anderen Seiten (Einstellungen), ohne den Fokus zu verschieben.
     await go(page, '#/einstellungen');
@@ -162,8 +191,5 @@ test('Neue Version: Hinweis statt stillem Reload, „Später“, „Neu laden“
     // Der vorher erfasste Eintrag ist noch da.
     await go(page, '#/verlauf');
     await expect(historyItem(page, /Supermarkt A/)).toBeVisible();
-  } finally {
-    server.kill();
-    rmSync(copy, { recursive: true, force: true });
   }
 });
