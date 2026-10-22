@@ -22,6 +22,19 @@ export function useTodayRate(provider: FxProvider): FxState {
   return state;
 }
 
+/** Kurs für einen Tag wie `useEntryRate`, aber einmalig und ohne Hook: Tageskurs (max. 3 s), sonst letzter bekannter. */
+export async function fetchKnownRate(
+  provider: FxProvider,
+  date: string,
+): Promise<KnownRate | null> {
+  const timeout = new Promise<null>((r) => setTimeout(() => r(null), 3000));
+  const fetched = navigator.onLine
+    ? await Promise.race([fetchRate(date, provider).catch(() => null), timeout])
+    : null;
+  const r = fetched ?? (await lastKnownRate(provider));
+  return r ? { rateMicro: r.rateMicro, date: r.date, stale: r.stale } : null;
+}
+
 export interface EntryRateState {
   status: 'idle' | 'loading' | 'ready' | 'missing';
   rate: KnownRate | null;

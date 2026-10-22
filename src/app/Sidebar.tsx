@@ -53,7 +53,12 @@ export function Sidebar() {
       </div>
       {me ? (
         <div className={styles.user}>
-          <Avatar name={me.displayName} color={me.color} size={32} />
+          <Avatar
+            name={me.displayName}
+            color={me.color}
+            size={32}
+            peers={household.members.map((m) => m.displayName)}
+          />
           <span>{me.displayName}</span>
         </div>
       ) : null}

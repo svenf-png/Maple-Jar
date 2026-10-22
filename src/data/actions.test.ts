@@ -7,6 +7,7 @@ import {
   adoptScenarioBudgets,
   applyCategoryTemplate,
   archiveGoal,
+  bookDueItems,
   bookFixedCost,
   createCategory,
   createEntry,
@@ -24,6 +25,7 @@ import {
   runAutobook,
   saveScenario,
   setBudget,
+  undoBookedDues,
   updateCategory,
   updateEntry,
   updateFixedCost,
@@ -408,6 +410,69 @@ describe('Fixkosten buchen', () => {
     expect(await bookFixedCost(db, fc, '2027-02-10', null)).toBe('restored');
     expect((await db.entry.get(id))?.deleted).toBe(false);
     expect(await fixedEntries()).toHaveLength(1);
+  });
+
+  it('bookDueItems: bucht jede Fälligkeit mit ihrem Datum, Rückgängig löscht genau diese Einträge', async () => {
+    const a = await createFixedCost(db, fcInput({ autobook: false, name: 'Miete A' }));
+    const b = await createFixedCost(
+      db,
+      fcInput({ autobook: false, name: 'Abo B', amountMinor: 500 }),
+    );
+    const items = [
+      { fixedCostId: a, dueOn: '2027-02-10' },
+      { fixedCostId: a, dueOn: '2027-03-10' },
+      { fixedCostId: b, dueOn: '2027-02-10' },
+    ];
+    const { booked, failed } = await bookDueItems(db, items, null, '2027-03-12');
+    expect(failed).toBe(0);
+    expect(booked.map((x) => x.result)).toEqual(['booked', 'booked', 'booked']);
+    const rows = await fixedEntries();
+    expect(rows.map((r) => `${r.merchant}@${r.bookedOn}`).sort()).toEqual([
+      'Abo B@2027-02-10',
+      'Miete A@2027-02-10',
+      'Miete A@2027-03-10',
+    ]);
+    await undoBookedDues(db, booked);
+    expect((await fixedEntries()).every((r) => r.deleted)).toBe(true);
+  });
+
+  it('bookDueItems: bereits Gebuchtes wird übersprungen und nicht von Rückgängig erfasst', async () => {
+    const a = await createFixedCost(db, fcInput({ autobook: false }));
+    await bookFixedCost(db, a, '2027-02-10', null);
+    const { booked } = await bookDueItems(
+      db,
+      [
+        { fixedCostId: a, dueOn: '2027-02-10' },
+        { fixedCostId: a, dueOn: '2027-03-10' },
+      ],
+      null,
+      '2027-03-12',
+    );
+    expect(booked).toHaveLength(1);
+    await undoBookedDues(db, booked);
+    const rows = await fixedEntries();
+    expect(rows.find((r) => r.bookedOn === '2027-02-10')?.deleted).toBe(false);
+    expect(rows.find((r) => r.bookedOn === '2027-03-10')?.deleted).toBe(true);
+  });
+
+  it('bookDueItems: gelöschte Buchung wird wiederhergestellt, Fehler zählen als failed', async () => {
+    const a = await createFixedCost(db, fcInput({ autobook: false }));
+    const eur = await createFixedCost(db, fcInput({ autobook: false, currency: 'EUR' }));
+    await bookFixedCost(db, a, '2027-02-10', null);
+    await deleteEntry(db, await fixedCostEntryId(a, '2027-02-10'));
+    const { booked, failed } = await bookDueItems(
+      db,
+      [
+        { fixedCostId: a, dueOn: '2027-02-10' },
+        { fixedCostId: eur, dueOn: '2027-02-10' },
+      ],
+      null,
+      '2027-03-12',
+    );
+    expect(booked).toEqual([
+      { entryId: await fixedCostEntryId(a, '2027-02-10'), result: 'restored' },
+    ]);
+    expect(failed).toBe(1);
   });
 
   it('bookFixedCost: Override wird als eigenes update nach dem deterministischen create geschrieben', async () => {

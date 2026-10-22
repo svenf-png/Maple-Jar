@@ -96,7 +96,14 @@ export function SettingsPage() {
       <div className={styles.stack}>
         <Card>
           <div className={styles.profile}>
-            {me ? <Avatar name={me.displayName} color={me.color} size={52} /> : null}
+            {me ? (
+              <Avatar
+                name={me.displayName}
+                color={me.color}
+                size={52}
+                peers={household.members.map((m) => m.displayName)}
+              />
+            ) : null}
             <div>
               <div className={styles.name}>{me?.displayName ?? username}</div>
               <div className={styles.sub}>

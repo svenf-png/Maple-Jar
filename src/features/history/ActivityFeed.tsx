@@ -113,6 +113,7 @@ export function ActivityFeed() {
                     name={member?.displayName ?? '?'}
                     color={member?.color ?? '#7F7569'}
                     size={32}
+                    peers={household.members.map((m) => m.displayName)}
                   />
                   <span className={styles.text}>
                     {activityText(item, memberName(household.members, item.author), {

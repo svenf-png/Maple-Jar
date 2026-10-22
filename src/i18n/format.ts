@@ -14,6 +14,52 @@ export function formatMoney(minor: bigint | number, currency: Currency, locale: 
   );
 }
 
+function moneyParts(
+  minor: bigint | number,
+  currency: Currency,
+  locale: Locale,
+  trimWhole: boolean,
+): Intl.NumberFormatPart[] {
+  const abs = BigInt(minor < 0 ? -minor : minor);
+  const whole = trimWhole && abs % 100n === 0n;
+  const value = `${minor < 0 ? '-' : ''}${abs / 100n}.${(abs % 100n).toString().padStart(2, '0')}`;
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    ...(whole ? { minimumFractionDigits: 0, maximumFractionDigits: 0 } : {}),
+  }).formatToParts(value as `${number}`);
+}
+
+/** Wie `formatMoney`, aber ganzzahlige Beträge ohne Nachkommastellen („700 CA$“). */
+export function formatMoneyShort(
+  minor: bigint | number,
+  currency: Currency,
+  locale: Locale,
+): string {
+  return moneyParts(minor, currency, locale, true)
+    .map((p) => p.value)
+    .join('');
+}
+
+/** Betrag und Währungssymbol getrennt, damit beide einzeln gesetzt werden können. */
+export function formatMoneySplit(
+  minor: bigint | number,
+  currency: Currency,
+  locale: Locale,
+  options: { trimWhole?: boolean } = {},
+): { amount: string; symbol: string; symbolFirst: boolean } {
+  const parts = moneyParts(minor, currency, locale, options.trimWhole ?? false);
+  const at = parts.findIndex((p) => p.type === 'currency');
+  const symbolFirst = at === 0;
+  const rest = parts.filter((_, i) => i !== at);
+  // Das Leerzeichen zwischen Zahl und Symbol gehört zum Symbol, nicht zur Zahl.
+  const amount = rest
+    .map((p) => p.value)
+    .join('')
+    .trim();
+  return { amount, symbol: parts[at]?.value ?? '', symbolFirst };
+}
+
 /** Kennzeichnet einen umgerechneten Betrag als ungefähr („≈ 12,00 CA$“). */
 export const formatApprox = (text: string): string => `≈ ${text}`;
 

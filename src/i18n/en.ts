@@ -16,7 +16,7 @@ export const en: Record<MessageKey, string> = {
   'nav.main': 'Main navigation',
   'nav.capture': 'Add expense',
 
-  'status.connected': 'Connected',
+  'status.synced': 'Synced',
   'status.offline': 'Offline',
   'status.pending': '{count} waiting to sync',
   'status.reauth': 'Sign in again',
@@ -129,7 +129,7 @@ export const en: Record<MessageKey, string> = {
     'Credentials and all local data are deleted from this device. The data in the Supabase project is kept.',
   'settings.logout.confirm': 'Sign out',
 
-  'overview.available': 'Still available',
+  'overview.available': 'Budget left',
   'overview.state.ok': 'On track',
   'overview.state.near': 'Nearly used up',
   'overview.state.over': 'Over budget',
@@ -201,6 +201,7 @@ export const en: Record<MessageKey, string> = {
   'history.yesterday': 'Yesterday',
   'history.delete': 'Delete',
   'history.deleted': 'Entry deleted',
+  'history.filters': 'Filters',
   'history.undo': 'Undo',
   'history.restored': 'Entry restored',
   'history.conflict': 'Conflict',

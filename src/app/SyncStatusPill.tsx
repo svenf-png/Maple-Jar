@@ -8,7 +8,7 @@ import { StatusPill } from '../ui';
 import styles from './SyncStatusPill.module.css';
 import { WifiOffIcon } from './status-icons';
 
-/** Sync-Status: immer Symbol plus Text, nie nur Farbe. Die Live-Region steht vor dem Inhalt. */
+/** Sync-Status: immer Symbol plus Text, nie nur Farbe (verbunden: Icon-Button 44 × 44 mit Beschriftung). Die Live-Region steht vor dem Inhalt. */
 export function SyncStatusPill() {
   useLang();
   const status = useSyncStatus();
@@ -49,9 +49,15 @@ export function SyncStatusPill() {
       break;
     case 'connected':
       content = (
-        <StatusPill variant="ok" icon={CloudOkIcon}>
-          {t('status.connected')}
-        </StatusPill>
+        <button
+          type="button"
+          className={styles.iconBtn}
+          aria-label={t('status.synced')}
+          title={t('status.synced')}
+          onClick={() => void import('../data/sync/runtime').then((r) => r.requestSync())}
+        >
+          <CloudOkIcon size={22} />
+        </button>
       );
       break;
   }

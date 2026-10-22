@@ -14,7 +14,7 @@ export const de = {
   'nav.main': 'Hauptnavigation',
   'nav.capture': 'Ausgabe erfassen',
 
-  'status.connected': 'Verbunden',
+  'status.synced': 'Synchronisiert',
   'status.offline': 'Offline',
   'status.pending': '{count} warten auf Sync',
   'status.reauth': 'Anmeldung erneuern',
@@ -130,7 +130,7 @@ export const de = {
     'Zugangsdaten und alle lokalen Daten werden von diesem Gerät gelöscht. Die Daten im Supabase-Projekt bleiben erhalten.',
   'settings.logout.confirm': 'Abmelden',
 
-  'overview.available': 'Noch verfügbar',
+  'overview.available': 'Budget übrig',
   'overview.state.ok': 'Im Plan',
   'overview.state.near': 'Fast aufgebraucht',
   'overview.state.over': 'Über Budget',
@@ -202,6 +202,7 @@ export const de = {
   'history.yesterday': 'Gestern',
   'history.delete': 'Löschen',
   'history.deleted': 'Eintrag gelöscht',
+  'history.filters': 'Filter',
   'history.undo': 'Rückgängig',
   'history.restored': 'Eintrag wiederhergestellt',
   'history.conflict': 'Konflikt',
