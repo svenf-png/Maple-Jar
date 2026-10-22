@@ -90,23 +90,20 @@ test('Offline erfassen und nach der Rückkehr synchronisieren', async ({ page, c
     await expect(page.getByText(/Offline|warten auf Sync/).first()).toBeVisible();
   }
   await context.setOffline(false);
-  if ((page.viewportSize()?.width ?? 0) < 1024) {
-    await expect(page.getByRole('button', { name: 'Synchronisiert' })).toBeVisible({
-      timeout: 15_000,
-    });
-  }
-  const pending = await page.evaluate(
-    () =>
-      new Promise<number>((resolve) => {
-        const open = indexedDB.open('maple-jar');
-        open.onsuccess = () => {
-          const tx = open.result.transaction('outbox');
-          const req = tx.objectStore('outbox').count();
-          req.onsuccess = () => resolve(req.result);
-        };
-      }),
-  );
-  expect(pending).toBe(0);
+  await expect(page.getByRole('button', { name: 'Synchronisiert' })).toBeVisible();
+  const pending = () =>
+    page.evaluate(
+      () =>
+        new Promise<number>((resolve) => {
+          const open = indexedDB.open('maple-jar');
+          open.onsuccess = () => {
+            const tx = open.result.transaction('outbox');
+            const req = tx.objectStore('outbox').count();
+            req.onsuccess = () => resolve(req.result);
+          };
+        }),
+    );
+  await expect.poll(pending).toBe(0);
 });
 
 test('Budget: ab 80 % und über 100 % Amber mit Icon und Text', async ({ page }) => {

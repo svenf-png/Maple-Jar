@@ -5,6 +5,7 @@ import {
   connectE2e,
   go,
   historyItem,
+  overviewHeading,
   setupHousehold,
   typeAmount,
   waitForAnimations,
@@ -365,11 +366,16 @@ test('Reduced Motion: keine Animationen auf Übersicht, Projektion und im Sheet'
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openDueSheet(page);
   await go(page, '#/planung/projektion');
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Projektion', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
   await waitForAnimations(page);
   expect(await animatedCount(page)).toBe(0);
 
   await go(page, '#/');
+  await expect(overviewHeading(page)).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.getByRole('button', { name: /Streaming-Abo A/ }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   expect(await animatedCount(page)).toBe(0);

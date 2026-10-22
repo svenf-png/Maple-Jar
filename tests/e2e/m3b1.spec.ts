@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
-import { connectE2e, go, setupHousehold, waitForAnimations } from './helpers';
+import { connectE2e, go, setupHousehold, waitForAnimations, waitForSheetSettled } from './helpers';
 
 const iso = (offsetDays: number) => {
   const d = new Date();
@@ -188,8 +188,10 @@ for (const scheme of ['light', 'dark'] as const) {
       await page.getByRole('button', { name: 'Anderer Betrag' }).click();
       await page.getByLabel('Betrag in CAD').fill('100');
       await page.getByRole('dialog').getByRole('button', { name: 'Speichern' }).click();
-      await expect(page.getByRole('dialog', { name: 'Sparziel A ist geschafft!' })).toBeVisible();
-      await page.waitForTimeout(800); // Einblend-Animation des Sheets abwarten (Kontrastprüfung)
+      const sheet = page.getByRole('dialog', { name: 'Sparziel A ist geschafft!' });
+      await expect(sheet).toBeVisible();
+      await waitForSheetSettled(sheet);
+      await expect(sheet.getByRole('button', { name: 'Abschließen' })).toBeEnabled();
       await axe();
     });
   });

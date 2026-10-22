@@ -9,6 +9,7 @@ import {
   overviewHeading,
   setupHousehold,
   waitForAnimations,
+  waitForSheetSettled,
 } from './helpers';
 
 test.use({ serviceWorkers: 'block' });
@@ -238,6 +239,8 @@ test('Konflikt: Einstieg aus der Übersicht', async ({ browser }) => {
 });
 
 // axe misst Kontraste sonst mitten in der Einblend-Animation des Sheets (vor allem in WebKit).
+// Das genügt nicht allein: WebKit meldet die Animation als `finished`, bevor die berechnete Deckkraft
+// 1 ist (0,06 bis 0,56 gemessen). Den Endzustand belegt erst `waitForSheetSettled`.
 async function animationsDone(page: Page): Promise<void> {
   await page.waitForFunction(() =>
     document.getAnimations().every((a) => a.playState !== 'running'),
@@ -256,6 +259,7 @@ for (const scheme of ['light', 'dark'] as const) {
     await expect(dialog.getByRole('heading', { name: 'Zwei Versionen gefunden' })).toBeVisible();
     await dialog.getByRole('radio', { name: /Version von Person B/ }).check();
     await animationsDone(d.a.page);
+    await waitForSheetSettled(dialog);
     await waitForAnimations(d.a.page);
     const results = await new AxeBuilder({ page: d.a.page }).analyze();
     expect(
@@ -286,6 +290,7 @@ for (const scheme of ['light', 'dark'] as const) {
     await expect(dialog.getByText('Geänderte Werte')).toBeVisible();
     await expect(dialog.getByText(/95,00/)).toBeVisible();
     await animationsDone(d.a.page);
+    await waitForSheetSettled(dialog);
     await waitForAnimations(d.a.page);
     const results = await new AxeBuilder({ page: d.a.page }).analyze();
     expect(

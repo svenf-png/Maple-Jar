@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { ANON_KEY, PERSON_A, PROJECT_URL } from './fixtures/household';
 
 type Person = { username: string; password: string };
@@ -119,4 +119,14 @@ export async function waitForAnimations(page: Page) {
         .map((a) => a.finished.catch(() => undefined)),
     ),
   );
+}
+
+/**
+ * Wartet, bis ein Sheet (`sheet-up` in BottomSheet.module.css) seinen Endzustand erreicht hat.
+ * WebKit meldet die Animation als `finished`, während die berechnete Deckkraft noch unter 1 liegt;
+ * erst die Endwerte (opacity 1, transform none) belegen den Zielzustand.
+ */
+export async function waitForSheetSettled(dialog: Locator): Promise<void> {
+  await expect(dialog).toHaveCSS('opacity', '1');
+  await expect(dialog).toHaveCSS('transform', 'none');
 }
