@@ -2,7 +2,14 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 import { todayIso } from '../../src/data/today';
 import { addDays } from '../../src/domain/schedule';
-import { connectE2e, go, historyItems, settleForAxe, setupHousehold } from './helpers';
+import {
+  connectE2e,
+  go,
+  historyItems,
+  settleForAxe,
+  setupHousehold,
+  waitForSheetSettled,
+} from './helpers';
 
 // Testdaten (Einnahmen, Fixkosten, Sparziele) entstehen über `window.__e2e` (src/data/e2e-seed.ts, nur im E2E-Build),
 // solange die Formulare nicht Teil dieses Zweigs sind. Alles fiktiv.
@@ -81,7 +88,7 @@ test('Fixkosten: fällig, per Tipp buchen, Verlauf mit Kennzeichnung, Budget ste
   await sheet.getByRole('button', { name: 'Als bezahlt buchen' }).click();
   await expect(page.getByText('Streaming-Abo A gebucht')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Als Nächstes fällig' })).toHaveCount(0);
-  await expect(page.getByText(/15,00.*von.*100,00/)).toBeVisible();
+  await expect(page.getByText(/15 von 100/)).toBeVisible();
 
   await go(page, '#/verlauf');
   const entry = historyItems(page).filter({ hasText: 'Fixkosten' });
@@ -108,12 +115,27 @@ test('Fixkosten: Rückgängig nach dem Buchen stellt die Fälligkeit wieder her'
   await expect(historyItems(page).filter({ hasText: 'Fixkosten' })).toHaveCount(1);
 });
 
-test('Fixkosten: überfällig ist markiert (Amber, Icon, Text)', async ({ page }) => {
+test('Fixkosten: Überfälliges steht in einem Hinweis-Block, „Alle buchen“ bucht mit Rückgängig', async ({
+  page,
+}) => {
   await start(page);
   await fixed(page, 2000, { startsOn: addDays(today, -3), unit: 'week', every: 4 });
-  const row = page.getByRole('button', { name: /Streaming-Abo A/ });
-  await expect(row).toContainText('Überfällig');
-  await expect(row.locator('svg')).toHaveCount(2); // Kategorie-Symbol und Warnzeichen
+  const block = page.getByRole('button', { name: /Fixkosten.*offen/ });
+  await expect(block).toContainText('Streaming-Abo A');
+  await expect(block.locator('svg').first()).toBeVisible(); // Warnzeichen, Status nie nur über Farbe
+  // Einzelne Zeile erst nach Tap auf den Block.
+  await expect(
+    page.getByRole('button', { name: /^Als bezahlt buchen: Streaming-Abo A/ }),
+  ).toHaveCount(0);
+  await block.click();
+  await expect(
+    page.getByRole('button', { name: /^Als bezahlt buchen: Streaming-Abo A/ }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Alle buchen' }).click();
+  await expect(page.getByText('1 Fixkosten gebucht')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Fixkosten.*offen/ })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Rückgängig' }).click();
+  await expect(page.getByRole('button', { name: /Fixkosten.*offen/ })).toBeVisible();
 });
 
 test('Sparziele: Karte mit Fortschritt und Status, Link zum Detail', async ({ page }) => {
@@ -130,8 +152,8 @@ test('Sparziele: Karte mit Fortschritt und Status, Link zum Detail', async ({ pa
   });
   const card = page.getByRole('link', { name: /Sparziel A/ });
   await expect(card).toBeVisible();
-  await expect(card).toContainText('0 % von');
-  await expect(card).toContainText('Etwas zurück');
+  await expect(card).toContainText('0 % · Ziel');
+  await expect(card).toContainText('hinter Plan');
   await expect(card.locator('svg')).toHaveCount(2); // Symbol und Warnzeichen
   await card.click();
   await expect(page).toHaveURL(/#\/ziel\/[0-9a-f-]+$/);
@@ -200,11 +222,12 @@ for (const scheme of ['light', 'dark'] as const) {
         ).toEqual([]);
       };
       await scan();
-      await page.getByRole('button', { name: /Streaming-Abo B/ }).click();
-      await page.waitForTimeout(500); // Einblend-Animation des Blatts abwarten (axe misst sonst Zwischenfarben)
-      await expect(
-        page.getByRole('dialog').getByRole('button', { name: 'Als bezahlt buchen' }),
-      ).toBeVisible();
+      await page.getByRole('button', { name: /Fixkosten.*offen/ }).click(); // Liste der offenen Fixkosten
+      await scan();
+      await page.getByRole('button', { name: /^Als bezahlt buchen: Streaming-Abo B/ }).click();
+      const dialog = page.getByRole('dialog');
+      await expect(dialog.getByRole('button', { name: 'Als bezahlt buchen' })).toBeVisible();
+      await waitForSheetSettled(dialog); // Endzustand des Blatts abwarten (axe misst sonst Zwischenfarben)
       await scan();
     });
   });

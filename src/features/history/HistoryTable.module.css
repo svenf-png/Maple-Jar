@@ -84,7 +84,9 @@
   background: var(--infoTint);
 }
 .link {
-  display: block;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
   color: var(--label);
   text-decoration: none;
   border-radius: 4px;

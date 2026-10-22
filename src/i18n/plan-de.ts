@@ -4,6 +4,7 @@
 export const planDe = {
   // shared (Foundation)
   'plan.title': 'Planung',
+  'row.pending': 'Wartet auf Sync',
   'plan.stub': 'In Arbeit',
   'plan.perMonth': '≈ {amount} / Monat',
   'plan.repeat.once': 'Einmalig',
@@ -31,7 +32,7 @@ export const planDe = {
   'conflict.title': 'Konflikt lösen',
 
   // planning (B1)
-  'plan.add': 'Hinzufügen',
+  'plan.new': 'Neu',
   'plan.add.title': 'Was möchtest du anlegen?',
   'plan.add.goal': 'Sparziel',
   'plan.add.fixed': 'Fixkosten',
@@ -56,6 +57,9 @@ export const planDe = {
   'goal.savedOf': '{saved} von {target}',
   'goal.percent': '{pct} % geschafft',
   'goal.needed': 'Nötig: {amount} / Monat',
+  'goal.statLine': '{pct} % · Ziel {date}',
+  'goal.neededShort': '{amount} / Monat nötig',
+  'goal.behind.chip': '{amount} hinter Plan',
   'goal.progress': 'Fortschritt {name}',
   'goal.behind.note': '{amount} hinter Plan. Mit {back} im {month} wieder im Plan.',
   'goal.behind.overdue': '{amount} hinter Plan. Das Zieldatum ist vorbei.',
@@ -156,12 +160,20 @@ export const planDe = {
   'overview.due.date': 'Fällig am',
   'overview.due.category': 'Kategorie',
   'overview.due.payer': 'Bezahlt von',
+  'overview.due.overdueBlock': '{count} Fixkosten aus {month} offen',
+  'overview.due.overdueBlock.one': '1 Fixkosten aus {month} offen',
+  'overview.due.overdueBlock.mixed': '{count} Fixkosten offen',
+  'overview.due.overdueSum': '{sum} · {names}',
+  'overview.due.bookAll': 'Alle buchen',
+  'overview.due.bookedAll': '{count} Fixkosten gebucht',
+  'overview.due.bookAllFailed': 'Nicht alle Fixkosten ließen sich buchen. Bitte einzeln versuchen.',
+  'overview.due.showList': 'Offene Fixkosten einzeln anzeigen',
   'overview.due.cancel': 'Abbrechen',
   'donut.seg.fixed': 'Fixkosten',
   'donut.seg.budget': 'Budget-Ausgaben',
   'donut.seg.other': 'Andere Ausgaben',
   'donut.seg.saving': 'Sparen',
-  'donut.seg.free': 'Frei',
+  'donut.seg.free': 'Unverplant',
   'donut.part': '{label} {percent} %',
   'donut.pct': '{percent} %',
   'donut.aria.normal': 'Anteil am Einkommen von {total}: {parts}.',
@@ -292,6 +304,32 @@ export const planDe = {
   'scen.adopt.text': 'Die Regler dieser Kategorien stehen danach wieder auf 0 %.',
   'scen.adopt.confirm': 'Übernehmen',
   'scen.adopt.done': 'Budgets ab {month} übernommen',
+  // export (M5)
+  'settings.exportCsv': 'Einträge exportieren (CSV)',
+  'settings.exportCsv.action': 'Exportieren',
+  'csv.date': 'Datum',
+  'csv.merchant': 'Händler',
+  'csv.note': 'Notiz',
+  'csv.category': 'Kategorie',
+  'csv.amount': 'Betrag',
+  'csv.currency': 'Währung',
+  'csv.amountCad': 'Betrag CAD',
+  'csv.paidBy': 'Bezahlt von',
+  'csv.source': 'Quelle',
+  'csv.source.manual': 'Manuell',
+  'csv.source.fixed': 'Fixkosten',
+  // states (M5)
+  'conflict.banner.label': 'Konflikte',
+  'conflict.banner.one': 'Ein Konflikt wartet auf dich',
+  'conflict.banner.many': '{count} Konflikte warten auf dich',
+  'conflict.banner.hint':
+    'Ihr habt dasselbe auf zwei Geräten geändert. Entscheide, welche Version bleibt.',
+  // install (M5)
+  'install.title': 'Auf dem Home-Bildschirm nutzen',
+  'install.before': 'Tippe in Safari auf',
+  'install.after': 'und wähle „Zum Home-Bildschirm“.',
+  'install.shareIcon': 'Teilen-Symbol',
+  'install.close': 'Hinweis schließen',
 } as const;
 
 export type PlanKey = keyof typeof planDe;

@@ -21,13 +21,6 @@
   text-overflow: ellipsis;
   cursor: pointer;
 }
-.filter {
-  min-width: 180px;
-  border: 0;
-  border-radius: var(--r-pill);
-  background: var(--fill);
-  transition: background-color 0.12s;
-}
 .plain {
   /* Rahmenlos wie die Felder in einer Formularzeile, Text rechtsbündig. */
   min-width: max-content;
@@ -53,9 +46,6 @@
   transition: background-color 0.12s;
 }
 @media (hover: hover) {
-  .filter:hover:not(:disabled) {
-    background: var(--fillHover);
-  }
   .edit:hover:not(:disabled) {
     background: var(--fill);
   }

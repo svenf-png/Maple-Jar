@@ -36,7 +36,68 @@
 .filters {
   display: flex;
   gap: var(--s-2);
-  flex-wrap: wrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 calc(-1 * var(--s-4));
+  padding: 2px var(--s-4);
+}
+.filters::-webkit-scrollbar {
+  display: none;
+}
+.chip {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--label3);
+  background: transparent;
+  color: var(--label);
+  transition: background-color 0.12s;
+}
+.chip svg {
+  position: absolute;
+  right: 12px;
+  transform: rotate(90deg);
+  pointer-events: none;
+}
+.chip select {
+  appearance: none;
+  /* Der Rahmen des Chips liegt innerhalb der 44 px; das Feld gleicht ihn aus, damit das Touch-Ziel 44 px hoch ist. */
+  margin: -1px;
+  height: calc(100% + 2px);
+  padding: 0 34px 0 14px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.chip select:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+.chipActive {
+  background: var(--acc);
+  border-color: var(--acc);
+  color: var(--onAcc);
+}
+@media (hover: hover) {
+  .chip:hover {
+    background: var(--fillHover);
+  }
+  .chipActive:hover {
+    background: var(--accHover);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chip {
+    transition: none;
+  }
 }
 .empty {
   color: var(--label2);

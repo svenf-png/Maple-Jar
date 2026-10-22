@@ -2,19 +2,23 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { PageHeader } from '../../app/PageHeader';
 import { db } from '../../data/db';
-import { exportEventsJson } from '../../data/export';
+import { exportEntriesCsv, exportEventsJson } from '../../data/export';
 import { findMember } from '../../data/household';
 import { disconnect } from '../../data/session';
+import { todayIso } from '../../data/today';
 import { useLiveQuery } from '../../data/use-live-query';
 import { useReadySession } from '../../data/use-session';
+import type { CsvLabels } from '../../domain/csv';
 import { formatDay, formatRate } from '../../i18n/format';
 import { getLocale, setLang, t, useLang } from '../../i18n/t';
+import { downloadFile } from '../../platform/download';
 import { usePersisted } from '../../platform/persist';
 import { readTheme, setTheme, type ThemePref } from '../../platform/theme';
 import { useTodayRate } from '../../platform/use-fx';
 import { useMedia } from '../../platform/use-media';
 import { Avatar, Button, Card, ConfirmDialog, ListRow, Segmented } from '../../ui';
 import styles from './SettingsPage.module.css';
+import { SetupLinkCard } from './SetupLinkCard';
 
 export function SettingsPage() {
   const lang = useLang();
@@ -35,19 +39,43 @@ export function SettingsPage() {
     0,
   );
   const [exportError, setExportError] = useState(false);
+  const [csvError, setCsvError] = useState(false);
 
   async function exportData() {
     setExportError(false);
     try {
       const json = await exportEventsJson(db);
-      const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `maple-jar-export-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      downloadFile(
+        `maple-jar-export-${new Date().toISOString().slice(0, 10)}.json`,
+        json,
+        'application/json',
+      );
     } catch {
       setExportError(true);
+    }
+  }
+
+  async function exportCsv() {
+    setCsvError(false);
+    try {
+      const labels: CsvLabels = {
+        headers: [
+          t('csv.date'),
+          t('csv.merchant'),
+          t('csv.note'),
+          t('csv.category'),
+          t('csv.amount'),
+          t('csv.currency'),
+          t('csv.amountCad'),
+          t('csv.paidBy'),
+          t('csv.source'),
+        ],
+        source: { manual: t('csv.source.manual'), fixed: t('csv.source.fixed') },
+      };
+      const csv = await exportEntriesCsv(db, household.members, labels);
+      downloadFile(`maple-jar-entries-${todayIso()}.csv`, csv, 'text/csv;charset=utf-8');
+    } catch {
+      setCsvError(true);
     }
   }
 
@@ -69,7 +97,14 @@ export function SettingsPage() {
       <div className={styles.stack}>
         <Card>
           <div className={styles.profile}>
-            {me ? <Avatar name={me.displayName} color={me.color} size={52} /> : null}
+            {me ? (
+              <Avatar
+                name={me.displayName}
+                color={me.color}
+                size={52}
+                peers={household.members.map((m) => m.displayName)}
+              />
+            ) : null}
             <div>
               <div className={styles.name}>{me?.displayName ?? username}</div>
               <div className={styles.sub}>
@@ -130,16 +165,38 @@ export function SettingsPage() {
             <ListRow title={t('settings.budgets')} chevron />
           </Link>
         </Card>
+        <SetupLinkCard />
         <Card>
           <ListRow
             title={t('settings.export')}
             right={
-              <Button variant="secondary" onClick={() => void exportData()}>
+              <Button
+                variant="secondary"
+                aria-label={t('settings.export')}
+                onClick={() => void exportData()}
+              >
                 {t('settings.export.action')}
               </Button>
             }
           />
           {exportError ? (
+            <p role="alert" className={styles.sub}>
+              {t('settings.export.error')}
+            </p>
+          ) : null}
+          <ListRow
+            title={t('settings.exportCsv')}
+            right={
+              <Button
+                variant="secondary"
+                aria-label={t('settings.exportCsv')}
+                onClick={() => void exportCsv()}
+              >
+                {t('settings.exportCsv.action')}
+              </Button>
+            }
+          />
+          {csvError ? (
             <p role="alert" className={styles.sub}>
               {t('settings.export.error')}
             </p>

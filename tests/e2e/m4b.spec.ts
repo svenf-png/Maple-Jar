@@ -9,7 +9,6 @@ import {
   seedLastMonthEntry,
   settleForAxe,
   setupHousehold,
-  waitForAnimations,
 } from './helpers';
 
 const DESKTOP = { width: 1280, height: 900 };
@@ -239,7 +238,7 @@ test.describe('M4 Teil B Mobil', () => {
   }) => {
     await setupSeeded(page);
     await openProjection(page);
-    await waitForAnimations(page);
+    await settleForAxe(page);
     const tableBox = await page.getByRole('table', { name: 'Cashflow pro Monat' }).boundingBox();
     const panelBox = await page.getByRole('complementary').boundingBox();
     expect(tableBox).not.toBeNull();

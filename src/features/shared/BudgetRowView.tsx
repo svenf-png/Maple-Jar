@@ -1,5 +1,5 @@
 import type { BudgetRow } from '../../domain/budget';
-import { formatMoney } from '../../i18n/format';
+import { formatMoney, formatMoneyShort, formatMoneySplit } from '../../i18n/format';
 import { getLocale, t } from '../../i18n/t';
 import { WarnIcon } from '../../icons/ui-icons';
 import { CategoryTile, ProgressBar } from '../../ui';
@@ -23,8 +23,8 @@ export function BudgetRowView({ row }: { row: BudgetRow }) {
         <div className={styles.line}>
           <span className={styles.name}>{row.category.name}</span>
           <span className={`${styles.amounts} num`}>
-            <strong>{formatMoney(row.spent, 'CAD', locale)}</strong> /{' '}
-            {formatMoney(row.limit, 'CAD', locale)}
+            <strong>{formatMoneySplit(row.spent, 'CAD', locale).amount}</strong> /{' '}
+            {formatMoneyShort(row.limit, 'CAD', locale)}
           </span>
         </div>
         <ProgressBar

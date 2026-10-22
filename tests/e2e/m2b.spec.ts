@@ -8,6 +8,7 @@ import {
   overviewHeading,
   settleForAxe,
   setupHousehold,
+  typeAmount,
 } from './helpers';
 
 async function ready(page: Page) {
@@ -40,6 +41,26 @@ test('Erfassen: Betrag über den Ziffernblock, Eintrag erscheint in Übersicht u
   await expect(page.getByRole('link', { name: /Supermarkt A/ })).toContainText('84,17');
   await go(page, '#/verlauf');
   await expect(page.getByRole('link', { name: /Supermarkt A/ })).toBeVisible();
+});
+
+test('Erfassen: neue Eingabe direkt nach dem Speichern bleibt erhalten', async ({ page }) => {
+  await page.clock.install();
+  await ready(page);
+  await go(page, '#/erfassen');
+  await typeAmount(page, '5,00');
+  await page.getByRole('button', { name: 'Lebensmittel' }).click();
+  await page.getByLabel('Händler oder Notiz (optional)').fill('Café B');
+  // Uhr anhalten: der Feedback-Timer läuft erst bei runFor.
+  const now = await page.evaluate(() => Date.now());
+  await page.clock.pauseAt(now + 60_000);
+  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect(page.getByText('Gespeichert', { exact: true })).toBeVisible();
+  await typeAmount(page, '6');
+  await page.clock.runFor(1000);
+  await expect(page.getByText('Gespeichert', { exact: true })).toBeHidden();
+  await expect(page.getByRole('status', { name: 'Betrag' })).toHaveText(/^6(?!\d)/);
+  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect(page.getByText('Gespeichert', { exact: true })).toBeVisible();
 });
 
 test('Erfassen: Kategorie-Vorschlag aus der Historie', async ({ page }) => {
@@ -90,21 +111,20 @@ test('Offline erfassen und nach der Rückkehr synchronisieren', async ({ page, c
     await expect(page.getByText(/Offline|warten auf Sync/).first()).toBeVisible();
   }
   await context.setOffline(false);
-  if ((page.viewportSize()?.width ?? 0) < 1024) {
-    await expect(page.getByText('Verbunden', { exact: true })).toBeVisible({ timeout: 15_000 });
-  }
-  const pending = await page.evaluate(
-    () =>
-      new Promise<number>((resolve) => {
-        const open = indexedDB.open('maple-jar');
-        open.onsuccess = () => {
-          const tx = open.result.transaction('outbox');
-          const req = tx.objectStore('outbox').count();
-          req.onsuccess = () => resolve(req.result);
-        };
-      }),
-  );
-  expect(pending).toBe(0);
+  await expect(page.getByRole('button', { name: 'Synchronisiert' })).toBeVisible();
+  const pending = () =>
+    page.evaluate(
+      () =>
+        new Promise<number>((resolve) => {
+          const open = indexedDB.open('maple-jar');
+          open.onsuccess = () => {
+            const tx = open.result.transaction('outbox');
+            const req = tx.objectStore('outbox').count();
+            req.onsuccess = () => resolve(req.result);
+          };
+        }),
+    );
+  await expect.poll(pending).toBe(0);
 });
 
 test('Budget: ab 80 % und über 100 % Amber mit Icon und Text', async ({ page }) => {

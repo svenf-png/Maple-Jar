@@ -16,17 +16,24 @@ export const en: Record<MessageKey, string> = {
   'nav.main': 'Main navigation',
   'nav.capture': 'Add expense',
 
-  'status.connected': 'Connected',
+  'status.synced': 'Synced',
   'status.offline': 'Offline',
   'status.pending': '{count} waiting to sync',
   'status.reauth': 'Sign in again',
-  'status.error': 'Sync problem',
+  'status.errorRetry': 'Sync problem · Try again',
+  'status.offlinePending': 'Offline · {count} waiting to sync',
+  'status.syncing': 'Syncing …',
   'status.member': 'Member {name}',
 
   'connect.subtitle': 'Your shared household budget.',
   'connect.projectUrl': 'Project URL',
   'connect.projectUrlPlaceholder': 'https://project.supabase.co',
   'connect.anonKey': 'Public key',
+  'connect.link': 'Paste setup link',
+  'connect.linkHint': 'Optional. Fills in the project URL and key.',
+  'connect.error.link': 'This link is not valid. Please paste the whole link.',
+  'connect.project': 'Project: {host}',
+  'connect.otherProject': 'Change',
   'connect.username': 'Username',
   'connect.password': 'Password',
   'connect.submit': 'Connect',
@@ -65,11 +72,11 @@ export const en: Record<MessageKey, string> = {
   'help.step5':
     'Open Project Settings, Data API or API Keys and copy the project URL and the public key (anon or publishable). Never enter the secret key (service_role) in the app.',
   'help.step6':
-    'Open the app address, enter project URL, public key, username and password, then tap "Connect". The first person sets up the household.',
+    'Open the app address, enter project URL, public key, username and password, then tap "Connect". The first person sets up the household. Then create a setup link under Settings for further devices: they only need username and password.',
   'help.step7':
     'The second person connects with their own account and joins the household themselves.',
   'help.step8':
-    'iPhone: open the app address in Safari, choose "Add to Home Screen" and connect in the installed app. Safari and the Home Screen app store data separately.',
+    'iPhone: open the app address in Safari, choose "Add to Home Screen" and connect in the installed app. Safari and the Home Screen app store data separately, so paste the setup link into the installed app.',
   'help.step9':
     'Free projects are paused after a week of inactivity. Export your data as JSON regularly under Settings.',
 
@@ -113,6 +120,14 @@ export const en: Record<MessageKey, string> = {
   'settings.fx.unavailable': 'Unavailable',
   'settings.device': 'Device',
   'settings.persisted': 'Persistent storage',
+  'settings.setupLink': 'Set up another device',
+  'settings.setupLink.hint': 'Link with project URL and public key, no password.',
+  'settings.setupLink.create': 'Create link',
+  'settings.setupLink.copy': 'Copy',
+  'settings.setupLink.copied': 'Copied',
+  'settings.setupLink.error': 'No access saved. Please sign in again.',
+  'settings.setupLink.warning':
+    'Share privately only, not in chats or public notes. iPhone: paste the link into the installed home screen app instead of opening it in Safari.',
   'settings.export': 'Export data (JSON)',
   'settings.export.action': 'Export',
   'settings.export.error': 'The export failed.',
@@ -127,7 +142,7 @@ export const en: Record<MessageKey, string> = {
     'Credentials and all local data are deleted from this device. The data in the Supabase project is kept.',
   'settings.logout.confirm': 'Sign out',
 
-  'overview.available': 'Still available',
+  'overview.available': 'Budget left',
   'overview.state.ok': 'On track',
   'overview.state.near': 'Nearly used up',
   'overview.state.over': 'Over budget',
@@ -167,6 +182,8 @@ export const en: Record<MessageKey, string> = {
   'capture.save': 'Save',
   'capture.saveChanges': 'Save changes',
   'capture.saved': 'Saved',
+  'capture.savedOffline':
+    'Saved on this device. It will sync automatically once you are back online.',
   'capture.suggestion': 'Suggested from {count} earlier purchases',
   'capture.suggestion.one': 'Suggested from 1 earlier purchase',
   'capture.suggestions': 'Suggestions',
@@ -197,6 +214,7 @@ export const en: Record<MessageKey, string> = {
   'history.yesterday': 'Yesterday',
   'history.delete': 'Delete',
   'history.deleted': 'Entry deleted',
+  'history.filters': 'Filters',
   'history.undo': 'Undo',
   'history.restored': 'Entry restored',
   'history.conflict': 'Conflict',

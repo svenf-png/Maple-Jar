@@ -4,7 +4,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
-  height: 40px;
+  min-height: 44px;
   padding: 0 14px 0 6px;
   border-radius: 20px;
   background: var(--fill);

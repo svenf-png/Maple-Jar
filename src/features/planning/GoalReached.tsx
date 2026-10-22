@@ -5,7 +5,8 @@ import { isReached } from '../../domain/goals';
 import type { Goal } from '../../domain/model';
 import { formatDay, formatMoney } from '../../i18n/format';
 import { getLocale, t } from '../../i18n/t';
-import { Button, CategoryTile, StatusPill } from '../../ui';
+import { CategoryTile, StatusPill } from '../../ui';
+import { HapticTarget } from '../../ui/HapticTarget';
 import { BottomSheet } from '../shared/BottomSheet';
 import styles from './GoalReached.module.css';
 import { monthsSpan, reachedSeenKey, spanFrom } from './plan-helpers';
@@ -77,7 +78,7 @@ export function GoalReached({ goal, savedMinor, today, open, onClose }: Props) {
           {t('goal.reached.saved', { amount: formatMoney(savedMinor, goal.currency, locale) })}
         </p>
         <p className={styles.duration}>{duration}</p>
-        <Button onClick={onClose}>{t('goal.reached.close')}</Button>
+        <HapticTarget onTap={onClose}>{t('goal.reached.close')}</HapticTarget>
         <Link to="/ziel/neu" className={styles.next} onClick={onClose}>
           {t('goal.reached.next')}
         </Link>

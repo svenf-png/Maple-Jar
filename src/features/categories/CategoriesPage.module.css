@@ -100,7 +100,7 @@
   }
 }
 .iconBtn:disabled {
-  color: var(--label3);
+  color: var(--label2);
   cursor: default;
 }
 .form {

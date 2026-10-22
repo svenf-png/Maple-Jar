@@ -11,6 +11,7 @@ import { formatDay, formatMoney } from '../../i18n/format';
 import { getLocale, t, useLang } from '../../i18n/t';
 import { TrashIcon } from '../../icons/ui-icons';
 import { Button, Card, CategoryTile, Segmented, TextField, useToast } from '../../ui';
+import { HapticTarget } from '../../ui/HapticTarget';
 import { ConflictBadge } from '../conflict/ConflictBadge';
 import { BottomSheet } from '../shared/BottomSheet';
 import { memberName, todayIso } from '../shared/helpers';
@@ -163,10 +164,10 @@ export function GoalDetailPage() {
       ) : (
         <section className={styles.actions} aria-label={t('goal.detail.contribute')}>
           {suggestion > 0n ? (
-            <Button
+            <HapticTarget
               variant="secondary"
               busy={busy}
-              onClick={() =>
+              onTap={() =>
                 void add({
                   amountMinor: Number(suggestion),
                   contributedOn: today,
@@ -176,7 +177,7 @@ export function GoalDetailPage() {
               }
             >
               {t('goal.detail.suggested', { amount: money(suggestion) })}
-            </Button>
+            </HapticTarget>
           ) : null}
           <Button
             disabled={busy}
@@ -286,9 +287,9 @@ export function GoalDetailPage() {
             />
           </div>
           <FormError message={error} />
-          <Button busy={busy} onClick={() => void submit()}>
+          <HapticTarget busy={busy} onTap={() => void submit()}>
             {t('common.save')}
-          </Button>
+          </HapticTarget>
           <Button variant="secondary" onClick={() => setSheet(false)}>
             {t('common.cancel')}
           </Button>

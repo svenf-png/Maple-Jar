@@ -36,6 +36,9 @@ Ausführlich mit Prüfliste in [`supabase/README.md`](supabase/README.md). Kurzf
 7. iPhone: App-Adresse in Safari öffnen, „Zum Home-Bildschirm“ wählen und in der installierten App verbinden
    (Projekt-URL, öffentlicher Schlüssel, Benutzername, Passwort). Die erste Person richtet den Haushalt ein, die zweite
    verbindet sich mit ihrem Konto und tritt dabei selbst bei.
+   Weitere Geräte: In den Einstellungen unter „Weiteres Gerät einrichten“ einen Einrichtungslink erzeugen und in der
+   installierten App auf der Anmeldeseite einfügen. Danach genügen Benutzername und Passwort. Der Link enthält
+   Projekt-URL und öffentlichen Schlüssel (kein Passwort) und wird nur privat weitergegeben.
 
 ### Pausierung und Sicherung
 

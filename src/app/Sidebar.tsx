@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { NavLink, useNavigate } from 'react-router';
 import { findMember } from '../data/household';
 import { useReadySession } from '../data/use-session';
@@ -7,6 +8,11 @@ import { PlusIcon } from '../icons/ui-icons';
 import { Avatar } from '../ui';
 import { navItems } from './nav-items';
 import styles from './Sidebar.module.css';
+
+// Die Pille ist klein, lädt aber nur hier nach, damit der Entry-Chunk nicht wächst.
+const SyncStatusPill = lazy(async () => ({
+  default: (await import('./SyncStatusPill')).SyncStatusPill,
+}));
 
 export function Sidebar() {
   const navigate = useNavigate();
@@ -40,9 +46,19 @@ export function Sidebar() {
         <PlusIcon size={18} />
         {t('nav.capture')}
       </button>
+      <div className={styles.status}>
+        <Suspense fallback={null}>
+          <SyncStatusPill />
+        </Suspense>
+      </div>
       {me ? (
         <div className={styles.user}>
-          <Avatar name={me.displayName} color={me.color} size={32} />
+          <Avatar
+            name={me.displayName}
+            color={me.color}
+            size={32}
+            peers={household.members.map((m) => m.displayName)}
+          />
           <span>{me.displayName}</span>
         </div>
       ) : null}

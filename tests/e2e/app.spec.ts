@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
+import { todayIso } from '../../src/data/today';
 import { ANON_KEY, PERSON_A, PERSON_C, PROJECT_URL } from './fixtures/household';
-import { overviewHeading, settleForAxe } from './helpers';
+import { captureEntry, overviewHeading, settleForAxe } from './helpers';
 
 const url = (scenario: string) => `/?e2e=${scenario}#/verbinden`;
 
@@ -59,7 +61,7 @@ test('2: noch kein Haushalt → Einrichten → Übersicht', async ({ page }) => 
   await expect(page.getByText('Noch keine zweite Person eingetragen')).toBeVisible();
 });
 
-test('3: vorhandener Haushalt (Mitglied) → direkt Übersicht, Status „Verbunden“', async ({
+test('3: vorhandener Haushalt (Mitglied) → direkt Übersicht, Status „Synchronisiert“', async ({
   page,
 }) => {
   await connect(page, 'member');
@@ -68,7 +70,7 @@ test('3: vorhandener Haushalt (Mitglied) → direkt Übersicht, Status „Verbun
   if (!isDesktop(page)) {
     await expect(page.getByRole('img', { name: 'Person A' })).toBeVisible();
     await expect(page.getByRole('img', { name: 'Person B' })).toBeVisible();
-    await expect(page.getByText('Verbunden', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Synchronisiert' })).toBeVisible();
   }
 });
 
@@ -188,9 +190,27 @@ test('Export lädt eine JSON-Datei mit den Ereignissen', async ({ page }) => {
   await page.goto('/#/einstellungen');
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Exportieren' }).click(),
+    page.getByRole('button', { name: 'Daten exportieren (JSON)' }).click(),
   ]);
   expect(download.suggestedFilename()).toMatch(/^maple-jar-export-\d{4}-\d{2}-\d{2}\.json$/);
+});
+
+test('Export lädt eine CSV-Datei mit den Einträgen', async ({ page }) => {
+  await connect(page, 'empty');
+  await setupHousehold(page);
+  await expect(page).toHaveURL(/#\/$/);
+  await captureEntry(page, { amount: '12,50', category: 'Lebensmittel', merchant: '=1+1' });
+  await page.goto('/#/einstellungen');
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Einträge exportieren (CSV)' }).click(),
+  ]);
+  expect(download.suggestedFilename()).toMatch(/^maple-jar-entries-\d{4}-\d{2}-\d{2}\.csv$/);
+  const csv = readFileSync((await download.path()) ?? '', 'utf8');
+  expect(csv.startsWith('\uFEFF')).toBe(true);
+  expect(csv.split('\r\n')[1]).toBe(
+    `${todayIso()};'=1+1;;Lebensmittel;12.50;CAD;12.50;Person A;Manuell`,
+  );
 });
 
 test('Abmelden löscht die Sitzung', async ({ page }) => {

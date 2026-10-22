@@ -42,6 +42,8 @@ const pairs: Array<[string, string]> = [
   ['label2', 'bg'],
   ['label2', 'card'],
   ['label2', 'fill'],
+  ['label2', 'warnTint'],
+  ['label', 'warnTint'],
   ['onAcc', 'acc'],
   ['warn', 'warnTint'],
   ['ok', 'okTint'],
@@ -63,6 +65,16 @@ describe.each([
   it.each(pairs)('%s auf %s ≥ 4,5:1', (fg, bg) => {
     const ratio = contrast(vars[fg] as string, vars[bg] as string);
     expect(ratio, `${fg}/${bg}`).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe.each([
+  ['hell', light],
+  ['dunkel (data-theme)', dark],
+  ['dunkel (Media-Query)', darkMedia],
+])('--label3 nur für Nicht-Text %s', (_name, vars) => {
+  it.each(['bg', 'card'])('≥ 3:1 auf %s (Linien, Rahmen, Symbole)', (bg) => {
+    expect(contrast(vars.label3 as string, vars[bg] as string)).toBeGreaterThanOrEqual(3);
   });
 });
 
@@ -89,6 +101,9 @@ describe.each([
       const [a, b] = [order[i], order[i + 1]] as [string, string];
       expect(contrast(seg(a), seg(b)), `${a}/${b}`).toBeGreaterThanOrEqual(1.2);
     }
+  });
+  it('Sparen hebt sich von Budget-Ausgaben ab (≥ 2:1, auch in der Helligkeit)', () => {
+    expect(contrast(seg('seg-saving'), seg('seg-budget'))).toBeGreaterThanOrEqual(2);
   });
   it('Überlauf ist von allen Segmenten unterscheidbar und nutzt nie --acc', () => {
     for (const n of segs) expect(seg('seg-overflow')).not.toBe(seg(n));
