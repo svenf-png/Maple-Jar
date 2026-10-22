@@ -17,3 +17,15 @@ export function focusHeading(root: ParentNode = document): boolean {
   target.focus({ preventScroll: true });
   return document.activeElement === target;
 }
+
+/**
+ * Wahr, wenn seit dem Seitenwechsel niemand sonst den Fokus gesetzt hat: `now` ist leer, `body` oder
+ * noch dasselbe Element wie beim Wechsel (`atNavigation`).
+ */
+export function focusUnclaimed(
+  atNavigation: Element | null,
+  now: Element | null,
+  body: HTMLElement,
+): boolean {
+  return now === null || now === body || now === atNavigation;
+}

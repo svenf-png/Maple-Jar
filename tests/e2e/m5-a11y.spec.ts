@@ -121,6 +121,43 @@ test.describe('Fokusführung', () => {
     await expect(page.getByRole('dialog')).toBeHidden();
     await expect(logout).toBeFocused();
   });
+
+  test('Fokus, der nach dem Seitenwechsel gesetzt wird, bleibt erhalten', async ({ page }) => {
+    // Langsame Frames deterministisch simulieren: der Rückruf läuft 300 ms später. `framesRun` zählt
+    // die ausgeführten Rückrufe, damit der Test erst prüft, nachdem die Fokusführung gelaufen ist.
+    await page.addInitScript(() => {
+      const w = window as unknown as { framesRun: number };
+      w.framesRun = 0;
+      const orig = window.requestAnimationFrame.bind(window);
+      window.requestAnimationFrame = (cb: FrameRequestCallback) => {
+        setTimeout(
+          () =>
+            orig((t) => {
+              cb(t);
+              w.framesRun += 1;
+            }),
+          300,
+        );
+        return 0;
+      };
+    });
+    await start(page);
+    const framesBefore = await page.evaluate(
+      () => (window as unknown as { framesRun: number }).framesRun,
+    );
+    await go(page, '#/ziel/neu');
+    const name = page.getByLabel('Name', { exact: true });
+    await name.fill('Sparziel A');
+    await page.waitForFunction(
+      (before) => (window as unknown as { framesRun: number }).framesRun > before,
+      framesBefore,
+    );
+    await expect(name).toBeFocused();
+    await expect(name).toHaveValue('Sparziel A');
+
+    await go(page, '#/verlauf');
+    await expect(page.getByRole('heading', { level: 1, name: 'Verlauf' })).toBeFocused();
+  });
 });
 
 /* ---------- 44-px-Ziele ---------- */
