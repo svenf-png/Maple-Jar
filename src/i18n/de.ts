@@ -317,6 +317,11 @@ export const de = {
 
   'error.title': 'Etwas ist schiefgelaufen',
   'error.reload': 'Neu laden',
+
+  'update.title': 'Neue Version verfügbar',
+  'update.sub': 'Deine Daten bleiben erhalten.',
+  'update.later': 'Später',
+  'update.reload': 'Neu laden',
 } as const;
 
 export type MessageKey = keyof typeof de;
