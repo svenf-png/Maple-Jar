@@ -1,7 +1,14 @@
 import { expect, type Page, test } from '@playwright/test';
 import { todayIso } from '../../src/data/today';
 import { addDays } from '../../src/domain/schedule';
-import { connectE2e, go, setupHousehold, typeAmount, waitForAnimations } from './helpers';
+import {
+  connectE2e,
+  go,
+  historyItem,
+  setupHousehold,
+  typeAmount,
+  waitForAnimations,
+} from './helpers';
 
 // Fokusführung, 44-px-Ziele und Reduced Motion (M5 Task 4). Alle Testdaten sind fiktiv
 // („Supermarkt A“, „Sparziel A“, „Streaming-Abo A“) und entstehen über `window.__e2e` (nur im E2E-Build).
@@ -249,18 +256,26 @@ test('Alle Hauptseiten: interaktive Ziele sind mindestens 44 px', async ({ page 
 
   await check('#/verlauf', async () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Verlauf' })).toBeVisible();
+    await expect(historyItem(page, /Supermarkt A/)).toBeVisible();
   });
-  await page.getByRole('button', { name: 'Aktivität', exact: true }).click();
+  const activityTab = page.getByRole('button', { name: 'Aktivität', exact: true });
+  await activityTab.click();
+  await expect(activityTab).toHaveAttribute('aria-pressed', 'true');
   await waitForAnimations(page);
   const activity = await smallTargets(page);
   if (activity.length) failures.push(`#/verlauf (Aktivität): ${activity.join(' | ')}`);
   await page.getByRole('button', { name: 'Einträge', exact: true }).click();
 
   await check('#/planung', async () => {
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Planung' })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Streaming-Abo A/ })).toBeVisible();
   });
   await check('#/planung/projektion', async () => {
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Projektion', exact: true })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    await expect(page.getByRole('slider', { name: /Lebensmittel/ })).toBeVisible();
   });
   await check('#/einstellungen', async () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Einstellungen' })).toBeVisible();
@@ -269,13 +284,14 @@ test('Alle Hauptseiten: interaktive Ziele sind mindestens 44 px', async ({ page 
     await expect(page.getByRole('heading', { name: 'Neue Ausgabe' })).toBeVisible();
   });
   await check('#/budgets', async () => {
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Budgets' })).toBeVisible();
   });
   await check('#/kategorien', async () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Kategorien' })).toBeVisible();
   });
   await check(`#/eintrag/${entryId}`, async () => {
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Eintrag' })).toBeVisible();
+    await expect(page.getByText('Supermarkt A', { exact: true })).toBeVisible();
   });
   await check(`#/ziel/${goalId}`, async () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Sparziel A' })).toBeVisible();
