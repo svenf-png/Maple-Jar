@@ -7,6 +7,7 @@ import {
   historyItem,
   overviewHeading,
   setupHousehold,
+  typeAmount,
   waitForAnimations,
 } from './helpers';
 
@@ -40,6 +41,26 @@ test('Erfassen: Betrag über den Ziffernblock, Eintrag erscheint in Übersicht u
   await expect(page.getByRole('link', { name: /Supermarkt A/ })).toContainText('84,17');
   await go(page, '#/verlauf');
   await expect(page.getByRole('link', { name: /Supermarkt A/ })).toBeVisible();
+});
+
+test('Erfassen: neue Eingabe direkt nach dem Speichern bleibt erhalten', async ({ page }) => {
+  await page.clock.install();
+  await ready(page);
+  await go(page, '#/erfassen');
+  await typeAmount(page, '5,00');
+  await page.getByRole('button', { name: 'Lebensmittel' }).click();
+  await page.getByLabel('Händler oder Notiz (optional)').fill('Café B');
+  // Uhr anhalten: der Feedback-Timer läuft erst bei runFor.
+  const now = await page.evaluate(() => Date.now());
+  await page.clock.pauseAt(now + 60_000);
+  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect(page.getByText('Gespeichert', { exact: true })).toBeVisible();
+  await typeAmount(page, '6');
+  await page.clock.runFor(1000);
+  await expect(page.getByText('Gespeichert', { exact: true })).toBeHidden();
+  await expect(page.getByRole('status', { name: 'Betrag' })).toHaveText(/^6(?!\d)/);
+  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect(page.getByText('Gespeichert', { exact: true })).toBeVisible();
 });
 
 test('Erfassen: Kategorie-Vorschlag aus der Historie', async ({ page }) => {

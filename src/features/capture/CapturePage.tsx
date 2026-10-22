@@ -41,6 +41,14 @@ export function CapturePage() {
   const online = useOnline();
   const [saved, setSaved] = useState(0);
   const loadedFor = useRef<string | null>(null);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (flashTimer.current) clearTimeout(flashTimer.current);
+    },
+    [],
+  );
 
   // Bearbeiten: Felder einmalig aus dem Eintrag übernehmen.
   useEffect(() => {
@@ -125,14 +133,13 @@ export function CapturePage() {
         rate: known,
       });
       setSaved((n) => n + 1);
+      setAmount('');
+      setMerchant('');
+      setNote('');
+      setManualCategory(false);
       setFlash(true);
-      setTimeout(() => {
-        setFlash(false);
-        setAmount('');
-        setMerchant('');
-        setNote('');
-        setManualCategory(false);
-      }, 900);
+      if (flashTimer.current) clearTimeout(flashTimer.current);
+      flashTimer.current = setTimeout(() => setFlash(false), 900);
     } catch (err) {
       setError(err instanceof NoRateError ? t('capture.error.rate') : t('capture.error.save'));
     } finally {
