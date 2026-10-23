@@ -34,9 +34,17 @@
 .dateCell {
   white-space: nowrap;
 }
-.right {
+.right,
+.table th.right {
   text-align: right;
   white-space: nowrap;
+}
+/* Aktionsspalte: so schmal wie die Knöpfe, mit Abstand zum Kartenrand wie die erste Spalte. */
+.table th:last-child,
+.table td:last-child {
+  width: 1%;
+  white-space: nowrap;
+  padding-right: var(--s-3);
 }
 .srOnly {
   position: absolute;

@@ -4,6 +4,12 @@
   padding: 2px;
   border-radius: 9px;
 }
+/* Seiten-Tabs (Planung): auf dem Desktop nach Inhalt statt über die volle Breite der Spalte. */
+@media (min-width: 1024px) {
+  .fit {
+    align-self: flex-start;
+  }
+}
 /* Das Touch-Ziel wird per Padding auf 44px Höhe gebracht, die sichtbare Fläche bleibt 30px. */
 .item {
   appearance: none;

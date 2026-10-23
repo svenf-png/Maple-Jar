@@ -63,7 +63,10 @@ export interface MonthSummary {
   month: string;
   rows: BudgetRow[];
   totalLimit: bigint;
+  /** Ausgaben des Monats in Kategorien mit Limit; nur sie zählen gegen das Gesamtbudget. */
   totalSpent: bigint;
+  /** Ausgaben des Monats in Kategorien ohne Limit; belasten kein Budget. */
+  unbudgetedSpent: bigint;
   remaining: bigint;
   daysLeft: number;
   /** Pro Tag möglich (abgerundet, nie negativ). */
@@ -83,8 +86,10 @@ export function daysLeftInMonth(today: string): number {
 }
 
 /**
- * Monatsstand: Gesamtbudget = Summe der Kategorielimits, Ausgaben = alle Ausgaben des Monats
- * (auch in Kategorien ohne Limit). Zeilen nur für sichtbare Kategorien mit Limit, nach Auslastung.
+ * Monatsstand: Gesamtbudget = Summe der Kategorielimits, Ausgaben = nur Ausgaben in Kategorien mit
+ * Limit. Ausgaben ohne Limit landen in `unbudgetedSpent` und belasten kein Budget. Der Gesamtstatus
+ * ist `over`/`near`, sobald eine budgetierte Kategorie ihr eigenes Limit reißt bzw. fast erreicht.
+ * Zeilen nur für sichtbare Kategorien mit Limit, nach Auslastung.
  */
 export function monthSummary(input: {
   categories: readonly Category[];
@@ -96,18 +101,27 @@ export function monthSummary(input: {
   const { categories, budgets, entries, month, today } = input;
   const rows: BudgetRow[] = [];
   let totalLimit = 0n;
+  let totalSpent = 0n;
+  let worst: BudgetState = 'none';
   for (const category of categories) {
     if (category.deleted) continue;
     const b = limitFor(budgets, category.id, month);
     const limit = BigInt(b?.monthlyLimitCadMinor ?? 0);
     if (limit <= 0n) continue;
     totalLimit += limit;
-    if (category.hidden) continue;
     const spent = spentIn(entries, month, category.id);
-    rows.push({ category, spent, limit, status: budgetStatus(spent, limit) });
+    totalSpent += spent;
+    const status = budgetStatus(spent, limit);
+    if (status.state === 'over' || (status.state === 'near' && worst !== 'over')) {
+      worst = status.state;
+    } else if (worst === 'none') {
+      worst = 'ok';
+    }
+    if (category.hidden) continue;
+    rows.push({ category, spent, limit, status });
   }
   rows.sort((a, b) => b.status.pct - a.status.pct || a.category.sort - b.category.sort);
-  const totalSpent = spentIn(entries, month);
+  const unbudgetedSpent = spentIn(entries, month) - totalSpent;
   const remaining = totalLimit - totalSpent;
   const daysLeft = monthOf(today) === month ? daysLeftInMonth(today) : 1;
   const perDay = remaining > 0n ? remaining / BigInt(daysLeft) : 0n;
@@ -119,10 +133,11 @@ export function monthSummary(input: {
     rows,
     totalLimit,
     totalSpent,
+    unbudgetedSpent,
     remaining,
     daysLeft,
     perDay,
-    state: budgetStatus(totalSpent, totalLimit).state,
+    state: worst,
     attention,
     calm: rows.length - attention,
   };

@@ -71,6 +71,11 @@
   color: var(--label2);
   margin: 0 0.25em;
 }
+/* Trennt den Budget-Teil vom Einkommen darüber. */
+.heroDivider {
+  padding-top: 14px;
+  border-top: 0.5px solid var(--sep);
+}
 .heroMain {
   display: flex;
   align-items: center;

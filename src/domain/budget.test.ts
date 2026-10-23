@@ -93,10 +93,11 @@ describe('monthSummary', () => {
       today: '2027-02-18',
     });
     expect(s.totalLimit).toBe(35_000n);
-    expect(s.totalSpent).toBe(12_000n);
-    expect(s.remaining).toBe(23_000n);
+    expect(s.totalSpent).toBe(11_000n);
+    expect(s.unbudgetedSpent).toBe(1_000n);
+    expect(s.remaining).toBe(24_000n);
     expect(s.daysLeft).toBe(11);
-    expect(s.perDay).toBe(2_090n);
+    expect(s.perDay).toBe(2_181n);
     expect(s.rows.map((r) => r.category.id)).toEqual([CAT_A, CAT_B]);
     expect(s.attention).toBe(1);
     expect(s.calm).toBe(1);
@@ -114,6 +115,45 @@ describe('monthSummary', () => {
     expect(s.remaining).toBe(-5_000n);
     expect(s.perDay).toBe(0n);
     expect(s.state).toBe('over');
+  });
+
+  it('Ausgaben in Kategorien ohne Limit belasten kein Budget', () => {
+    const entries = [entry({ amountMinor: 80_000, categoryId: 'c3' })];
+    const s = monthSummary({
+      categories,
+      budgets,
+      entries,
+      month: '2027-02-01',
+      today: '2027-02-18',
+    });
+    expect(s.totalSpent).toBe(0n);
+    expect(s.unbudgetedSpent).toBe(80_000n);
+    expect(s.remaining).toBe(35_000n);
+    expect(s.state).toBe('ok');
+    expect(s.attention).toBe(0);
+  });
+
+  it('Gesamtstatus folgt der schlechtesten Kategorie, nicht der Summe', () => {
+    // Summe weit unter dem Gesamtlimit, aber A über seinem eigenen Limit.
+    const over = monthSummary({
+      categories,
+      budgets,
+      entries: [entry({ amountMinor: 12_000, categoryId: CAT_A })],
+      month: '2027-02-01',
+      today: '2027-02-18',
+    });
+    expect(over.remaining).toBe(23_000n);
+    expect(over.state).toBe('over');
+    // Versteckte Kategorie mit Limit zählt für den Status mit, bekommt aber keine Zeile.
+    const hidden = monthSummary({
+      categories,
+      budgets,
+      entries: [entry({ amountMinor: 4_500, categoryId: 'c4' })],
+      month: '2027-02-01',
+      today: '2027-02-18',
+    });
+    expect(hidden.rows.map((r) => r.category.id)).toEqual([CAT_A, CAT_B]);
+    expect(hidden.state).toBe('near');
   });
 
   it('ohne Budgets: Summe 0, keine Zeilen', () => {

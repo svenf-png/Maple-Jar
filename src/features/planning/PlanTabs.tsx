@@ -6,7 +6,7 @@ import styles from '../../ui/Segmented.module.css';
 export function PlanTabs({ current }: { current: 'list' | 'projection' }) {
   useLang();
   return (
-    <nav aria-label={t('plan.tabs')} className={styles.group}>
+    <nav aria-label={t('plan.tabs')} className={`${styles.group} ${styles.fit}`}>
       <Link
         to="/planung"
         className={styles.item}

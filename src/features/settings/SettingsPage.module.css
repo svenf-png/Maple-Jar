@@ -5,6 +5,10 @@
   /* Formular-Variante der Inhaltsbreite. */
   max-width: var(--content-narrow);
 }
+/* Gruppenlabel in der Karte: ohne Innenabstand schneidet die runde Ecke den ersten Buchstaben ab. */
+.groupLabel {
+  padding: var(--s-3) var(--s-4) var(--s-1);
+}
 .profile {
   display: flex;
   align-items: center;
