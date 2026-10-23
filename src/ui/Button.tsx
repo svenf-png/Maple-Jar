@@ -4,12 +4,15 @@ import styles from './Button.module.css';
 
 interface Props extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   variant?: 'primary' | 'secondary' | 'text' | 'fab';
+  /** `compact`: Breite nach Inhalt, 44 px hoch – für Knöpfe in Listenzeilen statt Vollbreite. */
+  size?: 'full' | 'compact';
   busy?: boolean;
   children?: ReactNode;
 }
 
 export function Button({
   variant = 'primary',
+  size = 'full',
   busy = false,
   disabled,
   className,
@@ -17,7 +20,9 @@ export function Button({
   type = 'button',
   ...rest
 }: Props) {
-  const cls = [styles.button, styles[variant], className].filter(Boolean).join(' ');
+  const cls = [styles.button, styles[variant], size === 'compact' ? styles.compact : '', className]
+    .filter(Boolean)
+    .join(' ');
   return (
     <button
       type={type}

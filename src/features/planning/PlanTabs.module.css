@@ -19,6 +19,16 @@
   text-decoration: none;
   text-align: center;
 }
+/* Desktop: Umschalter nicht über die volle Breite strecken, Tabs nach Inhalt. */
+@media (min-width: 1024px) {
+  .tabs {
+    width: max-content;
+  }
+  .tab {
+    flex: none;
+    padding: 0 28px;
+  }
+}
 .tab[aria-current="page"] {
   background: var(--card);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);

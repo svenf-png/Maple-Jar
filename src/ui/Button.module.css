@@ -32,6 +32,13 @@
   color: var(--label);
   font-size: 17px;
 }
+/* In Listenzeilen (48 px): volle Trefferhöhe 44 px, Breite nach Inhalt, kleinere Schrift. */
+.compact {
+  width: auto;
+  height: 44px;
+  padding: 0 var(--s-4);
+  font-size: 15px;
+}
 .text {
   min-height: 44px;
   padding: 0 var(--s-2);

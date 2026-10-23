@@ -202,8 +202,8 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
               const editing = editingId === e.id;
               const dayText = formatDay(e.bookedOn, locale, {
                 weekday: 'short',
-                day: '2-digit',
-                month: '2-digit',
+                day: 'numeric',
+                month: 'short',
               });
               if (editing) {
                 return (
@@ -274,7 +274,11 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                       ) : null}
                     </td>
                     <td className={`${styles.original} ${styles.right} num`}>
-                      {e.currency === 'EUR' ? formatMoney(e.amountMinor, 'EUR', locale) : ''}
+                      {e.currency === 'EUR' ? (
+                        formatMoney(e.amountMinor, 'EUR', locale)
+                      ) : (
+                        <span aria-hidden="true">–</span>
+                      )}
                     </td>
                     <td className={styles.editActions}>
                       <div className={styles.actions}>
@@ -345,7 +349,11 @@ export function HistoryTable({ entries, categories, members, onDelete }: Props) 
                     {formatMoney(entryCad(e), 'CAD', locale)}
                   </td>
                   <td className={`${styles.original} ${styles.right} num`}>
-                    {e.currency === 'EUR' ? formatMoney(e.amountMinor, 'EUR', locale) : ''}
+                    {e.currency === 'EUR' ? (
+                      formatMoney(e.amountMinor, 'EUR', locale)
+                    ) : (
+                      <span aria-hidden="true">–</span>
+                    )}
                   </td>
                   <td>
                     <div className={styles.actions}>

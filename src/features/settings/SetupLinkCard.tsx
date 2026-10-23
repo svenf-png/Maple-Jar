@@ -34,7 +34,7 @@ export function SetupLinkCard() {
         subtitle={t('settings.setupLink.hint')}
         right={
           link ? null : (
-            <Button variant="secondary" onClick={() => void create()}>
+            <Button variant="secondary" size="compact" onClick={() => void create()}>
               {t('settings.setupLink.create')}
             </Button>
           )
