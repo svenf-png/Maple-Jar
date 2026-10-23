@@ -1,7 +1,6 @@
 import type { ComponentType } from 'react';
 import { createHashRouter, Navigate, type RouteObject } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
-import { ConnectPage } from '../features/connect/ConnectPage';
 import { loadPlanMessages } from '../i18n/plan-messages';
 import { AppShell } from './AppShell';
 import { RedirectIfConnected, RequireConnection, RequireHousehold } from './Guards';
@@ -83,11 +82,16 @@ const router = createHashRouter([
     children: [
       {
         path: '/verbinden',
-        element: (
-          <RedirectIfConnected>
-            <ConnectPage />
-          </RedirectIfConnected>
-        ),
+        lazy: async () => {
+          const { ConnectPage } = await import('../features/connect/ConnectPage');
+          return {
+            element: (
+              <RedirectIfConnected>
+                <ConnectPage />
+              </RedirectIfConnected>
+            ),
+          };
+        },
       },
       {
         path: '/hilfe',

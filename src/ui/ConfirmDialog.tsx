@@ -9,10 +9,22 @@ interface Props {
   text: string;
   confirmLabel: string;
   onConfirm: () => void;
+  /** Optionale bevorzugte Aktion (z. B. „Erst synchronisieren“); die Bestätigung wird dann sekundär. */
+  altLabel?: string | undefined;
+  onAlt?: (() => void) | undefined;
   onCancel: () => void;
 }
 
-export function ConfirmDialog({ open, title, text, confirmLabel, onConfirm, onCancel }: Props) {
+export function ConfirmDialog({
+  open,
+  title,
+  text,
+  confirmLabel,
+  onConfirm,
+  altLabel,
+  onAlt,
+  onCancel,
+}: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const d = ref.current;
@@ -27,7 +39,12 @@ export function ConfirmDialog({ open, title, text, confirmLabel, onConfirm, onCa
       </h2>
       <p className={styles.text}>{text}</p>
       <div className={styles.actions}>
-        <Button variant="primary" onClick={onConfirm}>
+        {altLabel && onAlt ? (
+          <Button variant="primary" onClick={onAlt}>
+            {altLabel}
+          </Button>
+        ) : null}
+        <Button variant={altLabel && onAlt ? 'secondary' : 'primary'} onClick={onConfirm}>
           {confirmLabel}
         </Button>
         <Button variant="secondary" onClick={onCancel}>

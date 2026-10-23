@@ -179,7 +179,20 @@ export const onDisconnect = (cb: () => void | Promise<void>): void => {
   disconnectHooks.add(cb);
 };
 
-export async function disconnect(): Promise<void> {
+/** `disconnect` verweigert das Löschen, solange ungesendete Ereignisse in der Outbox liegen. */
+export class PendingDataError extends Error {}
+
+/**
+ * Meldet ab und löscht alle lokalen Daten. Bei nicht leerer Outbox nur mit `discardPending: true`,
+ * sonst wirft sie `PendingDataError` und lässt alles unangetastet.
+ */
+export async function disconnect({
+  discardPending = false,
+}: {
+  discardPending?: boolean;
+} = {}): Promise<void> {
+  const pending = await db.outbox.count();
+  if (pending > 0 && !discardPending) throw new PendingDataError('Unsynced events would be lost');
   for (const hook of disconnectHooks) await hook();
   await db.delete();
   await db.open();
