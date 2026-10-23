@@ -10,8 +10,10 @@
   gap: var(--s-3);
 }
 @media (min-width: 1024px) {
-  /* Wie Übersicht, Planung, Projektion: Inhaltsbreite aus dem Token (Tabs, Feed, Suche, Filter, Tabelle). */
-  .stack {
+  /* Inhaltsbreite aus dem Token (Tabs, Feed, Suche, Filter). Nur die Einträge-Tabelle bleibt unbegrenzt, damit sie auch mit breiter Schrift nicht seitlich scrollt. */
+  .narrow,
+  .search,
+  .filters {
     max-width: var(--content-max);
   }
 }
