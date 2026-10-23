@@ -45,8 +45,9 @@ Zugriffsregeln: RLS ist auf allen Tabellen aktiv. Lesen und Anhängen (`events`)
 Default-Privilegien `execute` auf neue Funktionen direkt an `anon` und `authenticated`; `revoke ... from public` in 0001
 entzog das nicht. 0002 entzieht es für die sechs Funktionen aus 0001 ausdrücklich von `anon` (`authenticated`
 bleibt) und entfernt den Supabase-Default für `anon` bei künftigen Funktionen. PostgreSQL gibt neuen Funktionen
-trotzdem weiterhin `execute` an PUBLIC: Jede neue Funktion braucht `revoke all ... from public` und ein gezieltes
-grant. Es wurden keine Daten offengelegt: `is_member()` lieferte für anonyme Aufrufer `false`,
+trotzdem weiterhin `execute` an PUBLIC, und `authenticated` behält den Supabase-Default: Jede neue Funktion braucht
+`revoke all on function ... from public, anon, authenticated` und danach ein gezieltes `grant execute` nur an die
+Rollen, die sie aufrufen sollen (Regel aus dem M6-Plan). Es wurden keine Daten offengelegt: `is_member()` lieferte für anonyme Aufrufer `false`,
 `current_username()` `null`, die übrigen Funktionen lehnten sie ab. Jede neue Tabelle bekommt RLS im selben Commit.
 
 ## RLS-Prüfliste
