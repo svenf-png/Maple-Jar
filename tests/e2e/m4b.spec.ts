@@ -7,8 +7,8 @@ import {
   connectE2e,
   go,
   seedLastMonthEntry,
+  settleForAxe,
   setupHousehold,
-  waitForAnimations,
 } from './helpers';
 
 const DESKTOP = { width: 1280, height: 900 };
@@ -203,7 +203,7 @@ test.describe('M4 Teil B Desktop', () => {
         await expect(page.getByText('−20 %', { exact: true })).toBeVisible();
         // Erst nach dem Speichern wird der Button aktiv und blendet ein; vorher gemessen wäre der Kontrast zu gering.
         await expect(page.getByRole('button', { name: 'Als Budgets übernehmen' })).toBeEnabled();
-        await waitForAnimations(page);
+        await settleForAxe(page);
         const results = await new AxeBuilder({ page }).analyze();
         expect(
           results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
@@ -220,7 +220,7 @@ test.describe('M4 Teil B Desktop', () => {
         });
         await go(page, '#/verlauf');
         await expect(page.getByRole('table')).toBeVisible();
-        await waitForAnimations(page);
+        await settleForAxe(page);
         const results = await new AxeBuilder({ page }).analyze();
         expect(
           results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),
@@ -238,7 +238,7 @@ test.describe('M4 Teil B Mobil', () => {
   }) => {
     await setupSeeded(page);
     await openProjection(page);
-    await waitForAnimations(page);
+    await settleForAxe(page);
     const tableBox = await page.getByRole('table', { name: 'Cashflow pro Monat' }).boundingBox();
     const panelBox = await page.getByRole('complementary').boundingBox();
     expect(tableBox).not.toBeNull();

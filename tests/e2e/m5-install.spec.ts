@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
-import { connectE2e, go, overviewHeading, setupHousehold, waitForAnimations } from './helpers';
+import { connectE2e, go, overviewHeading, settleForAxe, setupHousehold } from './helpers';
 
 // Install-Hinweis für iOS Safari (M5 Task 6). Alle Texte sind fiktiv, Personen heißen „Person A“.
 
@@ -76,7 +76,7 @@ for (const scheme of ['light', 'dark'] as const) {
     test('mit sichtbarem Hinweis ohne axe-Verstöße', async ({ page }) => {
       await ready(page);
       await expect(page.getByRole('region', { name: HINT_REGION })).toBeVisible();
-      await waitForAnimations(page);
+      await settleForAxe(page);
       const results = await new AxeBuilder({ page }).analyze();
       expect(
         results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),

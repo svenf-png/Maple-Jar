@@ -122,6 +122,15 @@ export async function waitForAnimations(page: Page) {
 }
 
 /**
+ * Vor einem axe-Lauf: Zeiger wegnehmen, damit kein Hover-Zustand (Hintergrund-Übergang) zählt,
+ * dann auf laufende CSS-Übergänge und Animationen warten.
+ */
+export async function settleForAxe(page: Page) {
+  await page.mouse.move(0, 0);
+  await waitForAnimations(page);
+}
+
+/**
  * Wartet, bis ein Sheet (`sheet-up` in BottomSheet.module.css) seinen Endzustand erreicht hat.
  * WebKit meldet die Animation als `finished`, während die berechnete Deckkraft noch unter 1 liegt;
  * erst die Endwerte (opacity 1, transform none) belegen den Zielzustand.

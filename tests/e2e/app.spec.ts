@@ -3,7 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 import { todayIso } from '../../src/data/today';
 import { ANON_KEY, PERSON_A, PERSON_C, PROJECT_URL } from './fixtures/household';
-import { captureEntry, overviewHeading, waitForAnimations } from './helpers';
+import { captureEntry, overviewHeading, settleForAxe } from './helpers';
 
 const url = (scenario: string) => `/?e2e=${scenario}#/verbinden`;
 
@@ -149,7 +149,7 @@ for (const scheme of ['light', 'dark'] as const) {
     test.use({ colorScheme: scheme });
 
     const check = async (page: Page) => {
-      await waitForAnimations(page);
+      await settleForAxe(page);
       const results = await new AxeBuilder({ page }).analyze();
       expect(
         results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),

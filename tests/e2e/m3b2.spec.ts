@@ -6,8 +6,8 @@ import {
   connectE2e,
   go,
   historyItems,
+  settleForAxe,
   setupHousehold,
-  waitForAnimations,
   waitForSheetSettled,
 } from './helpers';
 
@@ -215,7 +215,7 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(page.getByRole('button', { name: /Streaming-Abo B/ })).toBeVisible();
       await expect(page.getByRole('link', { name: /Sparziel A/ })).toBeVisible();
       const scan = async () => {
-        await waitForAnimations(page);
+        await settleForAxe(page);
         const results = await new AxeBuilder({ page }).analyze();
         expect(
           results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(' | ')}`),

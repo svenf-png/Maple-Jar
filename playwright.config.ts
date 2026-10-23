@@ -8,13 +8,26 @@ const chromium = executablePath ? { launchOptions: { executablePath } } : {};
 // chromium-desktop: ein Browser genügt als Nachweis, die Logik ist per Unit-Test abgedeckt.
 const skipUpdate = { testIgnore: /update\.spec\.ts/ };
 
+// Tests mit dem Tag @desktop messen Desktop-Layout bzw. Hover und laufen nicht in den Mobil-Projekten.
+const mobileOnlyTests = { grepInvert: /@desktop/ };
+
 const projects = [
-  { name: 'chromium-mobile', use: { ...devices['Pixel 7'], ...chromium }, ...skipUpdate },
+  {
+    name: 'chromium-mobile',
+    use: { ...devices['Pixel 7'], ...chromium },
+    ...skipUpdate,
+    ...mobileOnlyTests,
+  },
   { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'], ...chromium } },
   ...(process.env.E2E_SKIP_WEBKIT
     ? []
     : [
-        { name: 'webkit-mobile', use: { ...devices['iPhone 14'] }, ...skipUpdate },
+        {
+          name: 'webkit-mobile',
+          use: { ...devices['iPhone 14'] },
+          ...skipUpdate,
+          ...mobileOnlyTests,
+        },
         { name: 'webkit-desktop', use: { ...devices['Desktop Safari'] }, ...skipUpdate },
       ]),
 ];

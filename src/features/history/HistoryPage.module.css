@@ -4,8 +4,17 @@
   gap: var(--s-3);
   padding-top: var(--s-3);
 }
+/* Flex-Spalte wie .stack: Tabs strecken sich, die Tagesgruppen des Aktivitäts-Feeds behalten ihren Abstand. */
+.narrow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
 @media (min-width: 1024px) {
-  .stack {
+  /* Nur die Einträge-Tabelle nutzt die volle Breite; Tabs, Aktivitäts-Feed, Suche und Filter bleiben bei 720 px. */
+  .narrow,
+  .search,
+  .filters {
     max-width: 720px;
   }
 }
@@ -53,6 +62,7 @@
   border: 1px solid var(--label3);
   background: transparent;
   color: var(--label);
+  transition: background-color 0.12s;
 }
 .chip svg {
   position: absolute;
@@ -83,6 +93,26 @@
   background: var(--acc);
   border-color: var(--acc);
   color: var(--onAcc);
+}
+@media (hover: hover) {
+  .chip:hover {
+    background: var(--fillHover);
+  }
+  .chipActive:hover {
+    background: var(--accHover);
+  }
+}
+/* Gedrückt: nur Farbe (kein Transform), daher auch mit reduzierter Bewegung unverändert. */
+.chip:has(select:not(:disabled)):active {
+  background: var(--fillActive);
+}
+.chipActive:has(select:not(:disabled)):active {
+  background: var(--accActive);
+}
+@media (prefers-reduced-motion: reduce) {
+  .chip {
+    transition: none;
+  }
 }
 .empty {
   color: var(--label2);

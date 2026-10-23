@@ -1,0 +1,71 @@
+.wrap {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+}
+.wrapEdit {
+  display: flex;
+  width: 100%;
+}
+
+.select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 calc(var(--s-3) + 18px + var(--s-2)) 0 var(--s-3);
+  font: inherit;
+  font-size: 16px;
+  color: var(--label);
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.plain {
+  /* Rahmenlos wie die Felder in einer Formularzeile, Text rechtsbündig. */
+  min-width: max-content;
+  padding-right: calc(18px + var(--s-2));
+  border: 0;
+  border-radius: var(--r-field);
+  background: transparent;
+  color: var(--label);
+  text-align: right;
+  text-align-last: right;
+  transition: background-color 0.12s;
+}
+.edit {
+  /*
+   * Untergrenze in rem statt max-content aus der längsten Option: Der gewählte Name passt auch bei breiter
+   * Ersatzschrift (Stress 0,1 em) hinein, ohne dass die längste Option die Tabelle sprengt. Die Breite gibt die
+   * Zelle vor (in der Verlauf-Tabelle `width: 28%`). Sehr lange Namen werden bei schmalen Fenstern mit „…“ gekürzt.
+   */
+  min-width: 16rem;
+  border: 1.5px solid var(--info);
+  border-radius: var(--r-field);
+  background: var(--card);
+  transition: background-color 0.12s;
+}
+@media (hover: hover) {
+  .edit:hover:not(:disabled) {
+    background: var(--fill);
+  }
+  .plain:hover:not(:disabled) {
+    background: var(--rowHover);
+  }
+}
+.select:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
+}
+.chevron {
+  position: absolute;
+  right: var(--s-3);
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--label2);
+}
+/* Plain-Variante: Pfeil auf der Fluchtlinie der Kalender-Icons der Zeile. */
+.wrapPlain .chevron {
+  right: 0;
+}

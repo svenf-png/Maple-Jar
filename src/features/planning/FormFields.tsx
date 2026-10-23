@@ -3,7 +3,7 @@ import type { RepeatUnit } from '../../domain/model';
 import type { Currency } from '../../domain/money';
 import { t } from '../../i18n/t';
 import { CalendarIcon } from '../../icons/ui-icons';
-import { Segmented, TextField } from '../../ui';
+import { Segmented, SelectField, TextField } from '../../ui';
 import styles from './PlanForm.module.css';
 
 export function AmountFields(props: {
@@ -91,9 +91,10 @@ export function RepeatFields(props: {
         <label htmlFor={selectId} className={styles.rowLabel}>
           {t('form.repeat')}
         </label>
-        <select
+        <SelectField
           id={selectId}
-          className={styles.select}
+          variant="plain"
+          className={styles.selectField}
           value={props.unit}
           onChange={(e) => props.onUnit(e.target.value as RepeatUnit)}
         >
@@ -102,7 +103,7 @@ export function RepeatFields(props: {
               {t(`plan.repeat.${u}`)}
             </option>
           ))}
-        </select>
+        </SelectField>
       </div>
       {props.unit !== 'once' ? (
         <TextField

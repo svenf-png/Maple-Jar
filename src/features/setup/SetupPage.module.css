@@ -36,6 +36,18 @@
   display: grid;
   place-items: center;
   cursor: pointer;
+  transition: transform 0.12s;
+}
+.swatch:active:not(:disabled) {
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .swatch {
+    transition: none;
+  }
+  .swatch:active:not(:disabled) {
+    transform: none;
+  }
 }
 .fx {
   display: flex;
