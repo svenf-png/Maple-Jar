@@ -67,3 +67,33 @@ test('Einstellungen: Einrichtungslink erzeugen, Bildschirm ohne axe-Verstöße',
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.map((v) => v.id)).toEqual([]);
 });
+
+test('Verbinden-Karte: Projektzeile mit Innenabstand, Fokusring bleibt innerhalb der Karte', async ({
+  page,
+}) => {
+  await page.goto(`/?e2e=empty${fragment}`);
+  const projectText = page.getByText('Projekt: e2e-project.supabase.co');
+  await expect(projectText).toBeVisible();
+  const card = page.locator('form > div').first();
+  const cardBox = await card.boundingBox();
+  const textBox = await projectText.boundingBox();
+  if (!cardBox || !textBox) throw new Error('Kein Layout');
+  expect(textBox.x - cardBox.x).toBeGreaterThanOrEqual(16);
+
+  const input = page.getByLabel('Passwort');
+  await input.focus();
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Tab');
+  await expect(input).toBeFocused();
+  const outlineColor = await input.evaluate((el) => getComputedStyle(el).outlineColor);
+  const alpha = outlineColor.match(/^rgba\(\s*[\d.]+,\s*[\d.]+,\s*[\d.]+,\s*([\d.]+)\s*\)$/);
+  expect(outlineColor === 'transparent' || (alpha !== null && Number(alpha[1]) === 0)).toBe(true);
+  const row = input.locator('xpath=ancestor::div[1]');
+  expect(await row.evaluate((el) => getComputedStyle(el).boxShadow)).toContain('inset');
+  const rowBox = await row.boundingBox();
+  if (!rowBox) throw new Error('Kein Layout');
+  expect(rowBox.x).toBeGreaterThanOrEqual(cardBox.x);
+  expect(rowBox.y).toBeGreaterThanOrEqual(cardBox.y);
+  expect(rowBox.x + rowBox.width).toBeLessThanOrEqual(cardBox.x + cardBox.width);
+  expect(rowBox.y + rowBox.height).toBeLessThanOrEqual(cardBox.y + cardBox.height);
+});
