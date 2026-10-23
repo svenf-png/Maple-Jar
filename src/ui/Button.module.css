@@ -26,8 +26,11 @@
 }
 .primary:disabled:not([aria-busy="true"]),
 .fab:disabled:not([aria-busy="true"]) {
-  /* Deaktiviert = neutral, keine Akzentfarbe, Deckkraft nicht doppelt (Ladezustand behält Akzent + .button:disabled). */
-  background: var(--fill);
+  /* Deaktiviert = nur Kontur, deutlich anders als ein aktiver Sekundär-Button (Fläche). Keine Akzentfarbe.
+     Die Umrandung zählt per border-box in die feste Höhe, die Größe bleibt gleich. Ladezustand behält Akzent. */
+  background: transparent;
+  border: 1px dashed var(--label3);
+  box-sizing: border-box;
   color: var(--label3);
   opacity: 1;
 }
