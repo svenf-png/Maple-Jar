@@ -57,6 +57,9 @@
   --s-5: 24px;
   --s-6: 32px;
   --s-7: 44px;
+  --page-head-gap: var(--s-4);
+  --content-max: 960px;
+  --content-narrow: 640px;
 }
 
 @media (prefers-color-scheme: dark) {

@@ -1,5 +1,6 @@
 .page {
-  max-width: 640px;
+  /* Formular-Variante der Inhaltsbreite. */
+  max-width: var(--content-narrow);
   margin: 0 auto;
   padding: calc(env(safe-area-inset-top) + 8px) var(--s-4) calc(env(safe-area-inset-bottom) + 100px);
   display: flex;
