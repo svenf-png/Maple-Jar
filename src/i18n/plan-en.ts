@@ -32,11 +32,12 @@ export const planEn: Record<PlanKey, string> = {
   'conflict.title': 'Resolve conflict',
 
   // planning (B1)
-  'plan.new': 'New',
-  'plan.add.title': 'What would you like to add?',
-  'plan.add.goal': 'Savings goal',
-  'plan.add.fixed': 'Fixed costs',
-  'plan.add.income': 'Income',
+  'plan.goals.add': '+ Add goal',
+  'plan.fixed.add': '+ Add fixed cost',
+  'plan.income.add': '+ Add income',
+  'plan.goals.addFirst': 'Add first goal',
+  'plan.fixed.addFirst': 'Add fixed cost',
+  'plan.income.addFirst': 'Add income',
   'plan.section.goals': 'Savings goals',
   'plan.section.fixed': 'Fixed costs',
   'plan.section.income': 'Income',

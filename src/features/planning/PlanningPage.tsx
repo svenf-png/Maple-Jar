@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { PageHeader } from '../../app/PageHeader';
 import {
   useCategories,
@@ -16,9 +15,8 @@ import { formatApprox, formatMoney } from '../../i18n/format';
 import { getLocale, t, useLang } from '../../i18n/t';
 import { useTodayRate } from '../../platform/use-fx';
 import { useMedia } from '../../platform/use-media';
-import { Button, Card, CategoryTile, EmptyState } from '../../ui';
+import { Card, CategoryTile, EmptyState } from '../../ui';
 import { ConflictBadge } from '../conflict/ConflictBadge';
-import { BottomSheet } from '../shared/BottomSheet';
 import { memberName, todayIso } from '../shared/helpers';
 import { amountWithOriginal, dueLabel, perMonthLabel, repeatLabel } from '../shared/plan-format';
 import { GoalCardBody } from './GoalParts';
@@ -29,7 +27,6 @@ import { monthlyCadTotal, nextOccurrence } from './plan-helpers';
 export function PlanningPage() {
   useLang();
   const locale = getLocale();
-  const navigate = useNavigate();
   const desktop = useMedia('(min-width: 1024px)');
   const { household } = useReadySession();
   const today = todayIso();
@@ -42,7 +39,6 @@ export function PlanningPage() {
   const categories = useCategories();
   const fixedCosts = useFixedCosts().filter((f) => !f.deleted);
   const incomes = useIncomes().filter((i) => !i.deleted);
-  const [adding, setAdding] = useState(false);
 
   // Kopfzeile Sparziele: Summe des Standes in CAD (EUR-Ziele mit dem heutigen Kurs, ohne Kurs weggelassen).
   let goalsTotal = 0n;
@@ -81,37 +77,44 @@ export function PlanningPage() {
 
   return (
     <>
-      <div className={styles.top}>
-        <PageHeader title={t('plan.title')} showMeta={!desktop} />
-        <button
-          type="button"
-          className={styles.newBtn}
-          aria-haspopup="dialog"
-          onClick={() => setAdding(true)}
-        >
-          {t('plan.new')}
-        </button>
-      </div>
+      <PageHeader title={t('plan.title')} showMeta={!desktop} />
       <PlanTabs current="list" />
       <div className={styles.stack}>
         <section aria-labelledby="pl-goals">
           <div className={styles.sectionHead}>
-            <h2 id="pl-goals" className={styles.sectionTitle}>
-              {t('plan.section.goals')}
-            </h2>
+            <div className={styles.headMain}>
+              <h2 id="pl-goals" className={styles.sectionTitle}>
+                {t('plan.section.goals')}
+              </h2>
+              {goals.length > 0 ? (
+                <span className={`${styles.sectionSum} num`}>
+                  {(() => {
+                    const total = t('plan.goals.total', {
+                      amount: formatMoney(goalsTotal, 'CAD', locale),
+                    });
+                    return goalsApprox ? formatApprox(total) : total;
+                  })()}
+                </span>
+              ) : null}
+            </div>
             {goals.length > 0 ? (
-              <span className={`${styles.sectionSum} num`}>
-                {(() => {
-                  const total = t('plan.goals.total', {
-                    amount: formatMoney(goalsTotal, 'CAD', locale),
-                  });
-                  return goalsApprox ? formatApprox(total) : total;
-                })()}
-              </span>
+              <Link to="/ziel/neu" className={styles.addLink}>
+                {t('plan.goals.add')}
+              </Link>
             ) : null}
           </div>
           {goals.length === 0 ? (
-            <EmptyState title={t('plan.goals.empty.title')} text={t('plan.goals.empty.text')} />
+            <Card radius="list">
+              <EmptyState
+                title={t('plan.goals.empty.title')}
+                text={t('plan.goals.empty.text')}
+                action={
+                  <Link to="/ziel/neu" className={styles.emptyCta}>
+                    {t('plan.goals.addFirst')}
+                  </Link>
+                }
+              />
+            </Card>
           ) : (
             <ul className={`${styles.plain} ${styles.stackList}`}>
               {goals.map((g) => {
@@ -169,17 +172,34 @@ export function PlanningPage() {
 
         <section aria-labelledby="pl-fixed">
           <div className={styles.sectionHead}>
-            <h2 id="pl-fixed" className={styles.sectionTitle}>
-              {t('plan.section.fixed')}
-            </h2>
+            <div className={styles.headMain}>
+              <h2 id="pl-fixed" className={styles.sectionTitle}>
+                {t('plan.section.fixed')}
+              </h2>
+              {fixedRows.length > 0 ? (
+                <span className={`${styles.sectionSum} num`}>
+                  {perMonthLabel(fixedSum.total, locale)}
+                </span>
+              ) : null}
+            </div>
             {fixedRows.length > 0 ? (
-              <span className={`${styles.sectionSum} num`}>
-                {perMonthLabel(fixedSum.total, locale)}
-              </span>
+              <Link to="/fixkosten/neu" className={styles.addLink}>
+                {t('plan.fixed.add')}
+              </Link>
             ) : null}
           </div>
           {fixedRows.length === 0 ? (
-            <EmptyState title={t('plan.fixed.empty.title')} text={t('plan.fixed.empty.text')} />
+            <Card radius="list">
+              <EmptyState
+                title={t('plan.fixed.empty.title')}
+                text={t('plan.fixed.empty.text')}
+                action={
+                  <Link to="/fixkosten/neu" className={styles.emptyCta}>
+                    {t('plan.fixed.addFirst')}
+                  </Link>
+                }
+              />
+            </Card>
           ) : (
             <Card radius="list">
               <ul className={styles.plain}>
@@ -230,17 +250,34 @@ export function PlanningPage() {
 
         <section aria-labelledby="pl-income">
           <div className={styles.sectionHead}>
-            <h2 id="pl-income" className={styles.sectionTitle}>
-              {t('plan.section.income')}
-            </h2>
+            <div className={styles.headMain}>
+              <h2 id="pl-income" className={styles.sectionTitle}>
+                {t('plan.section.income')}
+              </h2>
+              {incomeRows.length > 0 ? (
+                <span className={`${styles.sectionSum} num`}>
+                  {perMonthLabel(incomeSum.total, locale)}
+                </span>
+              ) : null}
+            </div>
             {incomeRows.length > 0 ? (
-              <span className={`${styles.sectionSum} num`}>
-                {perMonthLabel(incomeSum.total, locale)}
-              </span>
+              <Link to="/einnahme/neu" className={styles.addLink}>
+                {t('plan.income.add')}
+              </Link>
             ) : null}
           </div>
           {incomeRows.length === 0 ? (
-            <EmptyState title={t('plan.income.empty.title')} text={t('plan.income.empty.text')} />
+            <Card radius="list">
+              <EmptyState
+                title={t('plan.income.empty.title')}
+                text={t('plan.income.empty.text')}
+                action={
+                  <Link to="/einnahme/neu" className={styles.emptyCta}>
+                    {t('plan.income.addFirst')}
+                  </Link>
+                }
+              />
+            </Card>
           ) : (
             <Card radius="list">
               <ul className={styles.plain}>
@@ -278,29 +315,6 @@ export function PlanningPage() {
           {incomeSum.incomplete ? <p className={styles.hint}>{t('plan.partial')}</p> : null}
         </section>
       </div>
-
-      <BottomSheet open={adding} title={t('plan.add.title')} onClose={() => setAdding(false)}>
-        <div className={styles.sheetChoices}>
-          {(
-            [
-              ['plan.add.goal', '/ziel/neu'],
-              ['plan.add.fixed', '/fixkosten/neu'],
-              ['plan.add.income', '/einnahme/neu'],
-            ] as const
-          ).map(([key, to]) => (
-            <Button
-              key={to}
-              variant="secondary"
-              onClick={() => {
-                setAdding(false);
-                void navigate(to);
-              }}
-            >
-              {t(key)}
-            </Button>
-          ))}
-        </div>
-      </BottomSheet>
     </>
   );
 }

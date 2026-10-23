@@ -1,6 +1,6 @@
 .empty {
   text-align: center;
-  padding: var(--s-7) var(--s-4);
+  padding: var(--s-5) var(--s-4);
 }
 .title {
   font-size: 17px;
@@ -10,4 +10,7 @@
   margin-top: var(--s-1);
   color: var(--label2);
   font-size: 15px;
+}
+.action {
+  margin-top: var(--s-3);
 }

@@ -32,11 +32,12 @@ export const planDe = {
   'conflict.title': 'Konflikt lösen',
 
   // planning (B1)
-  'plan.new': 'Neu',
-  'plan.add.title': 'Was möchtest du anlegen?',
-  'plan.add.goal': 'Sparziel',
-  'plan.add.fixed': 'Fixkosten',
-  'plan.add.income': 'Einnahme',
+  'plan.goals.add': '+ Ziel hinzufügen',
+  'plan.fixed.add': '+ Fixkosten hinzufügen',
+  'plan.income.add': '+ Einnahme hinzufügen',
+  'plan.goals.addFirst': 'Erstes Ziel anlegen',
+  'plan.fixed.addFirst': 'Fixkosten anlegen',
+  'plan.income.addFirst': 'Einnahme anlegen',
   'plan.section.goals': 'Sparziele',
   'plan.section.fixed': 'Fixkosten',
   'plan.section.income': 'Einnahmen',

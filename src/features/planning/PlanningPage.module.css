@@ -1,44 +1,3 @@
-/* Der Button liegt in der Titelzeile über dem Kopf, damit er dessen Breite (Datum, Status) nicht verengt. */
-.top {
-  position: relative;
-}
-.newBtn {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: var(--acc);
-  font: inherit;
-  font-size: 16px;
-  font-weight: 600;
-  min-height: 44px;
-  min-width: 44px;
-  padding: 0 var(--s-2);
-  cursor: pointer;
-  position: absolute;
-  right: calc(-1 * var(--s-2));
-  bottom: -2px;
-  border-radius: var(--r-field);
-  transition:
-    background-color 0.12s,
-    transform 0.12s;
-}
-@media (hover: hover) {
-  .newBtn:hover:not(:disabled) {
-    background: var(--accTintHover);
-  }
-}
-.newBtn:active:not(:disabled) {
-  background: var(--accTintActive);
-  transform: scale(0.98);
-}
-@media (prefers-reduced-motion: reduce) {
-  .newBtn {
-    transition: none;
-  }
-  .newBtn:active:not(:disabled) {
-    transform: none;
-  }
-}
 .stack {
   display: flex;
   flex-direction: column;
@@ -48,15 +7,55 @@
 }
 @media (min-width: 1024px) {
   .stack {
-    max-width: 720px;
+    max-width: var(--content-max);
   }
 }
 .sectionHead {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: var(--s-3);
   margin-bottom: var(--s-2);
+}
+.headMain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--s-3);
+  min-width: 0;
+}
+.addLink {
+  flex: none;
+  color: var(--acc);
+  text-decoration: none;
+  font-size: 15px;
+  white-space: nowrap;
+  /* Trefferfläche mindestens 44 px; der negative Rand hält den Text an seiner Stelle. */
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 9px;
+  margin: 0 -9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.emptyCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--s-4);
+  border-radius: var(--r-button);
+  background: var(--fill);
+  color: var(--label);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+@media (hover: hover) {
+  .emptyCta:hover {
+    background: var(--fillHover);
+  }
 }
 .sectionTitle {
   font-size: 20px;
@@ -191,11 +190,6 @@
   font-size: 14px;
   color: var(--warn);
 }
-.sheetChoices {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-}
 .srOnly {
   position: absolute;
   width: 1px;
@@ -206,7 +200,8 @@
 }
 /* detail */
 .detail {
-  max-width: 640px;
+  /* Formular-Variante der Inhaltsbreite. */
+  max-width: var(--content-narrow);
   margin: 0 auto;
   padding: calc(env(safe-area-inset-top) + 8px) var(--s-4) calc(env(safe-area-inset-bottom) + 100px);
   display: flex;
