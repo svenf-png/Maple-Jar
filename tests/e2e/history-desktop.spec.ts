@@ -373,7 +373,7 @@ for (const { name, width, expected } of [
   test.describe(`Verlauf Tabs und Aktivitäts-Feed ${name}`, () => {
     test.use({ viewport: { width, height: 800 } });
 
-    test('Tab-Leiste ist so breit wie die Suche (Desktop 960 px, mobil volle Breite)', async ({
+    test('Tab-Leiste: Desktop kompakt und linksbündig an der Suche, mobil volle Breite', async ({
       page,
     }) => {
       await connectE2e(page, 'empty');
@@ -383,9 +383,14 @@ for (const { name, width, expected } of [
       const search = await requireBox(
         page.getByRole('searchbox', { name: 'Händler, Notiz, Betrag' }).locator('..'),
       );
-      expect(Math.abs(tabs.width - search.width)).toBeLessThan(1.5);
-      if (expected) expect(Math.abs(tabs.width - expected)).toBeLessThan(1.5);
-      else expect(tabs.width).toBeGreaterThan(width - 80);
+      expect(Math.abs(tabs.x - search.x)).toBeLessThan(1.5);
+      if (expected) {
+        expect(Math.abs(search.width - expected)).toBeLessThan(1.5);
+        expect(tabs.width).toBeLessThan(search.width / 2);
+      } else {
+        expect(Math.abs(tabs.width - search.width)).toBeLessThan(1.5);
+        expect(tabs.width).toBeGreaterThan(width - 80);
+      }
     });
 
     test('Tagesgruppen im Aktivitäts-Feed haben den Abstand --s-3 (12 px)', async ({ page }) => {
