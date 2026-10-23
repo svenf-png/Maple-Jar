@@ -22,8 +22,9 @@
   color: var(--label);
 }
 /* Fokusring innen an der ganzen Zeile, damit er nicht über Label und Kartenrand ragt */
+/* transparent statt none: im forced-colors-Modus entfällt box-shadow, die Outline bleibt sichtbar */
 .input:focus-visible {
-  outline: none;
+  outline: 2px solid transparent;
 }
 .field:has(.input:focus-visible) {
   box-shadow: inset 0 0 0 2px var(--acc);

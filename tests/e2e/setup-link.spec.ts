@@ -85,7 +85,9 @@ test('Verbinden-Karte: Projektzeile mit Innenabstand, Fokusring bleibt innerhalb
   await page.keyboard.press('Shift+Tab');
   await page.keyboard.press('Tab');
   await expect(input).toBeFocused();
-  expect(await input.evaluate((el) => getComputedStyle(el).outlineStyle)).toBe('none');
+  const outlineColor = await input.evaluate((el) => getComputedStyle(el).outlineColor);
+  const alpha = outlineColor.match(/^rgba\(\s*[\d.]+,\s*[\d.]+,\s*[\d.]+,\s*([\d.]+)\s*\)$/);
+  expect(outlineColor === 'transparent' || (alpha !== null && Number(alpha[1]) === 0)).toBe(true);
   const row = input.locator('xpath=ancestor::div[1]');
   expect(await row.evaluate((el) => getComputedStyle(el).boxShadow)).toContain('inset');
   const rowBox = await row.boundingBox();
