@@ -89,9 +89,12 @@
   gap: var(--s-2);
   overflow-x: auto;
   margin: 0 calc(var(--s-4) * -1);
-  padding: 0 var(--s-4) var(--s-2);
+  /* Rechts 32 px Luft: Der letzte Chip scrollt ganz aus dem Verlauf heraus. */
+  padding: 0 var(--s-6) var(--s-2) var(--s-4);
   border: 0;
   min-width: 0;
+  /* Verlauf am rechten Rand zeigt, dass weitere Kategorien folgen. */
+  mask-image: linear-gradient(to right, black calc(100% - 32px), transparent);
 }
 .chips > * {
   flex: none;

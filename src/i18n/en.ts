@@ -166,7 +166,7 @@ export const en: Record<MessageKey, string> = {
   'onboarding.go': 'Go',
   'onboarding.done': 'Done',
   'onboarding.noEntries': 'No entries yet',
-  'onboarding.noEntriesHint': 'Tap plus to add the first expense.',
+  'onboarding.noEntriesHint': 'Add your first expense.',
   'onboarding.tapPlus': 'Tap here to add an expense',
   'capture.title': 'New expense',
   'capture.titleEdit': 'Edit expense',
