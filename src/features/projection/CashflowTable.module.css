@@ -3,15 +3,38 @@
   position: relative;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: var(--label3) transparent;
   /* Rechter Rand blendet aus als Hinweis auf weitere Monate. Die letzte Spalte hat rechts so viel Luft
-     wie der Verlauf breit ist, ganz rechts gescrollt ist sie also voll sichtbar. Nur CSS, kein Skript. */
-  mask-image: linear-gradient(to right, black calc(100% - 28px), transparent);
+     wie der Verlauf breit ist, ganz rechts gescrollt ist sie also voll sichtbar. Nur CSS, kein Skript.
+     Zweite Ebene: die untersten 10 px bleiben unmaskiert, damit die Scrollleiste nicht mit ausblendet. */
+  mask-image:
+    linear-gradient(to right, black calc(100% - 48px), transparent), linear-gradient(black, black);
+  mask-size:
+    100% calc(100% - 10px),
+    100% 10px;
+  mask-position: top, bottom;
+  mask-repeat: no-repeat;
+}
+/* Dauerhaft sichtbare, dünne Scrollleiste. In Chromium >= 121 würde ein gesetztes scrollbar-width die
+   ::-webkit-scrollbar-Stile abschalten, daher die Standard-Eigenschaften nur ohne Webkit-Unterstützung (Firefox). */
+.wrap::-webkit-scrollbar {
+  height: 6px;
+}
+.wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+.wrap::-webkit-scrollbar-thumb {
+  background: var(--label3);
+  border-radius: 3px;
+}
+@supports not selector(::-webkit-scrollbar) {
+  .wrap {
+    scrollbar-width: thin;
+    scrollbar-color: var(--label3) transparent;
+  }
 }
 .table th:last-child,
 .table td:last-child {
-  padding-right: 28px;
+  padding-right: 48px;
 }
 .table {
   border-collapse: separate;
