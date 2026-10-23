@@ -50,7 +50,9 @@ export function formatMoneySplit(
 ): { amount: string; symbol: string; symbolFirst: boolean } {
   const parts = moneyParts(minor, currency, locale, options.trimWhole ?? false);
   const at = parts.findIndex((p) => p.type === 'currency');
-  const symbolFirst = at === 0;
+  // Bei negativen Beträgen steht das Vorzeichen vor dem Symbol („-$399.00“): Symbol zählt trotzdem als vorn.
+  const symbolFirst =
+    at >= 0 && parts.slice(0, at).every((p) => p.type === 'minusSign' || p.type === 'literal');
   const rest = parts.filter((_, i) => i !== at);
   // Das Leerzeichen zwischen Zahl und Symbol gehört zum Symbol, nicht zur Zahl.
   const amount = rest

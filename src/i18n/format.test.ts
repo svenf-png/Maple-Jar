@@ -46,6 +46,19 @@ describe('formatMoneySplit', () => {
     });
   });
 
+  it('hält das Symbol bei negativen Beträgen an seiner Seite', () => {
+    expect(formatMoneySplit(-39900n, 'CAD', 'en-CA')).toEqual({
+      amount: '-399.00',
+      symbol: '$',
+      symbolFirst: true,
+    });
+    expect(formatMoneySplit(-39900n, 'CAD', 'de-DE')).toEqual({
+      amount: '-399,00',
+      symbol: 'CA$',
+      symbolFirst: false,
+    });
+  });
+
   it('kürzt ganzzahlige Beträge nur mit trimWhole', () => {
     expect(formatMoneySplit(148000n, 'CAD', 'de-DE', { trimWhole: true }).amount).toBe('1.480');
     expect(formatMoneySplit(148000n, 'CAD', 'de-DE').amount).toBe('1.480,00');

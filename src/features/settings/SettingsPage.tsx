@@ -175,6 +175,7 @@ export function SettingsPage() {
             right={
               <Button
                 variant="secondary"
+                size="compact"
                 aria-label={t('settings.export')}
                 onClick={() => void exportData()}
               >
@@ -192,6 +193,7 @@ export function SettingsPage() {
             right={
               <Button
                 variant="secondary"
+                size="compact"
                 aria-label={t('settings.exportCsv')}
                 onClick={() => void exportCsv()}
               >
@@ -206,7 +208,7 @@ export function SettingsPage() {
           ) : null}
         </Card>
         <Card>
-          <h2 className="type-label">{t('settings.diagnostics')}</h2>
+          <h2 className={`type-label ${styles.groupLabel}`}>{t('settings.diagnostics')}</h2>
           <ListRow title={t('settings.diagnostics.parked')} right={String(parked.length)} />
           <ListRow title={t('settings.diagnostics.waiting')} right={String(waiting)} />
           <ListRow title={t('settings.diagnostics.conflicts')} right={String(conflicts)} />
