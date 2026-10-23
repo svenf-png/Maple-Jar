@@ -3,6 +3,7 @@
   flex-direction: column;
   gap: var(--s-4);
   padding-bottom: var(--s-5);
+  max-width: var(--content-max);
 }
 /* Mobil einspaltig (Panel unter der Tabelle); ab 1024 px Hauptspalte und Seitenpanel. */
 .layout {
@@ -96,4 +97,36 @@
 }
 .tableCard {
   padding: var(--s-4);
+}
+/* Leerzustand: Primäraktion als Füllfläche, zweite Aktion als Textlink; beide mindestens 44 px hoch. */
+.emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+}
+.emptyCta,
+.emptyLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--s-4);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: var(--r-button);
+}
+.emptyCta {
+  background: var(--fill);
+  color: var(--label);
+}
+.emptyLink {
+  color: var(--acc);
+}
+@media (hover: hover) {
+  .emptyCta:hover {
+    background: var(--fillHover);
+  }
 }

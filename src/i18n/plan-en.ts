@@ -240,6 +240,9 @@ export const planEn: Record<PlanKey, string> = {
   'plan.tabs': 'Planning view',
   'plan.tab.list': 'Goals and fixed costs',
   'plan.tab.projection': 'Projection',
+  'proj.empty.title': 'Nothing to project yet',
+  'proj.empty.text':
+    'The projection is calculated from income, fixed costs, budgets and expenses. Add income or fixed costs first.',
   'proj.end': 'Free surplus end of {month}',
   'proj.endNote': 'after fixed costs, savings and variable spending',
   'proj.basis.budget': 'No complete past months yet: the forecast uses your budgets.',

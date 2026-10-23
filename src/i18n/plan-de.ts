@@ -241,6 +241,9 @@ export const planDe = {
   'plan.tabs': 'Planungsansicht',
   'plan.tab.list': 'Ziele und Fixkosten',
   'plan.tab.projection': 'Projektion',
+  'proj.empty.title': 'Noch nichts zu projizieren',
+  'proj.empty.text':
+    'Die Projektion rechnet aus Einnahmen, Fixkosten, Budgets und Ausgaben. Lege zuerst eine Einnahme oder Fixkosten an.',
   'proj.end': 'Freier Überschuss Ende {month}',
   'proj.endNote': 'nach Fixkosten, Sparen und variablen Ausgaben',
   'proj.basis.budget': 'Noch keine vollständigen Vormonate: Die Prognose nutzt deine Budgets.',
