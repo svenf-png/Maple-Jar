@@ -1,5 +1,6 @@
 .header {
   padding-top: calc(env(safe-area-inset-top) + 12px);
+  margin-bottom: var(--page-head-gap);
 }
 .meta {
   display: flex;

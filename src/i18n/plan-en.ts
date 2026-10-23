@@ -32,11 +32,12 @@ export const planEn: Record<PlanKey, string> = {
   'conflict.title': 'Resolve conflict',
 
   // planning (B1)
-  'plan.new': 'New',
-  'plan.add.title': 'What would you like to add?',
-  'plan.add.goal': 'Savings goal',
-  'plan.add.fixed': 'Fixed costs',
-  'plan.add.income': 'Income',
+  'plan.goals.add': '+ Add goal',
+  'plan.fixed.add': '+ Add fixed cost',
+  'plan.income.add': '+ Add income',
+  'plan.goals.addFirst': 'Add first goal',
+  'plan.fixed.addFirst': 'Add fixed cost',
+  'plan.income.addFirst': 'Add income',
   'plan.section.goals': 'Savings goals',
   'plan.section.fixed': 'Fixed costs',
   'plan.section.income': 'Income',
@@ -239,6 +240,9 @@ export const planEn: Record<PlanKey, string> = {
   'plan.tabs': 'Planning view',
   'plan.tab.list': 'Goals and fixed costs',
   'plan.tab.projection': 'Projection',
+  'proj.empty.title': 'Nothing to project yet',
+  'proj.empty.text':
+    'The projection is calculated from income, fixed costs, budgets and expenses. Add income or fixed costs first.',
   'proj.end': 'Free surplus end of {month}',
   'proj.endNote': 'after fixed costs, savings and variable spending',
   'proj.basis.budget': 'No complete past months yet: the forecast uses your budgets.',

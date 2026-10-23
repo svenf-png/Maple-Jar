@@ -3,6 +3,38 @@
   position: relative;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  /* Rechter Rand blendet aus als Hinweis auf weitere Monate. Die letzte Spalte hat rechts so viel Luft
+     wie der Verlauf breit ist, ganz rechts gescrollt ist sie also voll sichtbar. Nur CSS, kein Skript.
+     Zweite Ebene: die untersten 10 px bleiben unmaskiert, damit die Scrollleiste nicht mit ausblendet. */
+  mask-image:
+    linear-gradient(to right, black calc(100% - 48px), transparent), linear-gradient(black, black);
+  mask-size:
+    100% calc(100% - 10px),
+    100% 10px;
+  mask-position: top, bottom;
+  mask-repeat: no-repeat;
+}
+/* Dauerhaft sichtbare, dünne Scrollleiste. In Chromium >= 121 würde ein gesetztes scrollbar-width die
+   ::-webkit-scrollbar-Stile abschalten, daher die Standard-Eigenschaften nur ohne Webkit-Unterstützung (Firefox). */
+.wrap::-webkit-scrollbar {
+  height: 6px;
+}
+.wrap::-webkit-scrollbar-track {
+  background: transparent;
+}
+.wrap::-webkit-scrollbar-thumb {
+  background: var(--label3);
+  border-radius: 3px;
+}
+@supports not selector(::-webkit-scrollbar) {
+  .wrap {
+    scrollbar-width: thin;
+    scrollbar-color: var(--label3) transparent;
+  }
+}
+.table th:last-child,
+.table td:last-child {
+  padding-right: 48px;
 }
 .table {
   border-collapse: separate;
@@ -21,13 +53,14 @@
 .monthHead {
   padding: 8px 10px;
   font-weight: 600;
-  color: var(--label2);
+  color: var(--label);
   text-align: right;
   white-space: nowrap;
   border-bottom: 0.5px solid var(--sep);
 }
+/* Prognose-Monate gedämpft statt kursiv; --label3 reicht für Text nicht an 4,5:1 heran. */
 .forecast {
-  font-style: italic;
+  color: var(--label2);
 }
 .rowHead {
   position: sticky;

@@ -2,14 +2,13 @@
   display: flex;
   flex-direction: column;
   gap: 22px;
-  padding-top: var(--s-4);
 }
 .grid {
   display: contents;
 }
 @media (min-width: 1024px) {
   .stack {
-    max-width: 1200px;
+    max-width: var(--content-max);
   }
   .grid {
     display: grid;

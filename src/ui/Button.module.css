@@ -24,6 +24,16 @@
   color: var(--onAcc);
   font-size: 17px;
 }
+.primary:disabled:not([aria-busy="true"]),
+.fab:disabled:not([aria-busy="true"]) {
+  /* Deaktiviert = nur Kontur, deutlich anders als ein aktiver Sekundär-Button (Fläche). Keine Akzentfarbe.
+     Die Umrandung zählt per border-box in die feste Höhe, die Größe bleibt gleich. Ladezustand behält Akzent. */
+  background: transparent;
+  border: 1px dashed var(--label3);
+  box-sizing: border-box;
+  color: var(--label3);
+  opacity: 1;
+}
 .secondary {
   width: 100%;
   height: 52px;

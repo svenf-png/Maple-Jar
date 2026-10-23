@@ -123,7 +123,7 @@ export function BookSheet({ item, category, members, provider, today, onClose, o
             </p>
           ) : null}
           <div className={styles.actions}>
-            <HapticTarget onTap={() => void confirm()} busy={busy} disabled={loading}>
+            <HapticTarget onTap={() => void confirm()} busy={busy || loading}>
               {loading ? t('overview.due.rateLoading') : t('overview.due.book')}
             </HapticTarget>
             <Button variant="text" onClick={close}>

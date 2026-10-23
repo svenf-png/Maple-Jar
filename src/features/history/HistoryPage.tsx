@@ -78,6 +78,7 @@ export function HistoryPage() {
       <div className={styles.stack}>
         <div className={styles.narrow}>
           <Segmented
+            fit
             label={t('history.tabs')}
             value={tab}
             options={[

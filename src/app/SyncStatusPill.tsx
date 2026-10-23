@@ -13,6 +13,7 @@ export function SyncStatusPill() {
   useLang();
   const status = useSyncStatus();
   const { running } = useSyncState();
+  const connectedLabel = t(running ? 'status.syncing' : 'status.synced');
   let content: ReactNode;
   switch (status.kind) {
     case 'reauth':
@@ -52,8 +53,9 @@ export function SyncStatusPill() {
         <button
           type="button"
           className={styles.iconBtn}
+          // Name bleibt fest, damit die Live-Region nicht bei jedem Sync-Lauf vorliest; der Tooltip zeigt den Lauf.
           aria-label={t('status.synced')}
-          title={t('status.synced')}
+          title={connectedLabel}
           onClick={() => void import('../data/sync/runtime').then((r) => r.requestSync())}
         >
           <CloudOkIcon size={22} />

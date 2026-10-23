@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router';
 import { PageHeader } from '../../app/PageHeader';
 import { useProjectionInput } from '../../data/projection-input';
 import { useBudgets, useCategories, useScenario } from '../../data/repos';
@@ -11,13 +12,14 @@ import { getLocale, t, useLang } from '../../i18n/t';
 import { InfoIcon, WarnIcon } from '../../icons/ui-icons';
 import { useEntryRate } from '../../platform/use-fx';
 import { useMedia } from '../../platform/use-media';
-import { Card } from '../../ui';
+import { Card, EmptyState } from '../../ui';
 import { PlanTabs } from '../planning/PlanTabs';
 import { todayIso } from '../shared/helpers';
 import { AdoptBudgets } from './AdoptBudgets';
 import { CashflowTable } from './CashflowTable';
 import { ProjectionChart } from './ProjectionChart';
 import styles from './ProjectionPage.module.css';
+import { isProjectionEmpty } from './projection-empty';
 import { signedMoney } from './projection-format';
 import { ScenarioPanel } from './ScenarioPanel';
 
@@ -36,6 +38,8 @@ export function ProjectionPage() {
   const categories = useCategories();
   const budgets = useBudgets();
   const scenarioActive = isScenarioActive(scenario);
+  // Erst nach dem Aufbau der Eingaben entscheiden, sonst blitzt der Leerzustand beim Laden auf.
+  const empty = input != null && isProjectionEmpty(input);
   const cmp = useMemo(
     () => (input ? compareScenario(input, scenario ?? { categoryPct: {}, extras: [] }) : null),
     [input, scenario],
@@ -58,7 +62,24 @@ export function ProjectionPage() {
       <PageHeader title={t('plan.title')} showMeta={!desktop} />
       <div className={styles.page}>
         <PlanTabs current="projection" />
-        {cmp ? (
+        {empty ? (
+          <Card radius="list">
+            <EmptyState
+              title={t('proj.empty.title')}
+              text={t('proj.empty.text')}
+              action={
+                <div className={styles.emptyActions}>
+                  <Link to="/einnahme/neu" className={styles.emptyCta}>
+                    {t('plan.income.addFirst')}
+                  </Link>
+                  <Link to="/fixkosten/neu" className={styles.emptyLink}>
+                    {t('plan.fixed.addFirst')}
+                  </Link>
+                </div>
+              }
+            />
+          </Card>
+        ) : cmp ? (
           <div className={styles.layout}>
             <div className={styles.main}>
               <Card radius="hero" className={styles.hero}>

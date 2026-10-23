@@ -4,6 +4,12 @@
   padding: 2px;
   border-radius: 9px;
 }
+/* Seiten-Tabs (Planung): auf dem Desktop nach Inhalt statt über die volle Breite der Spalte. */
+@media (min-width: 1024px) {
+  .fit {
+    align-self: flex-start;
+  }
+}
 /* Das Touch-Ziel wird per Padding auf 44px Höhe gebracht, die sichtbare Fläche bleibt 30px. */
 .item {
   appearance: none;
@@ -13,6 +19,10 @@
   margin: -7px 0;
   cursor: pointer;
   min-width: 44px;
+  /* Als Link (PlanTabs) genutzt: Block statt Inline, ohne Link-Optik. */
+  display: block;
+  color: inherit;
+  text-decoration: none;
 }
 .face {
   display: flex;
@@ -28,28 +38,33 @@
     background-color 0.12s,
     transform 0.12s;
 }
-.item[aria-pressed="true"] .face {
+.item[aria-pressed="true"] .face,
+.item[aria-current="page"] .face {
   background: var(--card);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
 }
+.item[aria-pressed="true"]:active:not(:disabled) .face,
+.item[aria-current="page"]:active:not(:disabled) .face {
+  transform: scale(0.98);
+}
+/* Inaktiv = weder gedrückt (Button) noch aktuelle Seite (Link). */
 @media (hover: hover) {
-  .item[aria-pressed="false"]:hover:not(:disabled) .face {
+  .item:not([aria-pressed="true"], [aria-current="page"]):hover:not(:disabled) .face {
     background: var(--fillHover);
   }
 }
-.item[aria-pressed="false"]:active:not(:disabled) .face {
+.item:not([aria-pressed="true"], [aria-current="page"]):active:not(:disabled) .face {
   background: var(--fillActive);
-  transform: scale(0.98);
-}
-.item[aria-pressed="true"]:active:not(:disabled) .face {
   transform: scale(0.98);
 }
 @media (prefers-reduced-motion: reduce) {
   .face {
     transition: none;
   }
-  .item[aria-pressed="false"]:active:not(:disabled) .face,
-  .item[aria-pressed="true"]:active:not(:disabled) .face {
+  /* Gleiche Spezifität wie die Regeln oben, sonst gewinnen sie und skalieren weiter. */
+  .item[aria-pressed="true"]:active:not(:disabled) .face,
+  .item[aria-current="page"]:active:not(:disabled) .face,
+  .item:not([aria-pressed="true"], [aria-current="page"]):active:not(:disabled) .face {
     transform: none;
   }
 }

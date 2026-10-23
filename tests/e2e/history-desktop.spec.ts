@@ -159,7 +159,7 @@ test.describe('Verlauf Desktop-Breite', { tag: '@desktop' }, () => {
       expect(actionsHead.width).toBeGreaterThan(1);
       expect(Math.abs(actionsHead.height - dateHead.height)).toBeLessThan(1);
 
-      // Suche und Filter bleiben bei 720 px, die Tabelle nutzt die volle Breite.
+      // Suche und Filter bleiben bei der Inhaltsbreite (--content-max, 960 px), die Tabelle nutzt die volle Breite.
       const searchBox = await page
         .locator('input[type="search"]')
         .locator('xpath=ancestor::label[1]')
@@ -169,9 +169,9 @@ test.describe('Verlauf Desktop-Breite', { tag: '@desktop' }, () => {
         .locator('xpath=ancestor::div[1]')
         .boundingBox();
       const tableBox = await tableContainer(page).boundingBox();
-      expect(searchBox?.width ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(720);
-      expect(filterBox?.width ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(720);
-      expect(tableBox?.width ?? 0).toBeGreaterThan(720);
+      expect(searchBox?.width ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(960);
+      expect(filterBox?.width ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(960);
+      expect(tableBox?.width ?? 0).toBeGreaterThan(960);
 
       await startEditing(page);
       await expectNoHorizontalOverflow(tableContainer(page));
@@ -368,12 +368,12 @@ for (const scheme of ['light', 'dark'] as const) {
 // Kein @desktop-Tag: die Prüfung läuft auch auf den Mobil-Projekten.
 for (const { name, width, expected } of [
   { name: 'Mobil (390 px)', width: 390, expected: null },
-  { name: 'Desktop (1280 px)', width: 1280, expected: 720 },
+  { name: 'Desktop (1280 px)', width: 1280, expected: 960 },
 ] as const) {
   test.describe(`Verlauf Tabs und Aktivitäts-Feed ${name}`, () => {
     test.use({ viewport: { width, height: 800 } });
 
-    test('Tab-Leiste ist so breit wie die Suche (Desktop 720 px, mobil volle Breite)', async ({
+    test('Tab-Leiste: Desktop kompakt und linksbündig an der Suche, mobil volle Breite', async ({
       page,
     }) => {
       await connectE2e(page, 'empty');
@@ -383,9 +383,14 @@ for (const { name, width, expected } of [
       const search = await requireBox(
         page.getByRole('searchbox', { name: 'Händler, Notiz, Betrag' }).locator('..'),
       );
-      expect(Math.abs(tabs.width - search.width)).toBeLessThan(1.5);
-      if (expected) expect(Math.abs(tabs.width - expected)).toBeLessThan(1.5);
-      else expect(tabs.width).toBeGreaterThan(width - 80);
+      expect(Math.abs(tabs.x - search.x)).toBeLessThan(1.5);
+      if (expected) {
+        expect(Math.abs(search.width - expected)).toBeLessThan(1.5);
+        expect(tabs.width).toBeLessThan(search.width / 2);
+      } else {
+        expect(Math.abs(tabs.width - search.width)).toBeLessThan(1.5);
+        expect(tabs.width).toBeGreaterThan(width - 80);
+      }
     });
 
     test('Tagesgruppen im Aktivitäts-Feed haben den Abstand --s-3 (12 px)', async ({ page }) => {

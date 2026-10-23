@@ -169,7 +169,7 @@ export const de = {
   'onboarding.go': 'Los',
   'onboarding.done': 'Erledigt',
   'onboarding.noEntries': 'Noch keine Einträge',
-  'onboarding.noEntriesHint': 'Tippe auf Plus, um die erste Ausgabe zu erfassen.',
+  'onboarding.noEntriesHint': 'Erfasse deine erste Ausgabe.',
   'onboarding.tapPlus': 'Hier tippen, um eine Ausgabe zu erfassen',
   'capture.title': 'Neue Ausgabe',
   'capture.titleEdit': 'Ausgabe bearbeiten',
