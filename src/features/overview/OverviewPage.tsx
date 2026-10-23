@@ -37,11 +37,12 @@ function HeroAmount({
   /** Umgerechneter Betrag: „≈“ davor, wie bei IncomeTotal. */
   approximate?: boolean;
 }) {
-  const { amount, symbol, symbolFirst } = formatMoneySplit(minor, 'CAD', locale);
+  const { amount, symbol, symbolFirst, sign } = formatMoneySplit(minor, 'CAD', locale);
   const cur = <span className={styles.bigCur}>{symbol}</span>;
   return (
     <div className={`${className} num`}>
       {approximate ? <span className={styles.bigCur}>≈</span> : null}
+      {sign ? <span>{sign}</span> : null}
       {symbolFirst ? cur : null}
       <span>{amount}</span>
       {symbolFirst ? null : cur}
@@ -85,6 +86,10 @@ export function OverviewPage() {
   const todayRate = useEntryRate('EUR', today, provider).rate;
   const split = useIncomeSplit(entries, today, todayRate);
   const showSplit = split !== null && hasSplitData(split);
+  // Einkommen nur groß oben zeigen, wenn es eines gibt; ohne Einnahme (Monatsanfang) bleibt der Donut
+  // neben dem Budget und die Legende darunter, ohne „Einkommen 0,00“.
+  const incomeSplit = showSplit && split.mode !== 'noIncome' ? split : null;
+  const splitBelow = showSplit && incomeSplit === null ? split : null;
   const month = monthOf(today);
   const live = entries.filter((e) => !e.deleted);
   const summary = monthSummary({ categories, budgets, entries, month, today });
@@ -144,8 +149,8 @@ export function OverviewPage() {
         {hasBudgets ? (
           <Card className={styles.card}>
             <section className={styles.hero} aria-label={t('overview.available')}>
-              {showSplit ? <IncomeBlock split={split} locale={locale} /> : null}
-              <div className={`${styles.heroTop} ${showSplit ? styles.heroDivider : ''}`}>
+              {incomeSplit ? <IncomeBlock split={incomeSplit} locale={locale} /> : null}
+              <div className={`${styles.heroTop} ${incomeSplit ? styles.heroDivider : ''}`}>
                 <span className={styles.muted}>{t('overview.available')}</span>
                 <span className={`${styles.pill} ${stateWarn ? styles.pillWarn : styles.pillOk}`}>
                   {stateWarn ? <WarnIcon size={14} /> : <CheckIcon size={14} />}
@@ -158,6 +163,7 @@ export function OverviewPage() {
                   locale={locale}
                   className={`${styles.big} ${showSplit ? styles.bigWithChart : ''}`}
                 />
+                {splitBelow ? <IncomeDonutChart split={splitBelow} /> : null}
               </div>
               <ProgressBar
                 value={pct}
@@ -188,6 +194,12 @@ export function OverviewPage() {
                   <strong className="num">
                     {formatMoney(summary.unbudgetedSpent, 'CAD', locale)}
                   </strong>
+                </div>
+              ) : null}
+              {splitBelow ? (
+                <div className={styles.perDay}>
+                  <span className={styles.muted}>{t('donut.title')}</span>
+                  <IncomeLegend split={splitBelow} />
                 </div>
               ) : null}
             </section>

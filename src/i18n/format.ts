@@ -47,19 +47,21 @@ export function formatMoneySplit(
   currency: Currency,
   locale: Locale,
   options: { trimWhole?: boolean } = {},
-): { amount: string; symbol: string; symbolFirst: boolean } {
+): { amount: string; symbol: string; symbolFirst: boolean; sign: string } {
   const parts = moneyParts(minor, currency, locale, options.trimWhole ?? false);
   const at = parts.findIndex((p) => p.type === 'currency');
-  // Bei negativen Beträgen steht das Vorzeichen vor dem Symbol („-$399.00“): Symbol zählt trotzdem als vorn.
+  // Das Vorzeichen kommt getrennt zurück: bei „-$399.00“ steht es vor dem Symbol, bei „-399,00 CA$“ vor der Zahl.
+  // Ohne Vorzeichen zählt das Symbol als vorn, wenn vor ihm nichts steht.
   const symbolFirst =
     at >= 0 && parts.slice(0, at).every((p) => p.type === 'minusSign' || p.type === 'literal');
-  const rest = parts.filter((_, i) => i !== at);
+  const sign = parts.find((p) => p.type === 'minusSign')?.value ?? '';
+  const rest = parts.filter((p, i) => i !== at && p.type !== 'minusSign');
   // Das Leerzeichen zwischen Zahl und Symbol gehört zum Symbol, nicht zur Zahl.
   const amount = rest
     .map((p) => p.value)
     .join('')
     .trim();
-  return { amount, symbol: parts[at]?.value ?? '', symbolFirst };
+  return { amount, symbol: parts[at]?.value ?? '', symbolFirst, sign };
 }
 
 /** Kennzeichnet einen umgerechneten Betrag als ungefähr („≈ 12,00 CA$“). */

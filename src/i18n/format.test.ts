@@ -35,6 +35,7 @@ describe('formatMoneySplit', () => {
       amount: '981,00',
       symbol: 'CA$',
       symbolFirst: false,
+      sign: '',
     });
   });
 
@@ -43,19 +44,22 @@ describe('formatMoneySplit', () => {
       amount: '981.00',
       symbol: '$',
       symbolFirst: true,
+      sign: '',
     });
   });
 
-  it('hält das Symbol bei negativen Beträgen an seiner Seite', () => {
+  it('trennt das Vorzeichen ab und hält das Symbol an seiner Seite', () => {
     expect(formatMoneySplit(-39900n, 'CAD', 'en-CA')).toEqual({
-      amount: '-399.00',
+      amount: '399.00',
       symbol: '$',
       symbolFirst: true,
+      sign: '-',
     });
     expect(formatMoneySplit(-39900n, 'CAD', 'de-DE')).toEqual({
-      amount: '-399,00',
+      amount: '399,00',
       symbol: 'CA$',
       symbolFirst: false,
+      sign: '-',
     });
   });
 
