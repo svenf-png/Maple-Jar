@@ -1,6 +1,9 @@
 name: keepalive
 
 # Hält das Supabase-Projekt aktiv, damit es im Free-Plan nicht wegen Inaktivität pausiert wird.
+# Ruft die RPC-Funktion public.keepalive() auf, nicht eine Tabelle: Die Anonymrolle hat auf Tabellen keine
+# Rechte (Anfrage wird mit 401 abgewiesen). Voraussetzung: Migration 0002_keepalive.sql ist im Projekt
+# eingespielt. Geplante Läufe starten nur auf dem Default-Branch.
 # URL und öffentlicher Schlüssel kommen ausschließlich aus Repository-Secrets (nie aus dem Repo).
 # Hinweis: GitHub kann geplante Workflows in Repos ohne Aktivität nach 60 Tagen deaktivieren.
 
@@ -24,14 +27,31 @@ jobs:
             echo "Secrets SUPABASE_URL und SUPABASE_ANON_KEY sind nicht gesetzt. Nichts zu tun."
             exit 0
           fi
-          # Lesende Anfrage an die Datenbank (REST). Ohne Anmeldung liefert RLS eine leere Liste;
-          # die Anfrage erreicht trotzdem die Datenbank. Nur der Statuscode wird ausgegeben.
-          code=$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+          # Aufruf der Funktion public.keepalive() (RPC). Sie liest keine Daten und ist als einzige
+          # Funktion für die Anonymrolle freigegeben. Gezeigt werden nur Statuscode sowie code und
+          # message der Fehlerantwort, nie Header, URL oder Schlüssel.
+          body=$(mktemp)
+          # Kein --show-error und stderr verworfen: Netzfehlermeldungen von curl enthalten den Host.
+          rc=0
+          code=$(curl --silent --output "$body" --write-out '%{http_code}' \
             --max-time 30 \
+            --request POST \
             --header "apikey: $SUPABASE_ANON_KEY" \
-            "$SUPABASE_URL/rest/v1/household?select=id&limit=1")
+            --header "Content-Type: application/json" \
+            --data '{}' \
+            "$SUPABASE_URL/rest/v1/rpc/keepalive" 2>/dev/null) || rc=$?
+          if [ "$rc" -ne 0 ]; then
+            echo "curl fehlgeschlagen, Exitcode: $rc"
+            echo "Ping fehlgeschlagen."
+            exit 1
+          fi
           echo "HTTP status: $code"
           case "$code" in
             2*) ;;
-            *) echo "Ping fehlgeschlagen." ; exit 1 ;;
+            *)
+              jq -r '"code: \(.code // "-")", "message: \(.message // "-")"' "$body" 2>/dev/null \
+                || echo "Antwort ohne lesbares JSON."
+              echo "Ping fehlgeschlagen."
+              exit 1
+              ;;
           esac
