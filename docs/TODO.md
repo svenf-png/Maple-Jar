@@ -11,7 +11,7 @@ M7 sind Kandidaten ohne Plan. Supabase-Migrationen: `0001` und `0002` (PR #18) b
 - **Abmelden bei offenem Sync schützen** (hoch) – `disconnect()` löscht die ganze lokale Datenbank samt Outbox
   ohne Prüfung, der Bestätigungstext warnt nicht. Beleg: `src/data/session.ts:182-201`, `src/i18n/de.ts:142`.
   Status: in Arbeit, PR #17 (Branch `fix/logout-guard`).
-- **Verlauf in Desktop-Breite, SelectField, Hover-Zustände** – Draft-PR #11, in Arbeit.
+- **Verlauf in Desktop-Breite, SelectField, Hover-Zustände** – erledigt, PR #11 gemergt (1e39e6a).
 - **Update-Fenster für neue App-Versionen** – erledigt, PR #15 gemergt (9f02ecc) und live. `main` liegt danach bei
   149,81 KB von 150 KB (CI-Lauf 39856099341).
 - **Keepalive** (mittel–hoch) – gelöst in PR #18 (Branch `fix/keepalive-rpc`, Merge steht aus). Ursachen: Geplante
@@ -22,7 +22,8 @@ M7 sind Kandidaten ohne Plan. Supabase-Migrationen: `0001` und `0002` (PR #18) b
   Befund dabei: Die Default-Privilegien von Supabase geben `anon` und `authenticated` `EXECUTE` auf neue Funktionen in
   `public`; `0001_init.sql` entzog nur `from public`. PR #18 entzieht `anon` ausdrücklich und setzt
   `alter default privileges … revoke execute on functions from anon`. Regel ab jetzt: jede neue Funktion
-  `revoke execute … from public, anon`, dann gezieltes `grant`.
+  `revoke all on function … from public, anon, authenticated`, dann gezieltes `grant execute … to authenticated` nur wo
+  nötig.
 
 ## Datensicherheit
 
@@ -78,7 +79,7 @@ M7 sind Kandidaten ohne Plan. Supabase-Migrationen: `0001` und `0002` (PR #18) b
 - **„Zuletzt synchronisiert“ unsichtbar** (mittel) – `lastSyncAt` wird nur im Speicher geführt und nirgends angezeigt.
   Beleg: `src/data/sync/engine.ts:18,42`.
 - **Fehlerzustände nicht unterscheidbar** (hoch) – Die Zustandsmaschine kennt `forbidden`, `rate` und `server`, die
-  Pille zeigt aber immer „Sync gestört · Erneut versuchen“. Ein gelöschtes Projekt (Adresse nicht auflösbar) erscheint
+  Pille zeigt aber immer „Sync gestört · Erneut versuchen“. Ein pausiertes Projekt (Adresse nicht auflösbar) erscheint
   dauerhaft als „Offline“. Am 22.10.2026 echt eingetreten: Das pausierte Projekt war per DNS nicht auflösbar
   (NXDOMAIN), die App zeigte nur „Offline“ statt des Lösungswegs (im Supabase-Dashboard wiederherstellen).
   Beleg: `src/data/remote/supabase-transport.ts:85-86`, `src/data/sync/engine.ts:62-69`,
@@ -109,8 +110,8 @@ M7 sind Kandidaten ohne Plan. Supabase-Migrationen: `0001` und `0002` (PR #18) b
 - **CSV-Beträge als `12.50`** (niedrig) – Deutsche Tabellenkalkulationen lesen das unter Umständen als Text oder
   Datum. Offen bis zum Gerätetest. Beleg: `src/domain/csv.ts:53,55`.
 - **Realtime und Verdichtung (Snapshot)** (niedrig) – laut `docs/PLAN.md` optional bzw. bei Bedarf; derzeit nicht nötig.
-- **Größenbudget praktisch voll** (hoch) – 149,81 von 150 KB auf `main` nach PR #15, mit PR #11 etwa 149,98 KB.
-  Neues nur per `import()`; M6-A schafft Puffer durch lazy Laden der Verbinden-Seite als zwingend ersten Schritt (Task A0), das Budget wird nicht angehoben
+- **Größenbudget praktisch voll** (hoch) – 149,81 von 150 KB auf `main` nach PR #15, 149,98 KB nach dem Merge von PR #11 (Stand von main).
+  Neues nur per `import()`; Puffer durch lazy Laden der Verbinden-Seite als zwingend ersten Schritt (Task A0, läuft vorab als eigener PR auf `perf/lazy-connect`, WIP gemessen 148,63 KB), das Budget wird nicht angehoben
   (M6.md, Entscheidung 8).
 
 ## Bewusst hingenommen
