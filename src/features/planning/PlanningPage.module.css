@@ -1,14 +1,14 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding-bottom: var(--s-5);
+  max-width: var(--content-max);
+}
 .stack {
   display: flex;
   flex-direction: column;
   gap: 22px;
-  padding-top: var(--s-4);
-  padding-bottom: var(--s-5);
-}
-@media (min-width: 1024px) {
-  .stack {
-    max-width: var(--content-max);
-  }
 }
 .sectionHead {
   display: flex;

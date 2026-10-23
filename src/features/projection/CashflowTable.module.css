@@ -3,6 +3,13 @@
   position: relative;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--label3) transparent;
+  /* Rechter Rand als Hinweis auf weitere Monate: der Verlauf klebt am Rand (scroll), die Deckschicht
+     (local) liegt am Ende des Inhalts und blendet ihn ganz rechts wieder aus. Nur CSS, kein Skript. */
+  background:
+    linear-gradient(to left, var(--card), var(--card)) right center / 28px 100% no-repeat local,
+    linear-gradient(to left, var(--fill), transparent) right center / 28px 100% no-repeat scroll;
 }
 .table {
   border-collapse: separate;
@@ -27,7 +34,7 @@
   border-bottom: 0.5px solid var(--sep);
 }
 .forecast {
-  font-style: italic;
+  color: var(--label3);
 }
 .rowHead {
   position: sticky;
