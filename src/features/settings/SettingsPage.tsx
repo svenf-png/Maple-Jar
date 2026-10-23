@@ -4,7 +4,6 @@ import { PageHeader } from '../../app/PageHeader';
 import { db } from '../../data/db';
 import { exportEntriesCsv, exportEventsJson } from '../../data/export';
 import { findMember } from '../../data/household';
-import { disconnect } from '../../data/session';
 import { todayIso } from '../../data/today';
 import { useLiveQuery } from '../../data/use-live-query';
 import { useReadySession } from '../../data/use-session';
@@ -16,7 +15,8 @@ import { usePersisted } from '../../platform/persist';
 import { readTheme, setTheme, type ThemePref } from '../../platform/theme';
 import { useTodayRate } from '../../platform/use-fx';
 import { useMedia } from '../../platform/use-media';
-import { Avatar, Button, Card, ConfirmDialog, ListRow, Segmented } from '../../ui';
+import { Avatar, Button, Card, ListRow, Segmented } from '../../ui';
+import { LogoutDialog, useLogoutTexts } from './LogoutDialog';
 import styles from './SettingsPage.module.css';
 import { SetupLinkCard } from './SetupLinkCard';
 
@@ -28,6 +28,8 @@ export function SettingsPage() {
   const fx = useTodayRate(household.settings.fxProvider);
   const [theme, setThemeState] = useState<ThemePref>(readTheme());
   const [confirm, setConfirm] = useState(false);
+  const logoutTexts = useLogoutTexts();
+  const [logoutError, setLogoutError] = useState(false);
   const me = findMember(household, userId);
   const other = household.members.find((m) => m.userId !== userId);
 
@@ -38,6 +40,7 @@ export function SettingsPage() {
     [],
     0,
   );
+  const pending = useLiveQuery(() => db.outbox.count(), [], 0);
   const [exportError, setExportError] = useState(false);
   const [csvError, setCsvError] = useState(false);
 
@@ -214,17 +217,20 @@ export function SettingsPage() {
         <Button variant="secondary" onClick={() => setConfirm(true)}>
           {t('settings.logout')}
         </Button>
+        {logoutError ? (
+          <p role="alert" className={styles.sub}>
+            {logoutTexts.error}
+          </p>
+        ) : null}
       </div>
-      <ConfirmDialog
+      <LogoutDialog
         open={confirm}
-        title={t('settings.logout.confirmTitle')}
-        text={t('settings.logout.confirmText')}
-        confirmLabel={t('settings.logout.confirm')}
-        onCancel={() => setConfirm(false)}
-        onConfirm={() => {
-          setConfirm(false);
-          void disconnect();
+        pending={pending}
+        onOpenChange={(o) => {
+          setConfirm(o);
+          if (o) setLogoutError(false);
         }}
+        onError={() => setLogoutError(true)}
       />
     </>
   );
