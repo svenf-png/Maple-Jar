@@ -5,11 +5,13 @@
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: var(--label3) transparent;
-  /* Rechter Rand als Hinweis auf weitere Monate: der Verlauf klebt am Rand (scroll), die Deckschicht
-     (local) liegt am Ende des Inhalts und blendet ihn ganz rechts wieder aus. Nur CSS, kein Skript. */
-  background:
-    linear-gradient(to left, var(--card), var(--card)) right center / 28px 100% no-repeat local,
-    linear-gradient(to left, var(--fill), transparent) right center / 28px 100% no-repeat scroll;
+  /* Rechter Rand blendet aus als Hinweis auf weitere Monate. Die letzte Spalte hat rechts so viel Luft
+     wie der Verlauf breit ist, ganz rechts gescrollt ist sie also voll sichtbar. Nur CSS, kein Skript. */
+  mask-image: linear-gradient(to right, black calc(100% - 28px), transparent);
+}
+.table th:last-child,
+.table td:last-child {
+  padding-right: 28px;
 }
 .table {
   border-collapse: separate;
@@ -28,13 +30,14 @@
 .monthHead {
   padding: 8px 10px;
   font-weight: 600;
-  color: var(--label2);
+  color: var(--label);
   text-align: right;
   white-space: nowrap;
   border-bottom: 0.5px solid var(--sep);
 }
+/* Prognose-Monate gedämpft statt kursiv; --label3 reicht für Text nicht an 4,5:1 heran. */
 .forecast {
-  color: var(--label3);
+  color: var(--label2);
 }
 .rowHead {
   position: sticky;
