@@ -180,7 +180,7 @@ export function GoalDetailPage() {
             </HapticTarget>
           ) : null}
           <Button
-            disabled={busy}
+            busy={busy}
             onClick={() => {
               setError(null);
               setDate(today);
