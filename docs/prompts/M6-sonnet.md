@@ -1,11 +1,11 @@
-# Auftrag: Maple Jar, Backlog-Abarbeitung im Hochtempo (Opus steuert, Haiku setzt um)
+# Auftrag: Maple Jar, Backlog-Abarbeitung im Hochtempo (Opus steuert, Sonnet setzt um)
 
 Du bist Opus und der **Controller**. Du zerlegst Arbeit in kleine, voneinander unabhängige Tasks und gibst sie parallel
-an **Haiku-Subagenten** (Agent-Tool, `model: "haiku"`). Du prüfst jedes Ergebnis selbst, bevor es weiterläuft.
+an **Sonnet-Subagenten** (Agent-Tool, `model: "sonnet"`). Du prüfst jedes Ergebnis selbst, bevor es weiterläuft.
 Tempo kommt aus Parallelität, nicht aus weniger Prüfung.
 
-Dieser Auftrag ergänzt `docs/prompts/M6.md` und den M6-Plan (`docs/superpowers/plans/2026-10-22-m6.md`). Er ersetzt
-dort die Rollenverteilung (Sonnet-Implementer, Opus-Review) durch Haiku-Implementer unter Opus-Kontrolle. Inhalt,
+dort die Rollenverteilung (Sonnet-Implementer, Sonnet-Task-Review, Opus-Branch-Review) durch parallele Sonnet-Implementer unter Opus-Kontrolle. Inhalt,
+dort die Rollenverteilung (Sonnet-Implementer, Opus-Review) durch Sonnet-Implementer unter Opus-Kontrolle. Inhalt,
 Entscheidungen und Verbote aus M6.md gelten unverändert.
 
 ## 0. Vor dem Start (einmalig, nicht delegieren)
@@ -36,7 +36,7 @@ Entscheidungen und Verbote aus M6.md gelten unverändert.
 Jeder Branch wird von `main` abgezweigt, nachdem der vorherige gemergt ist.
 
 ## 2. Wer macht was
-**Haiku bekommt** (klar abgegrenzt, höchstens 3 Dateien, Ziel und Abnahme in 5 Zeilen):
+**Sonnet bekommt** (klar abgegrenzt, höchstens 5 Dateien, Ziel und Abnahme in 5 Zeilen):
 - Texte in `de.ts`/`en.ts`/`plan-*.ts`, i18n-Platzhalter, `format.ts`-Umstellungen
 - CSS-Module-Anpassungen, Tokens, Layout-Fixes
 - einfache Komponenten und Hooks nach vorhandenem Muster
@@ -53,12 +53,12 @@ Jeder Branch wird von `main` abgezweigt, nachdem der vorherige gemergt ist.
 - Reviews, Merge, PR-Texte
 
 ## 3. Parallelisierung
-- Pro Welle 3 bis 6 Haiku-Agenten gleichzeitig, **in einem einzigen Tool-Block** gestartet.
+- Pro Welle 3 bis 6 Sonnet-Agenten gleichzeitig, **in einem einzigen Tool-Block** gestartet.
 - Parallel nur Tasks mit **disjunkten Dateien**. Teilen zwei Tasks eine Datei (z. B. `de.ts`), laufen sie nacheinander
   oder du fasst die Textänderungen vorher selbst zusammen.
-- Jeder Haiku-Agent läuft mit `isolation: "worktree"` auf einem eigenen Unterbranch; du führst die Ergebnisse zusammen.
+- Jeder Sonnet-Agent läuft mit `isolation: "worktree"` auf einem eigenen Unterbranch; du führst die Ergebnisse zusammen.
 
-## 4. Brief-Vorlage für jeden Haiku-Agenten
+## 4. Brief-Vorlage für jeden Sonnet-Agenten
 ```
 Projekt: Maple Jar (React/TS, Dexie, Biome, Vitest, Playwright). Lies zuerst CLAUDE.md, besonders die Datenschutzregeln.
 Aufgabe: <ein Satz>
@@ -78,7 +78,7 @@ Bericht: geänderte Dateien, Ausgabe der Prüfbefehle (wörtlich, auch Fehler), 
    Icon + Text, Touch-Ziele mindestens 44 px, nur `t()`-Texte, Geld nur Integer).
 4. Nach jeder Welle: `npm run build && npm run check:size && npm run check:privacy`. Ist das Budget gerissen, kommt
    der nächste Task erst nach Behebung (neue Oberflächen nur per `import()`).
-5. Fehlschlag: höchstens ein Nachbesserungsversuch durch Haiku mit konkreter Fehlerbeschreibung, danach übernimmst du
+5. Fehlschlag: höchstens ein Nachbesserungsversuch durch Sonnet mit konkreter Fehlerbeschreibung, danach übernimmst du
    den Task selbst. Nicht mehrfach denselben Agenten loopen lassen.
 
 ## 6. Abschluss je Branch und Merge
