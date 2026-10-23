@@ -20,7 +20,8 @@ test('Übersicht: Ausgabe ohne Budget belastet das Monatsbudget nicht', async ({
   await expect(hero.getByText('Über Budget')).toHaveCount(0);
   await expect(hero.getByText(/^0 von .*150.* ausgegeben$/)).toBeVisible();
   await expect(hero.getByText('Ohne Budget', { exact: true })).toBeVisible();
-  await expect(hero.getByText('123,00 CA$')).toBeVisible();
+  // Der Betrag steht auch in der Einkommens-Legende; die Zeile „Ohne Budget“ ist das <strong> daneben.
+  await expect(hero.locator('strong', { hasText: '123,00 CA$' })).toBeVisible();
 });
 
 test.describe('Übersicht Desktop-Breite', { tag: '@desktop' }, () => {
