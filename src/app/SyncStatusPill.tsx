@@ -53,7 +53,8 @@ export function SyncStatusPill() {
         <button
           type="button"
           className={styles.iconBtn}
-          aria-label={connectedLabel}
+          // Name bleibt fest, damit die Live-Region nicht bei jedem Sync-Lauf vorliest; der Tooltip zeigt den Lauf.
+          aria-label={t('status.synced')}
           title={connectedLabel}
           onClick={() => void import('../data/sync/runtime').then((r) => r.requestSync())}
         >

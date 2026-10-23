@@ -55,7 +55,10 @@
   .face {
     transition: none;
   }
-  .item:active:not(:disabled) .face {
+  /* Gleiche Spezifität wie die Regeln oben, sonst gewinnen sie und skalieren weiter. */
+  .item[aria-pressed="true"]:active:not(:disabled) .face,
+  .item[aria-current="page"]:active:not(:disabled) .face,
+  .item:not([aria-pressed="true"], [aria-current="page"]):active:not(:disabled) .face {
     transform: none;
   }
 }
